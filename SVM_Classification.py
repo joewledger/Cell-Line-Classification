@@ -7,9 +7,6 @@
 
 from sklearn import *
 import numpy as np
-from matplotlib.pylab import *
-from matplotlib import colors,pyplot
-import scipy.stats.mstats as sp
 import DataFormatting as df
 
 #This method will generate a SVM classifier

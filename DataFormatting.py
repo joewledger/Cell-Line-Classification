@@ -12,6 +12,10 @@
 #	4) (Optional) The matrix of z-scores that correspond to the matrix
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib.pylab import *
+import scipy.stats.mstats as sp
 
 #Returns a tuple containing
 #	1) A matrix of cell lines x genes
@@ -118,6 +122,15 @@ def trim_dicts(dict1,dict2):
 		if (not key in key_set_1): trimmed_dict_2.pop(key,None)
 	return tuple([trimmed_dict_1,trimmed_dict_2])
 
+def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
+	plt.imshow(matrix)
+	plt.title(title + "\n")
+	plt.xlabel(x_axis)
+	plt.ylabel(y_axis)
+	plt.gca().axes.get_xaxis().set_ticks([])
+	plt.gca().axes.get_yaxis().set_ticks([])
+	plt.savefig(outfile)
+
 def visualize_all():
 	mutation_dict = generate_mutation_dict()
 	trimmed_mutation_dict = trim_dicts(mutation_dict, generate_ic_50_dict())[0]
@@ -137,8 +150,9 @@ def visualize_all():
 	expression_matrix_ic50_mutation = generate_cell_line_expression_matrix(2)[0]
 	visualize_matrix(expression_matrix_ic50_mutation, "Gene Expression Matrix (Only with IC50 values and mutation data)" + str(expression_matrix_ic50_mutation.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50_mutation.png")
 
-ic_50_filename = "CL_Sensitivity.txt"
+ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+#expression_features_filename = "CCLE_Data/sample.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
 
 visualize_all()
