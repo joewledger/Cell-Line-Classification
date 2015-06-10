@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.pylab import *
 import scipy.stats.mstats as sp
+import pandas as pd
+import csv
 
 #Returns a tuple containing
 #	1) A matrix of cell lines x genes
@@ -25,38 +27,13 @@ import scipy.stats.mstats as sp
 #Parameter: filter_cells - boolean that tells us whether or not to filter out cell lines not in ic_50 data,
 #			or all cell lines that are not in both the IC50 and mutation data
 #	0 -- do nothing, 1 -- filter ic_50 only, 2 -- filter both
-def generate_cell_line_expression_matrix(filter_cells):
-	genes = list(row.split("\t")[0].strip() for row in open(expression_features_filename).readlines())
-	genes = filter(lambda entry: (entry != "" and entry[0].isupper()), genes)[1:len(genes)]
-	cell_lines = list(entry for entry in open(expression_features_filename).readline().split("\t") if entry.find("_") > 0)
-	if(filter_cells == 1): cell_lines = filter(lambda a: a[0:a.find("_")] in generate_ic_50_dict().keys(), cell_lines)
-	if(filter_cells == 2): cell_lines = filter(lambda a: a[0:a.find("_")] in trim_dicts(generate_ic_50_dict(),generate_mutation_dict())[0].keys(), cell_lines)
-	row_count = sum(1 for row in open(expression_features_filename))
-	col_count = sum(1 for col in open(expression_features_filename).readline().split("\t"))
-	m = np.zeros((len(genes),len(cell_lines)))
-	with open(expression_features_filename,'rb') as f:
-		lines = f.readlines()
-		cell_iden = lines[0].split("\t")
-		row,col = (0,0)
-		gene_num,cell_num = (0,0)
-		while(row < row_count):
-			col,cell_num = (0,0)
-			gene_vector = lines[row].split("\t")
-			if(gene_num + 1 > len(genes)): break
-			if(gene_vector[0] == genes[gene_num]):
-				while(col < col_count):
-					if(cell_num + 1 > len(cell_lines)): break
-					if(cell_iden[col] == cell_lines[cell_num]):
-						if(len(gene_vector) > col):
-							m[gene_num][cell_num] = gene_vector[col]
-						cell_num += 1
-					col += 1
-				gene_num += 1
-			row += 1
-	z_scores = np.matrix([sp.zscore(row) for row in m])
-	m = np.matrix(m).transpose()
-	z_scores = z_scores.transpose()
-	return tuple([m,cell_lines,genes,z_scores])
+def generate_cell_line_expression_matrix():
+	df = pd.DataFrame.from_csv(expression_features_filename, index_col=0, sep='\t')
+	df = df.reindex_axis(df.columns[1:], 1)
+	df = df.reindex_axis([c for c in df.columns if not c.startswith('Unnamed')], 1)
+	renamed_columns = {c: c[:c.find('_')] for c in df.columns}
+	df = df.rename(columns=renamed_columns)
+	return df
 
 #Returns a tuple containing
 #	1) A matrix of cell lines x Oncomap mutations
@@ -122,6 +99,12 @@ def trim_dicts(dict1,dict2):
 		if (not key in key_set_1): trimmed_dict_2.pop(key,None)
 	return tuple([trimmed_dict_1,trimmed_dict_2])
 
+def trim_dict(dictionary,array):
+	trimmed_dict = dictionary.copy()
+	for key in trimmed_dict.keys():
+		if(not key in array): trimmed_dict.pop(key,None)
+	return trimmed_dict
+
 def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.imshow(matrix)
 	plt.title(title + "\n")
@@ -151,8 +134,9 @@ def visualize_all():
 	visualize_matrix(expression_matrix_ic50_mutation, "Gene Expression Matrix (Only with IC50 values and mutation data)" + str(expression_matrix_ic50_mutation.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50_mutation.png")
 
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-#expression_features_filename = "CCLE_Data/sample.res"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
 
-visualize_all()
+print(generate_cell_line_expression_matrix())
+#visualize_all()
