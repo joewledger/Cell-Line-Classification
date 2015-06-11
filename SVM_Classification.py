@@ -1,9 +1,9 @@
 ##---Cell Line Classification Project using SVM and Neural Networks
 ##---Working with Elena Svenson under the direction of Dr. Mehmet Koyuturk
-##---We have IC50 values for a bunch of different cell lines for the drug we are testing(What is the drug called?)
+##---We have IC50 values for a bunch of different cell lines for the drug we are testing (SMAPs -- Small Molecular Activators of PP2A)
 ##---We are going to apply SVM to classify cell lines as either sensitive or resistant to this drug
 ##---The training input values are the gene expression measurements for each cell line
-##---The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"  (not sure about undetermined)
+##---The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
 
 from sklearn import *
 import numpy as np
@@ -24,7 +24,7 @@ class classifiers(Enum):
 #Parameters: cell_lines - list of cell lines from IC_50 Data
 #Parameters: z_threshold - a value that will determine which features we use based on z-score
 #Parameters: num_folds - the number of folds we will use in the cross-fold validation (usually 5)
-def cross_validate_make_predictions(num_folds,threshold):
+def cross_validate_make_predictions(num_folds,threshold,**kwargs):
 	data_matrix = df.generate_cell_line_expression_matrix(True)
 	ic_50_dict = df.trim_dict(df.generate_ic_50_dict(),list(data_matrix.columns.values))
 	cell_lines = ic_50_dict.keys()
@@ -43,15 +43,20 @@ def cross_validate_make_predictions(num_folds,threshold):
 			cell_line_data = generate_cell_line_data(cell_line,trimmed_matrix,ic_50_dict,class_bin)
 			predictions[0].append(cell_line_data[1])
 			predictions[1].append(model.predict(cell_line_data[0]))
-	return predictions
+	if('cell_lines' in kwargs and kwargs['cell_lines']):
+		return predictions,cell_lines
+	else:
+		return predictions
 
 #Evaluates the predictions the model makes for accuracy
 #Returns a 3x3 matrix
 #	Row labels as actual sensitivity values (discretized)
 #	Column labels as predicted sensitivity values (discretized)
 #	Each entry is the percentage of times that each event happened during cross-validation
-def cross_validate_evaluate_predictions(num_folds,threshold):
-	predictions = cross_validate_make_predictions(num_folds,threshold)
+def cross_validate_evaluate_predictions(**kwargs):
+	num_folds = (kwargs['num_folds'] if 'num_folds' in kwargs else 5)
+	threshold = (kwargs['threshold'] if 'threshold' in kwargs else .2)
+	predictions = (kwargs['predictions'] if 'predictions' in kwargs else cross_validate_make_predictions(num_folds,threshold))
 	pred = [[0.0] * 3 for x in range(0,3)]
 	total = float(len(predictions[1]))
 	for index, actual in enumerate(predictions[0]):
@@ -110,7 +115,9 @@ def generate_class_bin():
 	upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 	return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
 
-#Trims
+#Trims genes from the data matrix that don't have a significant difference in gene expression between the sensitive and resistant groups
+#Parameters: data_matrix - the gene expression matrix
+#Parameters: ic_50_dict - 
 def trim_expression_features(data_matrix, ic_50_dict,threshold):
 	cb = generate_class_bin()
 	sensitive_cells = [x for x in ic_50_dict.keys() if cb(ic_50_dict[x]) == 0]
@@ -136,6 +143,3 @@ def trim_expression_features(data_matrix, ic_50_dict,threshold):
 	#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
 	data_matrix = data_matrix.copy().drop(labels=remove_list)
 	return data_matrix
-
-print(cross_validate_evaluate_predictions(5,.2))
-

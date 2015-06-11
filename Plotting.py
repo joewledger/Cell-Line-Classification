@@ -7,23 +7,30 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.pylab import *
 
+def plot_accuracy_threshold_curve(all_contingency_lists, thresholds):
+	plt.figure()
+	x = thresholds
+	y = [cont[0][0] + cont[1][1] + cont[2][2] for cont in all_contingency_lists]
+	plt.plot(x,y)
+	plt.xlabel("Threshold")
+	plt.ylabel("Accuracy")
+	plt.title("Accuracy vs. Threshold Curve")
+	plt.savefig("Visualizations/Accuracy_Threshold.png")
+
 def generate_prediction_heat_maps(contingency_list, threshold):
-	fig, ax = plt.subplots()
-	ax.imshow(contingency_list,interpolation='none')
+	plt.figure()
+	plt.imshow(contingency_list,interpolation='none')
 	for i,row in enumerate(contingency_list):
 		for j,col in enumerate(row):
 			percent = str(col * 100)
 			length = min(len(percent),4)
-			plt.text(float(i) - .15, float(j) + .05, percent[:length] + "%",size="12")
+			plt.text(float(j) - .15, float(i) + .05, percent[:length] + "%",size="12")
 	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ")")
 	plt.xticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='horizontal')
 	plt.yticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='vertical')
 	plt.ylabel("Actual Values",size=24)
 	plt.xlabel("Model Predictions",size=24)
-	plt.savefig("Visualizations/Contingency_p<" + str(threshold) + ".png")
-
-threshold = .2
-generate_prediction_heat_maps(svm.cross_validate_evaluate_predictions(5,threshold), threshold)
+	plt.savefig("Visualizations/Cont_Tables/Contingency_p<" + str(threshold) + ".png")
 
 def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.imshow(matrix)
@@ -34,7 +41,7 @@ def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.gca().axes.get_yaxis().set_ticks([])
 	plt.savefig(outfile)
 
-def visualize_all():
+def visualize_all_data_matrices():
 	mutation_dict = df.generate_mutation_dict()
 	trimmed_mutation_dict = df.trim_dicts(mutation_dict, df.generate_ic_50_dict())[0]
 
@@ -52,4 +59,3 @@ def visualize_all():
 
 	expression_matrix_ic50_mutation = df.generate_cell_line_expression_matrix(2)[0]
 	visualize_matrix(expression_matrix_ic50_mutation, "Gene Expression Matrix (Only with IC50 values and mutation data)" + str(expression_matrix_ic50_mutation.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50_mutation.png")
-
