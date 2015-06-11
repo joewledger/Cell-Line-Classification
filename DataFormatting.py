@@ -33,6 +33,7 @@ def generate_cell_line_expression_matrix(filtering):
 	renamed_columns = {c: c[:c.find('_')] for c in df.columns}
 	df = df.rename(columns=renamed_columns)
 	df = df.drop(labels=[x for x in renamed_columns.values() if x not in generate_ic_50_dict().keys()],axis=1)
+	df = df.drop(labels=[x for x in df.index if not type(x) == str or not x[0].isupper()])
 	return df
 
 #Returns a tuple containing
@@ -134,6 +135,6 @@ def visualize_all():
 	visualize_matrix(expression_matrix_ic50_mutation, "Gene Expression Matrix (Only with IC50 values and mutation data)" + str(expression_matrix_ic50_mutation.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50_mutation.png")
 
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample.res"
+expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+#expression_features_filename = "CCLE_Data/sample.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"

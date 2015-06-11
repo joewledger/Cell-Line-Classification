@@ -10,6 +10,7 @@ import numpy as np
 import DataFormatting as df
 from enum import Enum
 import pandas as pd
+import scipy.stats as sp
 
 class classifiers(Enum):
 	sensitive = 0
@@ -26,7 +27,8 @@ class classifiers(Enum):
 def cross_validate_make_predictions(num_folds,threshold):
 	data_matrix = df.generate_cell_line_expression_matrix(True)
 	ic_50_dict = df.trim_dict(df.generate_ic_50_dict(),list(data_matrix.columns.values))
-	#data_matrix = trim_expression_features(data_matrix, ic_50_dict, threshold)
+	data_matrix = trim_expression_features(data_matrix, ic_50_dict, threshold)
+	print("Done trimming features")
 	cell_lines = ic_50_dict.keys()
 	predictions = tuple([[],[]])
 	num_samples = len(cell_lines)
@@ -45,8 +47,8 @@ def cross_validate_make_predictions(num_folds,threshold):
 	return predictions
 
 #Evaluates the predictions the model makes for accuracy
-def cross_validate_evalutate_predictions(num_folds):
-	predictions = cross_validate_make_predictions(num_folds)
+def cross_validate_evaluate_predictions(num_folds,threshold):
+	predictions = cross_validate_make_predictions(num_folds,threshold)
 	pred = [[0.0] * 3 for x in range(0,3)]
 	total = float(len(predictions[1]))
 	for index, actual in enumerate(predictions[0]):
@@ -89,10 +91,10 @@ def create_training_data(training_subset,data_matrix,ic_50_dict,class_bin):
 #	The function should take an IC50 value and convert it to a number from 0-2 (corresponds to SUR)
 def generate_cell_line_data(cell_line, data_matrix,ic_50_dict,class_bin):
 	feature_inputs = list(data_matrix.get(cell_line).values)
-	if(any(type(x) == np.ndarray for x in feature_inputs)): feature_inputs = [0.0] * 97
+	if(any(type(x) == np.ndarray for x in feature_inputs)): feature_inputs = [0.0] * len(data_matrix.index)
 	ic_50 = ic_50_dict[cell_line]
 	classifier = [class_bin(ic_50)]
-	return tuple([feature_inputs, classifier])
+	return feature_inputs, classifier
 
 #Returns a function that classifies cell lines as either sensitive or resistant
 #Looks at distribution of IC50 values
@@ -105,9 +107,31 @@ def generate_class_bin():
 	upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 	return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
 
-#def trim_expression_features(expression_matrix, ic_50_dict):
+def trim_expression_features(data_matrix, ic_50_dict,threshold):
+	cb = generate_class_bin()
+	sensitive_cells = [x for x in ic_50_dict.keys() if cb(ic_50_dict[x]) == 0]
+	insig_cells = [x for x in ic_50_dict.keys() if cb(ic_50_dict[x]) == 1]
+	resistant_cells = [x for x in ic_50_dict.keys() if cb(ic_50_dict[x]) == 2]
+	dm = data_matrix.copy().drop(insig_cells,1)
+	genes = [x[0] for x in dm.iterrows()]
+	sig_cells = [x[0] for x in dm.iteritems()]
+	remove_list = [] 
+	for gene in genes:
+		if(type(dm.get_value(gene,sig_cells[0])) == np.ndarray): 
+			remove_list.append(gene)
+			continue
+		s_list = list()
+		r_list = list()
+		for cell in sig_cells:
+			if(cb(ic_50_dict[cell]) == 0): s_list.append(dm.get_value(gene,cell))
+			elif(cb(ic_50_dict[cell]) == 2):r_list.append(dm.get_value(gene,cell))
+		#Compute the t-statistic
+		t_stat,p_val = sp.ttest_ind(s_list,r_list)
+		if(p_val > threshold):
+			remove_list.append(gene)
+	#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
+	data_matrix = data_matrix.drop(labels=remove_list)
+	return data_matrix
 
-
-print(cross_validate_evalutate_predictions(5))
-
+print(cross_validate_evaluate_predictions(5,.2))
 
