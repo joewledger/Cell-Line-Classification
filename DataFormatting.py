@@ -5,9 +5,6 @@
 #All data sources for now are from CCLE
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import colors
-from matplotlib.pylab import *
 import scipy.stats.mstats as sp
 import pandas as pd
 import csv

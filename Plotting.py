@@ -2,9 +2,28 @@
 #This includes data matrix visualizations, Accuracy v. Threshold graphs, and AUC graphs
 
 import DataFormatting as df
+import SVM_Classification as svm
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib.pylab import *
 
-def generate_prediction_heat_maps(contingency_list):
-	return "For Elena"
+def generate_prediction_heat_maps(contingency_list, threshold):
+	fig, ax = plt.subplots()
+	ax.imshow(contingency_list,interpolation='none')
+	for i,row in enumerate(contingency_list):
+		for j,col in enumerate(row):
+			percent = str(col * 100)
+			length = min(len(percent),4)
+			plt.text(float(i) - .15, float(j) + .05, percent[:length] + "%",size="12")
+	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ")")
+	plt.xticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='horizontal')
+	plt.yticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='vertical')
+	plt.ylabel("Actual Values",size=24)
+	plt.xlabel("Model Predictions",size=24)
+	plt.savefig("Visualizations/Contingency_p<" + str(threshold) + ".png")
+
+threshold = .2
+generate_prediction_heat_maps(svm.cross_validate_evaluate_predictions(5,threshold), threshold)
 
 def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.imshow(matrix)
