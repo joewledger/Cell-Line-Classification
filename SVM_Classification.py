@@ -27,8 +27,6 @@ class classifiers(Enum):
 def cross_validate_make_predictions(num_folds,threshold):
 	data_matrix = df.generate_cell_line_expression_matrix(True)
 	ic_50_dict = df.trim_dict(df.generate_ic_50_dict(),list(data_matrix.columns.values))
-	data_matrix = trim_expression_features(data_matrix, ic_50_dict, threshold)
-	print("Done trimming features")
 	cell_lines = ic_50_dict.keys()
 	predictions = tuple([[],[]])
 	num_samples = len(cell_lines)
@@ -39,14 +37,19 @@ def cross_validate_make_predictions(num_folds,threshold):
 		testing_cell_lines = cell_lines[lower_bound:upper_bound]
 		training_cell_lines = cell_lines[0:lower_bound]
 		training_cell_lines.extend(cell_lines[upper_bound:len(cell_lines) - 1])
-		model = generate_svm_model(training_cell_lines,data_matrix, ic_50_dict,class_bin)
+		trimmed_matrix = trim_expression_features(data_matrix,ic_50_dict,threshold)
+		model = generate_svm_model(training_cell_lines,trimmed_matrix, ic_50_dict,class_bin)
 		for cell_line in testing_cell_lines:
-			cell_line_data = generate_cell_line_data(cell_line,data_matrix,ic_50_dict,class_bin)
+			cell_line_data = generate_cell_line_data(cell_line,trimmed_matrix,ic_50_dict,class_bin)
 			predictions[0].append(cell_line_data[1])
 			predictions[1].append(model.predict(cell_line_data[0]))
 	return predictions
 
 #Evaluates the predictions the model makes for accuracy
+#Returns a 3x3 matrix
+#	Row labels as actual sensitivity values (discretized)
+#	Column labels as predicted sensitivity values (discretized)
+#	Each entry is the percentage of times that each event happened during cross-validation
 def cross_validate_evaluate_predictions(num_folds,threshold):
 	predictions = cross_validate_make_predictions(num_folds,threshold)
 	pred = [[0.0] * 3 for x in range(0,3)]
@@ -107,6 +110,7 @@ def generate_class_bin():
 	upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 	return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
 
+#Trims
 def trim_expression_features(data_matrix, ic_50_dict,threshold):
 	cb = generate_class_bin()
 	sensitive_cells = [x for x in ic_50_dict.keys() if cb(ic_50_dict[x]) == 0]
@@ -130,7 +134,7 @@ def trim_expression_features(data_matrix, ic_50_dict,threshold):
 		if(p_val > threshold):
 			remove_list.append(gene)
 	#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
-	data_matrix = data_matrix.drop(labels=remove_list)
+	data_matrix = data_matrix.copy().drop(labels=remove_list)
 	return data_matrix
 
 print(cross_validate_evaluate_predictions(5,.2))

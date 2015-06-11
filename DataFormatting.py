@@ -4,13 +4,6 @@
 #	2) Gene Expression x Cell Line matrices
 #All data sources for now are from CCLE
 
-#Format for all methods that return matrices
-#	All methods will return a tuple containing the following entries
-#	1) The matrix
-#	2) The list of names that correspond to the row entries
-#	3) The list of names that correspond to the column entries
-#	4) (Optional) The matrix of z-scores that correspond to the matrix
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
@@ -106,35 +99,7 @@ def trim_dict(dictionary,array):
 		if(not key in array): trimmed_dict.pop(key,None)
 	return trimmed_dict
 
-def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
-	plt.imshow(matrix)
-	plt.title(title + "\n")
-	plt.xlabel(x_axis)
-	plt.ylabel(y_axis)
-	plt.gca().axes.get_xaxis().set_ticks([])
-	plt.gca().axes.get_yaxis().set_ticks([])
-	plt.savefig(outfile)
-
-def visualize_all():
-	mutation_dict = generate_mutation_dict()
-	trimmed_mutation_dict = trim_dicts(mutation_dict, generate_ic_50_dict())[0]
-
-	oncomap_matrix = generate_cell_line_mutation_matrix(mutation_dict)[0]
-	visualize_matrix(oncomap_matrix, "Oncomap Cell Line Mutation Matrix (All)" + str(oncomap_matrix.shape),"Mutations","Cell Lines", "Visualizations/Oncomap_Cell_Line_Mutations_Matrix.png")
-
-	oncomap_with_ic50_matrix = generate_cell_line_mutation_matrix(trimmed_mutation_dict)[0]
-	visualize_matrix(oncomap_with_ic50_matrix, "Oncomap Cell Line Mutation Matrix (only with IC50 values) " + str(oncomap_with_ic50_matrix.shape), "Mutations","Cell Lines", "Visualizations/Oncomap_Cell_Line_Mutations_Matrix_IC50.png")
-
-	expression_matrix = generate_cell_line_expression_matrix(0)[0]
-	visualize_matrix(expression_matrix, "Gene Expression Matrix" + str(expression_matrix.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix.png") 
-
-	expression_matrix_ic50 = generate_cell_line_expression_matrix(1)[0]
-	visualize_matrix(expression_matrix_ic50, "Gene Expression Matrix (Only with IC50 values)" + str(expression_matrix_ic50.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50.png")
-
-	expression_matrix_ic50_mutation = generate_cell_line_expression_matrix(2)[0]
-	visualize_matrix(expression_matrix_ic50_mutation, "Gene Expression Matrix (Only with IC50 values and mutation data)" + str(expression_matrix_ic50_mutation.shape),"Genes","Cell Lines", "Visualizations/Gene_Expression_Matrix_IC50_mutation.png")
-
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-#expression_features_filename = "CCLE_Data/sample.res"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
