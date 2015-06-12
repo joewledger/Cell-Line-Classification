@@ -98,5 +98,5 @@ def trim_dict(dictionary,array):
 
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample.res"
+expression_features_filename = "CCLE_Data/sample1000.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"

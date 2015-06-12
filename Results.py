@@ -5,7 +5,9 @@ import DataFormatting as df
 import Plotting as plt
 
 all_evaluations = list()
-thresholds = [float(i) * .05 for i in range(1,20)]
+thresholds = [.001,.01]
+thresholds.extend([float(i) * .05 for i in range(1,20)])
+
 
 results_file = open("Results/Results.txt",'wb')
 for i,threshold in enumerate(thresholds):
@@ -16,6 +18,7 @@ for i,threshold in enumerate(thresholds):
 	results_file.write("Cell line names:\n" + str(cell_lines) + "\n")
 	results_file.write("Actual IC50 values for threshold: " + str(threshold) + "\n" + str([x[0] for x in predictions[0]]) + "\n")
 	results_file.write("Model predictions for threshold: " + str(threshold) + "\n" + str([x[0] for x in predictions[1]]) + "\n")
+	results_file.write("Model accuracy: " + str(svm.model_accuracy(evaluations)))
 	results_file.write("\n")
 	plt.generate_prediction_heat_maps(evaluations,threshold)
 results_file.close()

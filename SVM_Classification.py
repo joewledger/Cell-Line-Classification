@@ -31,13 +31,15 @@ def cross_validate_make_predictions(num_folds,threshold,**kwargs):
 	predictions = tuple([[],[]])
 	num_samples = len(cell_lines)
 	class_bin = generate_class_bin()
-	for fold in range(0,num_folds - 1):
+	for fold in range(0,num_folds):
 		lower_bound = int(float(fold) / float(num_folds) * float(num_samples))
 		upper_bound = int(float(fold + 1) / float(num_folds) * float(num_samples))
 		testing_cell_lines = cell_lines[lower_bound:upper_bound]
 		training_cell_lines = cell_lines[0:lower_bound]
 		training_cell_lines.extend(cell_lines[upper_bound:len(cell_lines) - 1])
-		trimmed_matrix = trim_expression_features(data_matrix,ic_50_dict,threshold)
+		trimmed_matrix = data_matrix.copy().drop(labels=[x for x in testing_cell_lines])
+		trimmed_matrix = trim_expression_features(trimmed_matrix,ic_50_dict,threshold)
+		print("Threshold: " + str(threshold) + ", Number of features: " + str(len(trimmed_matrix.index)))
 		model = generate_svm_model(training_cell_lines,trimmed_matrix, ic_50_dict,class_bin)
 		for cell_line in testing_cell_lines:
 			cell_line_data = generate_cell_line_data(cell_line,trimmed_matrix,ic_50_dict,class_bin)
@@ -141,5 +143,8 @@ def trim_expression_features(data_matrix, ic_50_dict,threshold):
 		if(p_val > threshold):
 			remove_list.append(gene)
 	#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
-	data_matrix = data_matrix.copy().drop(labels=remove_list)
-	return data_matrix
+	return data_matrix.drop(labels=remove_list)
+	
+
+def model_accuracy(contingency_list):
+	return contingency_list[0][0] + contingency_list[1][1] + contingency_list[2][2]

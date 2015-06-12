@@ -10,7 +10,7 @@ from matplotlib.pylab import *
 def plot_accuracy_threshold_curve(all_contingency_lists, thresholds):
 	plt.figure()
 	x = thresholds
-	y = [cont[0][0] + cont[1][1] + cont[2][2] for cont in all_contingency_lists]
+	y = [svm.model_accuracy(cont) for cont in all_contingency_lists]
 	plt.plot(x,y)
 	plt.xlabel("Threshold")
 	plt.ylabel("Accuracy")
