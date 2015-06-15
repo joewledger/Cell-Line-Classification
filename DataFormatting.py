@@ -11,12 +11,12 @@ import csv
 
 class DataFormatting:
 
-	def __init__(self,datatype,ic50_filename,**kwargs):
+	def __init__(self,datatype,ic50_filename,datafile):
 		if(datatype == "Mutation"):
 			print("Not currently implemented")
 		elif(datatype == "Expression"):
 			self.ic_50_filename = ic50_filename
-			self.expression_features_filename = kwargs['expression_filename']
+			self.expression_features_filename = datafile
 			
 
 	#Returns a tuple containing

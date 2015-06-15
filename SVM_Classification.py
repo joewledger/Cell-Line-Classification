@@ -13,16 +13,31 @@ import scipy.stats as sp
 
 class SVM_Classification:
 
-	def __init__(self,datatype, ic50_filename,**kwargs):
+	def __init__(self,datatype,ic50_filename,data_file,**kwargs):
 		if(datatype == "Mutation"):
 			print("Not currently implemented")
 		elif(datatype == "Expression"):
-			self.df = dfm.DataFormatting(datatype,ic50_filename, expression_filename=kwargs['expression_filename'])
+			self.df = dfm.DataFormatting(datatype,ic50_filename,datafile)
+			self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 			self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
 			self.ic_50_dict = self.df.trim_dict(self.df.generate_ic_50_dict(),list(self.data_matrix.columns.values))
 			self.cell_lines = self.ic_50_dict.keys()
 			self.num_samples = len(self.cell_lines)
 			self.class_bin = self.generate_class_bin()
+
+
+	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
+	#Pseudocode:
+	#	1) In each fold, split
+	#def generate_insignificant_genes_dict(self,num_folds,thresholds):
+
+	def split_testing_training_samples(self,cell_lines,fold, num_folds):
+		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
+		upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
+		testing_cell_lines = self.cell_lines[lower_bound:upper_bound]
+		training_cell_lines = self.cell_lines[0:lower_bound]
+		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
+		return training_cell_lines, testing_cell_lines
 
 	#Does n-fold cross-validation on our SVM model.
 	#Saves these predictions along with the actual outputs in a tuple
@@ -32,14 +47,9 @@ class SVM_Classification:
 	#Parameters: z_threshold - a value that will determine which features we use based on z-score
 	#Parameters: num_folds - the number of folds we will use in the cross-fold validation (usually 5)
 	def cross_validate_make_predictions(self,num_folds,threshold,**kwargs):
-		#insignificant_genes = generate_insignificant_genes()
 		predictions = tuple([[],[]])
 		for fold in range(0,num_folds):
-			lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
-			upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
-			testing_cell_lines = self.cell_lines[lower_bound:upper_bound]
-			training_cell_lines = self.cell_lines[0:lower_bound]
-			training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
+			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(self.cell_lines,fold,num_folds)
 			trimmed_matrix = self.data_matrix.copy().drop(labels=[x for x in testing_cell_lines])
 			trimmed_matrix = self.trim_expression_features(trimmed_matrix,self.ic_50_dict,threshold)
 			print("Threshold: " + str(threshold) + ", Number of features: " + str(len(trimmed_matrix.index)))
@@ -148,6 +158,9 @@ class SVM_Classification:
 				remove_list.append(gene)
 		#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
 		return data_matrix.drop(labels=remove_list)
+
+	def set_thresholds(self,thresholds):
+		self.thresholds = thresholds
 		
 def model_accuracy(contingency_list):
 	return contingency_list[0][0] + contingency_list[1][1] + contingency_list[2][2]
