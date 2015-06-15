@@ -9,6 +9,15 @@ import scipy.stats.mstats as sp
 import pandas as pd
 import csv
 
+class DataFormatting:
+
+	def __init__(self,filename,datatype):
+		if(datatype == "Mutation"):
+			print("Not currently implemented")
+		elif(datatype == "Expression"):
+
+
+
 #Returns a tuple containing
 #	1) A matrix of cell lines x genes
 #	2) A list of cell line names
@@ -100,3 +109,6 @@ ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_features_filename = "CCLE_Data/sample1000.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
+
+def set_expression_filename(filename):
+	expression_features_filename = filename
