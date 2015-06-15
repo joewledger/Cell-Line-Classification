@@ -27,25 +27,38 @@ class SVM_Classification:
 
 
 	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
+	#Parameters: num_folds, number of folds to do cross-validation with
 	#Pseudocode:
-	#	1) In each fold, split samples into testing/training
-	#
-	#def generate_insignificant_genes_dict(self,num_folds,thresholds):
+	#	1) Initialize a matrix of size (num_folds) x (Genes)
+	#	2) Initialize an empty dictionary 'insignificant_genes_dict'
+	#	3) In each fold
+	#		a) Split samples into testing/training samples
+	#		b) Throw away testing samples, split training samples into sensitive/resistant
+	#		c) For each gene
+	#			i) Calculate p-value for difference in distribution of gene-expression measurements between sensitve/resistant cell-lines
+	#			ii) Store each p-value in the matrix at matrix[fold][gene]
+	#		d) For each threshold
+	#			i) Iterate through row vector matrix[fold]
+	#			ii) For any entries that are greater than the threshold:
+	#				Update the 
+	#	4) Return insignificant_genes_dict
+	#def generate_insignificant_genes_dict(self,num_folds):
 
-	def split_testing_training_samples(self,cell_lines,fold, num_folds):
-		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
-		upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
-		testing_cell_lines = self.cell_lines[lower_bound:upper_bound]
-		training_cell_lines = self.cell_lines[0:lower_bound]
-		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
-		return training_cell_lines, testing_cell_lines
+	def evaluate_all_thresholds(self,num_folds):
+		all_predictions = list()
+		all_evaluations = list()
+		for threshold in self.thresholds:
+			prediction = self.cross_validate_make_predictions(num_folds,threshold)
+			all_predictions.append(prediction)
+			evaluation = self.cross_validate_evaluate_predictions(predictions=prediction)
+			all_evaluations.append(evaluation)
+		return all_predictions, all_evaluations
 
 	#Does n-fold cross-validation on our SVM model.
 	#Saves these predictions along with the actual outputs in a tuple
 	#	First entry in the tuple will be the actual output
 	#	Second entry in the tuple will be the predicted output
 	#Parameters: cell_lines - list of cell lines from IC_50 Data
-	#Parameters: z_threshold - a value that will determine which features we use based on z-score
 	#Parameters: num_folds - the number of folds we will use in the cross-fold validation (usually 5)
 	def cross_validate_make_predictions(self,num_folds,threshold,**kwargs):
 		predictions = tuple([[],[]])
@@ -82,7 +95,6 @@ class SVM_Classification:
 
 	#This method will generate a SVM classifier
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	#Parameters: z_threshold - a value that will determine which features we use based on z-score
 	def generate_svm_model(self,training_subset,data_matrix):
 		training_data = self.create_training_data(training_subset,data_matrix)
 		model = svm.LinearSVC()
@@ -91,7 +103,6 @@ class SVM_Classification:
 
 	#This method will return a tuple containing the training input and output for our SVM classifier based on a list of cell_line names
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	#Parameters: z_threshold - a value that will determine which features we use based on z-score
 	#Output: a tuple, first entry is training input, second is training output
 	#	Example for training input --- [[0,0],[1,1]], there are two samples, each with two features
 	#	Example for training output -- [0,1], there are two samples, each with a classification in range (0, n_classes - 1)
@@ -110,7 +121,6 @@ class SVM_Classification:
 	#The second entry in the tuple will be the training output for the sample
 	#	This will be a value that determines which class the cell line is in ("sensitive", "undetermined", "resistant" AKA SUR)
 	#Parameters: cell_line is the name of the cell_line we are interested in
-	#Parameters: z_threshold is the z-score that will determine which features are actually selected
 	#Parameters: class_bin is a function that will convert a numeric IC50 value into one of three classes
 	#	The function should take an IC50 value and convert it to a number from 0-2 (corresponds to SUR)
 	def generate_cell_line_data(self,cell_line, data_matrix):
@@ -159,6 +169,14 @@ class SVM_Classification:
 				remove_list.append(gene)
 		#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
 		return data_matrix.drop(labels=remove_list)
+
+	def split_testing_training_samples(self,cell_lines,fold, num_folds):
+		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
+		upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
+		testing_cell_lines = self.cell_lines[lower_bound:upper_bound]
+		training_cell_lines = self.cell_lines[0:lower_bound]
+		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
+		return training_cell_lines, testing_cell_lines
 
 	def set_thresholds(self,thresholds):
 		self.thresholds = thresholds
