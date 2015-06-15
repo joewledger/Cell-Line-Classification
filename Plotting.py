@@ -6,6 +6,7 @@ import SVM_Classification as svm
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.pylab import *
+import os
 
 def plot_accuracy_threshold_curve(all_contingency_lists, thresholds):
 	plt.figure()
@@ -30,7 +31,10 @@ def generate_prediction_heat_maps(contingency_list, threshold):
 	plt.yticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='vertical')
 	plt.ylabel("Actual Values",size=24)
 	plt.xlabel("Model Predictions",size=24)
-	plt.savefig("Visualizations/Cont_Tables/Contingency_p<" + str(threshold) + ".png")
+	c_table_directory = "Visualizations/Cont_Tables"
+	if not os.path.exists(c_table_directory): os.makedirs(c_table_directory)
+	save_file = "p" + str(threshold)[str(threshold).find(".") + 1:] + ".png" 
+	plt.savefig("Visualizations/Cont_Tables/" + save_file)
 
 def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.imshow(matrix)

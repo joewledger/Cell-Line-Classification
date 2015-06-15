@@ -6,7 +6,7 @@ import Plotting as plt
 
 all_evaluations = list()
 thresholds = [.001,.01]
-thresholds.extend([float(i) * .05 for i in range(1,20)])
+thresholds.extend([float(i) * .05 for i in range(1,5)])
 
 
 results_file = open("Results/Results.txt",'wb')
