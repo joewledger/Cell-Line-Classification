@@ -7,7 +7,7 @@ import Plotting as plt
 all_evaluations = list()
 thresholds = [.001,.01]
 thresholds.extend([float(i) * .05 for i in range(1,5)])
-svm = svmc.SVM_Classification("Expression", "IC_50_Data/CL_Sensitivity.txt" ,expression_filename="CCLE_Data/sample1000.res")
+svm = svmc.SVM_Classification("Expression", "IC_50_Data/CL_Sensitivity.txt" ,"CCLE_Data/sample1000.res")
 
 
 results_file = open("Results/Results.txt",'wb')

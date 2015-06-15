@@ -17,7 +17,7 @@ class SVM_Classification:
 		if(datatype == "Mutation"):
 			print("Not currently implemented")
 		elif(datatype == "Expression"):
-			self.df = dfm.DataFormatting(datatype,ic50_filename,datafile)
+			self.df = dfm.DataFormatting(datatype,ic50_filename,data_file)
 			self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 			self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
 			self.ic_50_dict = self.df.trim_dict(self.df.generate_ic_50_dict(),list(self.data_matrix.columns.values))
@@ -28,7 +28,8 @@ class SVM_Classification:
 
 	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
 	#Pseudocode:
-	#	1) In each fold, split
+	#	1) In each fold, split samples into testing/training
+	#
 	#def generate_insignificant_genes_dict(self,num_folds,thresholds):
 
 	def split_testing_training_samples(self,cell_lines,fold, num_folds):
