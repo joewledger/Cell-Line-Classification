@@ -29,9 +29,17 @@ class SVM_Classification:
 	
 	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
 	#Parameters: num_folds, number of folds to do cross-validation with
-	#def generate_insignificant_genes_dict(self,num_folds):
+	def generate_insignificant_genes_dict(self,num_folds):
+		pval_frame = self.get_fold_gene_pvalue_frame(num_folds)
+		genes_dict = {}
+		for fold in range(0,num_folds):
+			for threshold in self.thresholds:
+				genes_dict[(fold,threshold)] = []
+				for gene in pval_frame.columns:
+					if(pval_frame.ix[fold, gene] > threshold):
+						genes_dict[(fold,threshold)].append(gene)
+		return genes_dict
 
-		
 
 	def get_fold_gene_pvalue_frame(self,num_folds):
 		sensitive_frame = self.data_matrix[[x for x in self.data_matrix.columns if self.class_bin(self.ic_50_dict[x]) == 0]]
@@ -43,7 +51,7 @@ class SVM_Classification:
 			resistant_fold = resistant_frame[[y for y in resistant_frame.columns if y in training]]
 			fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
 			fold_series.append(fold_values)
-		p_values_frame = pd.DataFrame(fold_series).T
+		p_values_frame = pd.DataFrame(fold_series)
 		return p_values_frame
 
 

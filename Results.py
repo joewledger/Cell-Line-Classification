@@ -13,14 +13,14 @@ def generate_thresholds():
 
 data_type = "Expression"
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample1000.res"
+expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+#expression_features_filename = "CCLE_Data/sample1000.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
 
 thresholds = generate_thresholds()
 svm = svmc.SVM_Classification(data_type, ic_50_filename ,expression_features_filename,thresholds=thresholds)
-print(svm.get_fold_gene_pvalue_matrix(5))
-#(svm.generate_insignificant_genes_dict(5))
+#print(svm.get_fold_gene_pvalue_frame(5))
+print(svm.generate_insignificant_genes_dict(5).keys())
 """
 df = dfm.DataFormatting(data_type, ic_50_filename ,expression_features_filename)
 all_predictions,all_evaluations = svm.evaluate_all_thresholds(5)
