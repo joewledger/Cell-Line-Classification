@@ -10,6 +10,7 @@ import numpy as np
 import DataFormatting as dfm
 import pandas as pd
 import scipy.stats as sp
+import time
 
 class SVM_Classification:
 
@@ -25,24 +26,26 @@ class SVM_Classification:
 			self.num_samples = len(self.cell_lines)
 			self.class_bin = self.generate_class_bin()
 
-
+	
 	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
 	#Parameters: num_folds, number of folds to do cross-validation with
-	#Pseudocode:
-	#	1) Initialize a matrix of size (num_folds) x (Genes)
-	#	2) Initialize an empty dictionary 'insignificant_genes_dict'
-	#	3) In each fold
-	#		a) Split samples into testing/training samples
-	#		b) Throw away testing samples, split training samples into sensitive/resistant
-	#		c) For each gene
-	#			i) Calculate p-value for difference in distribution of gene-expression measurements between sensitve/resistant cell-lines
-	#			ii) Store each p-value in the matrix at matrix[fold][gene]
-	#		d) For each threshold
-	#			i) Iterate through row vector matrix[fold]
-	#			ii) For any entries that are greater than the threshold:
-	#				Update the 
-	#	4) Return insignificant_genes_dict
 	#def generate_insignificant_genes_dict(self,num_folds):
+
+		
+
+	def get_fold_gene_pvalue_frame(self,num_folds):
+		sensitive_frame = self.data_matrix[[x for x in self.data_matrix.columns if self.class_bin(self.ic_50_dict[x]) == 0]]
+		resistant_frame = self.data_matrix[[y for y in self.data_matrix.columns if self.class_bin(self.ic_50_dict[y]) == 2]]
+		fold_series = []
+		for fold in range(0,num_folds):
+			training,testing = self.split_testing_training_samples(fold,num_folds)
+			sensitive_fold = sensitive_frame[[x for x in sensitive_frame.columns if x in training]]
+			resistant_fold = resistant_frame[[y for y in resistant_frame.columns if y in training]]
+			fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
+			fold_series.append(fold_values)
+		p_values_frame = pd.DataFrame(fold_series).T
+		return p_values_frame
+
 
 	def evaluate_all_thresholds(self,num_folds):
 		all_predictions = list()
@@ -63,7 +66,7 @@ class SVM_Classification:
 	def cross_validate_make_predictions(self,num_folds,threshold,**kwargs):
 		predictions = tuple([[],[]])
 		for fold in range(0,num_folds):
-			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(self.cell_lines,fold,num_folds)
+			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(fold,num_folds)
 			trimmed_matrix = self.data_matrix.copy().drop(labels=[x for x in testing_cell_lines])
 			trimmed_matrix = self.trim_expression_features(trimmed_matrix,self.ic_50_dict,threshold)
 			print("Threshold: " + str(threshold) + ", Number of features: " + str(len(trimmed_matrix.index)))
@@ -142,6 +145,7 @@ class SVM_Classification:
 		upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 		return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
 
+	
 	#Trims genes from the data matrix that don't have a significant difference in gene expression between the sensitive and resistant groups
 	#Parameters: data_matrix - the gene expression matrix
 	#Parameters: ic_50_dict - 
@@ -170,7 +174,10 @@ class SVM_Classification:
 		#From original data_matrix (not the copied version) drop all the rows that are in the list of genes to be thrown out
 		return data_matrix.drop(labels=remove_list)
 
-	def split_testing_training_samples(self,cell_lines,fold, num_folds):
+	def set_thresholds(self,thresholds):
+		self.thresholds = thresholds
+
+	def split_testing_training_samples(self,fold, num_folds):
 		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
 		upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
 		testing_cell_lines = self.cell_lines[lower_bound:upper_bound]
@@ -178,8 +185,5 @@ class SVM_Classification:
 		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
 		return training_cell_lines, testing_cell_lines
 
-	def set_thresholds(self,thresholds):
-		self.thresholds = thresholds
-		
 def model_accuracy(contingency_list):
 	return contingency_list[0][0] + contingency_list[1][1] + contingency_list[2][2]

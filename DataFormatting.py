@@ -32,9 +32,11 @@ class DataFormatting:
 		df = df.reindex_axis([c for c in df.columns if not (c.startswith('Unnamed'))], 1)
 		renamed_columns = {c: c[:c.find('_')] for c in df.columns}
 		df = df.rename(columns=renamed_columns)
-		df = df.drop(labels=[x for x in renamed_columns.values() if x not in self.generate_ic_50_dict().keys()],axis=1)
+		df = df.drop(labels=[x for x in df.columns if x not in self.generate_ic_50_dict().keys()],axis=1)
 		df = df.drop(labels=[x for x in df.index if not type(x) == str or not x[0].isupper()])
+		df = df.drop(labels=[x for x in df.index if type(df.ix[x,df.columns[0]]) != np.float64])
 		return df
+
 
 	#Returns a tuple containing
 	#	1) A matrix of cell lines x Oncomap mutations
