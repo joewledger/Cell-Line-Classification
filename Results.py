@@ -7,7 +7,7 @@ import Plotting as plt
 
 
 def generate_thresholds():
-	thresholds = [.001,.01]
+	thresholds = [.01]
 	thresholds.extend([float(i) * .05 for i in range(1,5)])
 	return thresholds
 
@@ -19,9 +19,7 @@ mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
 
 thresholds = generate_thresholds()
 svm = svmc.SVM_Classification(data_type, ic_50_filename ,expression_features_filename,thresholds=thresholds)
-#print(svm.get_fold_gene_pvalue_frame(5))
-print(svm.generate_insignificant_genes_dict(5).keys())
-"""
+
 df = dfm.DataFormatting(data_type, ic_50_filename ,expression_features_filename)
 all_predictions,all_evaluations = svm.evaluate_all_thresholds(5)
 cell_lines = df.generate_ic_50_dict().keys()
@@ -36,6 +34,4 @@ for i,evaluation in enumerate(all_evaluations):
 	plt.generate_prediction_heat_maps(evaluation,thresholds[i])
 
 plt.plot_accuracy_threshold_curve(all_evaluations, thresholds)
-
-"""
 
