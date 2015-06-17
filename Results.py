@@ -7,8 +7,7 @@ import Plotting as plt
 
 
 def generate_thresholds():
-	thresholds = [.01]
-	thresholds.extend([float(i) * .05 for i in range(1,5)])
+	thresholds = [float(i) * .01 for i in range(1,21)]
 	return thresholds
 
 data_type = "Expression"

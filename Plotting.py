@@ -27,8 +27,8 @@ def generate_prediction_heat_maps(contingency_list, threshold):
 			length = min(len(percent),4)
 			plt.text(float(j) - .15, float(i) + .05, percent[:length] + "%",size="12")
 	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ")")
-	plt.xticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='horizontal')
-	plt.yticks(arange(3),['Sensitive','Undetermined','Resistant'],rotation='vertical')
+	plt.xticks(arange(2),['Sensitive','Resistant'],rotation='horizontal')
+	plt.yticks(arange(2),['Sensitive','Resistant'],rotation='vertical')
 	plt.ylabel("Actual Values",size=24)
 	plt.xlabel("Model Predictions",size=24)
 	c_table_directory = "Visualizations/Cont_Tables"

@@ -21,11 +21,13 @@ class SVM_Classification:
 			self.df = dfm.DataFormatting(datatype,ic50_filename,data_file)
 			self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 			self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
-			self.ic_50_dict = self.df.trim_dict(self.df.generate_ic_50_dict(),list(self.data_matrix.columns.values))
-			self.cell_lines = self.ic_50_dict.keys()
-			self.num_samples = len(self.cell_lines)
+			self.ic_50_dict = self.df.generate_ic_50_dict()
 			self.class_bin = self.generate_class_bin()
 			self.insignificant_gene_dict = None
+			self.remove_undetermined_cells()
+			self.cell_lines = list(self.data_matrix.columns.values)
+			self.num_samples = len(self.cell_lines)
+			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 
 
 	def evaluate_all_thresholds(self,num_folds):
@@ -50,8 +52,8 @@ class SVM_Classification:
 		for fold in range(0,num_folds):
 			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(fold,num_folds)
 			data_frame = self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
-			training_frame = data_frame[[x for x in training_cell_lines]]
-			testing_frame = data_frame[[y for y in testing_cell_lines]]
+			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
+			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
 			print("Threshold: " + str(threshold) + ", Number of features: " + str(len(data_frame.index)))
 			model = self.generate_svm_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
@@ -61,7 +63,7 @@ class SVM_Classification:
 		return predictions
 
 	#Evaluates the predictions the model makes for accuracy
-	#Returns a 3x3 matrix
+	#Returns a 2x2 matrix
 	#	Row labels as actual sensitivity values (discretized)
 	#	Column labels as predicted sensitivity values (discretized)
 	#	Each entry is the percentage of times that each event happened during cross-validation
@@ -74,6 +76,8 @@ class SVM_Classification:
 		for index, actual in enumerate(predictions[0]):
 			pred[actual[0]][predictions[1][index][0]] += 1.0
 		pred = np.divide(pred,total)
+		pred = [[pred[0][0], pred[0][2]], [pred[2][0], pred[2][2]]]
+		print(pred)
 		return pred
 
 	#This method will generate a SVM classifier
@@ -147,8 +151,7 @@ class SVM_Classification:
 			resistant_fold = resistant_frame[[y for y in resistant_frame.columns if y in training]]
 			fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
 			fold_series.append(fold_values)
-		p_values_frame = pd.DataFrame(fold_series)
-		return p_values_frame
+		return pd.DataFrame(fold_series)
 
 	def split_testing_training_samples(self,fold, num_folds):
 		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
@@ -158,5 +161,8 @@ class SVM_Classification:
 		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
 		return training_cell_lines, testing_cell_lines
 
+	def remove_undetermined_cells(self):
+		self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
+
 def model_accuracy(contingency_list):
-	return contingency_list[0][0] + contingency_list[1][1] + contingency_list[2][2]
+	return contingency_list[0][0] + contingency_list[1][1]
