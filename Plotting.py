@@ -8,11 +8,9 @@ from matplotlib import colors
 from matplotlib.pylab import *
 import os
 
-def plot_accuracy_threshold_curve(all_contingency_lists, thresholds):
+def plot_accuracy_threshold_curve(thresholds,accuracy_values):
 	plt.figure()
-	x = thresholds
-	y = [svm.model_accuracy(cont) for cont in all_contingency_lists]
-	plt.plot(x,y)
+	plt.plot(thresholds,accuracy_values)
 	plt.xlabel("Threshold")
 	plt.ylabel("Accuracy")
 	plt.title("Accuracy vs. Threshold Curve")

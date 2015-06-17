@@ -22,11 +22,11 @@ def compile_results(data_type, ic_50_filename, expression_features_filename, mut
 		results_file.write("Cell line names:\n" + str(cell_lines) + "\n")
 		results_file.write("Actual IC50 values for threshold: " + str(thresholds[i]) + "\n" + str([x[0] for x in all_predictions[i][0]]) + "\n")
 		results_file.write("Model predictions for threshold: " + str(thresholds[i]) + "\n" + str([x[0] for x in all_predictions[i][1]]) + "\n")
-		results_file.write("Model accuracy: " + str(svmc.model_accuracy(evaluation)))
+		results_file.write("Model accuracy: " + str(svm.model_accuracy(evaluation)))
 		results_file.write("\n")
 		features_file.write(all_features[i])
 		plt.generate_prediction_heat_maps(evaluation,thresholds[i])
-	plt.plot_accuracy_threshold_curve(all_evaluations, thresholds)
+	plt.plot_accuracy_threshold_curve(thresholds,[svm.model_accuracy(evaluation) for evaluation in all_evaluations])
 
 data_type = "Expression"
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"

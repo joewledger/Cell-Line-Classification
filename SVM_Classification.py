@@ -169,5 +169,5 @@ class SVM_Classification:
 		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
 		return training_cell_lines, testing_cell_lines
 
-def model_accuracy(contingency_list):
-	return contingency_list[0][0] + contingency_list[1][1]
+	def model_accuracy(self,contingency_list):
+		return sum(contingency_list[x][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
