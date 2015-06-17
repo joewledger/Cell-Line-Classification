@@ -18,13 +18,18 @@ class SVM_Classification:
 		if(datatype == "Mutation"):
 			print("Not currently implemented")
 		elif(datatype == "Expression"):
+			#Read data from files
 			self.df = dfm.DataFormatting(datatype,ic50_filename,data_file)
 			self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
+			self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
 			self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
 			self.ic_50_dict = self.df.generate_ic_50_dict()
 			self.class_bin = self.generate_class_bin()
 			self.insignificant_gene_dict = None
-			self.remove_undetermined_cells()
+			
+			#Trim data
+			if(self.exclude_undetermined):
+				self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
 			self.cell_lines = list(self.data_matrix.columns.values)
 			self.num_samples = len(self.cell_lines)
 			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
@@ -76,8 +81,8 @@ class SVM_Classification:
 		for index, actual in enumerate(predictions[0]):
 			pred[actual[0]][predictions[1][index][0]] += 1.0
 		pred = np.divide(pred,total)
-		pred = [[pred[0][0], pred[0][2]], [pred[2][0], pred[2][2]]]
-		print(pred)
+		if(self.exclude_undetermined):
+			pred = [[pred[0][0], pred[0][2]], [pred[2][0], pred[2][2]]]
 		return pred
 
 	#This method will generate a SVM classifier
@@ -160,9 +165,6 @@ class SVM_Classification:
 		training_cell_lines = self.cell_lines[0:lower_bound]
 		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
 		return training_cell_lines, testing_cell_lines
-
-	def remove_undetermined_cells(self):
-		self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
 
 def model_accuracy(contingency_list):
 	return contingency_list[0][0] + contingency_list[1][1]

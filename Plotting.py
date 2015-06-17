@@ -17,8 +17,10 @@ def plot_accuracy_threshold_curve(all_contingency_lists, thresholds):
 	plt.ylabel("Accuracy")
 	plt.title("Accuracy vs. Threshold Curve")
 	plt.savefig("Visualizations/Accuracy_Threshold.png")
+	plt.close()
 
 def generate_prediction_heat_maps(contingency_list, threshold):
+	num_classifiers = len(contingency_list)
 	plt.figure()
 	plt.imshow(contingency_list,interpolation='none')
 	for i,row in enumerate(contingency_list):
@@ -26,15 +28,17 @@ def generate_prediction_heat_maps(contingency_list, threshold):
 			percent = str(col * 100)
 			length = min(len(percent),4)
 			plt.text(float(j) - .15, float(i) + .05, percent[:length] + "%",size="12")
-	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ")")
-	plt.xticks(arange(2),['Sensitive','Resistant'],rotation='horizontal')
-	plt.yticks(arange(2),['Sensitive','Resistant'],rotation='vertical')
+	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ") with undetermined cell-lines")
+	labels = (['Sensitive', 'Resistant'] if num_classifiers == 2 else ['Sensitive', 'Undetermined', 'Resistant'])
+	plt.xticks(arange(num_classifiers),labels,rotation='horizontal')
+	plt.yticks(arange(num_classifiers),labels,rotation='vertical')
 	plt.ylabel("Actual Values",size=24)
 	plt.xlabel("Model Predictions",size=24)
 	c_table_directory = "Visualizations/Cont_Tables"
 	if not os.path.exists(c_table_directory): os.makedirs(c_table_directory)
 	save_file = "p" + str(threshold)[str(threshold).find(".") + 1:] + ".png" 
 	plt.savefig("Visualizations/Cont_Tables/" + save_file)
+	plt.close()
 
 def visualize_matrix(matrix,title,x_axis,y_axis,outfile):
 	plt.imshow(matrix)
