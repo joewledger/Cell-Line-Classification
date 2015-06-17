@@ -38,13 +38,15 @@ class SVM_Classification:
 	def evaluate_all_thresholds(self,num_folds):
 		self.insignificant_gene_dict = self.generate_insignificant_genes_dict(num_folds)
 		all_predictions = list()
+		all_feature_selection = list()
 		all_evaluations = list()
 		for threshold in self.thresholds:
-			prediction = self.cross_validate_make_predictions(num_folds,threshold)
+			prediction, feature_selction = self.cross_validate_make_predictions(num_folds,threshold)
 			all_predictions.append(prediction)
+			all_feature_selection.append(feature_selction)
 			evaluation = self.cross_validate_evaluate_predictions(predictions=prediction)
 			all_evaluations.append(evaluation)
-		return all_predictions, all_evaluations
+		return all_predictions, all_feature_selection, all_evaluations
 
 	#Does n-fold cross-validation on our SVM model.
 	#Saves these predictions along with the actual outputs in a tuple
@@ -54,18 +56,19 @@ class SVM_Classification:
 	#Parameters: num_folds - the number of folds we will use in the cross-fold validation (usually 5)
 	def cross_validate_make_predictions(self,num_folds,threshold):
 		predictions = tuple([[],[]])
+		feature_selection = ""
 		for fold in range(0,num_folds):
 			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(fold,num_folds)
 			data_frame = self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
 			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
 			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
-			print("Threshold: " + str(threshold) + ", Number of features: " + str(len(data_frame.index)))
+			feature_selection += "Fold: " + str(fold) + ", Threshold: " + str(threshold) + ", Number of features: " + str(len(data_frame.index)) + "\n" + str(data_frame.index) + "\n"
 			model = self.generate_svm_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
 				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
 				predictions[0].append(cell_line_data[1])
 				predictions[1].append(model.predict(cell_line_data[0]))
-		return predictions
+		return predictions,feature_selection
 
 	#Evaluates the predictions the model makes for accuracy
 	#Returns a 2x2 matrix
@@ -75,7 +78,7 @@ class SVM_Classification:
 	def cross_validate_evaluate_predictions(self,**kwargs):
 		num_folds = (kwargs['num_folds'] if 'num_folds' in kwargs else 5)
 		threshold = (kwargs['threshold'] if 'threshold' in kwargs else .2)
-		predictions = (kwargs['predictions'] if 'predictions' in kwargs else self.cross_validate_make_predictions(num_folds,threshold))
+		predictions = (kwargs['predictions'] if 'predictions' in kwargs else self.cross_validate_make_predictions(num_folds,threshold)[0])
 		pred = [[0.0] * 3 for x in range(0,3)]
 		total = float(len(predictions[1]))
 		for index, actual in enumerate(predictions[0]):

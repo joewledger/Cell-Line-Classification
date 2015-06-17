@@ -14,15 +14,17 @@ def compile_results(data_type, ic_50_filename, expression_features_filename, mut
 	thresholds = generate_thresholds(increment,max_threshold)
 	svm = svmc.SVM_Classification(data_type, ic_50_filename ,expression_features_filename,thresholds=thresholds, exclude_undetermined=exclude_undetermined)
 	df = dfm.DataFormatting(data_type, ic_50_filename ,expression_features_filename)
-	all_predictions,all_evaluations = svm.evaluate_all_thresholds(5)
+	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(5)
 	cell_lines = df.generate_ic_50_dict().keys()
 	results_file = open("Results/Results.txt",'wb')
+	features_file = open("Results/Feature_Selection.txt",'wb')
 	for i,evaluation in enumerate(all_evaluations):
 		results_file.write("Cell line names:\n" + str(cell_lines) + "\n")
 		results_file.write("Actual IC50 values for threshold: " + str(thresholds[i]) + "\n" + str([x[0] for x in all_predictions[i][0]]) + "\n")
 		results_file.write("Model predictions for threshold: " + str(thresholds[i]) + "\n" + str([x[0] for x in all_predictions[i][1]]) + "\n")
 		results_file.write("Model accuracy: " + str(svmc.model_accuracy(evaluation)))
 		results_file.write("\n")
+		features_file.write(all_features[i])
 		plt.generate_prediction_heat_maps(evaluation,thresholds[i])
 	plt.plot_accuracy_threshold_curve(all_evaluations, thresholds)
 
