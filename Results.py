@@ -49,8 +49,8 @@ data_type = "Expression"
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_features_filename = "CCLE_Data/sample1000.res"
-compile_results("Test_Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='linear')
-compile_results("Test_Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
-compile_results("Test_RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
+#compile_results("Test_Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='linear')
+#compile_results("Test_Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
+#compile_results("Test_RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
 compile_results("Test_Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')
 

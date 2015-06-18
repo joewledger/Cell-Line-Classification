@@ -22,15 +22,16 @@ class SVM_Classification:
 		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
 		self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
 		self.ic_50_dict = self.df.generate_ic_50_dict()
+		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 		self.class_bin = self.generate_class_bin()
 		self.insignificant_gene_dict = None
 			
 		#Trim data
 		if(self.exclude_undetermined):
 			self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
+			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 		self.cell_lines = list(self.data_matrix.columns.values)
 		self.num_samples = len(self.cell_lines)
-		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 
 
 	def evaluate_all_thresholds(self,num_folds):
@@ -129,7 +130,7 @@ class SVM_Classification:
 	#	Bottom 15 Percent are Senstive -- marked 0
 	#	Rest are neutral -- marked 1
 	def generate_class_bin(self):
-		ic_50_distribution = sorted(self.df.generate_ic_50_dict().values())
+		ic_50_distribution = sorted(self.ic_50_dict.values())
 		lower_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .15)]
 		upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 		return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
