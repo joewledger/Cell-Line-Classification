@@ -17,7 +17,7 @@ def make_dirs(outdir):
 		if(not os.path.exists(out)):
 			os.makedirs(out)
 
-def compile_results(outdir,data_type, ic_50_filename, expression_features_filename, mutation_features_filename,increment,max_threshold, exclude_undetermined):
+def compile_results(outdir,data_type, ic_50_filename, expression_features_filename, mutation_features_filename,increment,max_threshold, exclude_undetermined, kernel_type, normalization):
 	outdir += "/"
 	make_dirs(outdir)
 	thresholds = generate_thresholds(increment,max_threshold)
@@ -42,5 +42,5 @@ ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_features_filename = "CCLE_Data/sample1000.res"
 mutation_features_filename = "CCLE_Data/CCLE_Oncomap3_2012-04-09.maf"
-compile_results("Test1",data_type,ic_50_filename,expression_features_filename,mutation_features_filename,.01,.04,True)
+compile_results("Test1",data_type,ic_50_filename,expression_features_filename,mutation_features_filename,.01,.04,True,"","")
 
