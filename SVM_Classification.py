@@ -14,25 +14,23 @@ import time
 
 class SVM_Classification:
 
-	def __init__(self,datatype,ic50_filename,data_file,**kwargs):
-		if(datatype == "Mutation"):
-			print("Not currently implemented")
-		elif(datatype == "Expression"):
-			#Read data from files
-			self.df = dfm.DataFormatting(datatype,ic50_filename,data_file)
-			self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
-			self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
-			self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
-			self.ic_50_dict = self.df.generate_ic_50_dict()
-			self.class_bin = self.generate_class_bin()
-			self.insignificant_gene_dict = None
+	def __init__(self,ic50_filename,data_file,**kwargs):
+		#Read data from files
+		self.df = dfm.DataFormatting(ic50_filename,data_file)
+		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
+		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
+		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
+		self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
+		self.ic_50_dict = self.df.generate_ic_50_dict()
+		self.class_bin = self.generate_class_bin()
+		self.insignificant_gene_dict = None
 			
-			#Trim data
-			if(self.exclude_undetermined):
-				self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
-			self.cell_lines = list(self.data_matrix.columns.values)
-			self.num_samples = len(self.cell_lines)
-			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
+		#Trim data
+		if(self.exclude_undetermined):
+			self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
+		self.cell_lines = list(self.data_matrix.columns.values)
+		self.num_samples = len(self.cell_lines)
+		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 
 
 	def evaluate_all_thresholds(self,num_folds):
@@ -93,7 +91,7 @@ class SVM_Classification:
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
 	def generate_svm_model(self,training_subset,data_matrix):
 		training_data = self.create_training_data(training_subset,data_matrix)
-		model = svm.LinearSVC()
+		model = svm.SVC(kernel=self.kernel)
 		model.fit(training_data[0],[value[0] for value in training_data[1]])
 		return model
 

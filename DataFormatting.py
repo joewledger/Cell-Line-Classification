@@ -1,7 +1,5 @@
 #File for creating and visualizing feature matrices
-#There are two types of matrices we will be working with
-#	1) Oncomap Mutation x Cell Line matrices
-#	2) Gene Expression x Cell Line matrices
+#We will be working with gene expression matrices
 #All data sources for now are from CCLE
 
 import numpy as np
@@ -11,12 +9,9 @@ import csv
 
 class DataFormatting:
 
-	def __init__(self,datatype,ic50_filename,datafile):
-		if(datatype == "Mutation"):
-			print("Not currently implemented")
-		elif(datatype == "Expression"):
-			self.ic_50_filename = ic50_filename
-			self.expression_features_filename = datafile
+	def __init__(self,ic50_filename,datafile):
+		self.ic_50_filename = ic50_filename
+		self.expression_features_filename = datafile
 			
 
 	#Returns a tuple containing

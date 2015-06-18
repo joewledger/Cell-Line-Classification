@@ -25,7 +25,7 @@ def generate_prediction_heat_maps(outdir, contingency_list, threshold):
 			percent = str(col * 100)
 			length = min(len(percent),4)
 			plt.text(float(j) - .15, float(i) + .05, percent[:length] + "%",size="12")
-	plt.title("Model Predictions in Cross Validation (Threshold p < " + str(threshold) + ") with undetermined cell-lines")
+	plt.title("Model Predictions in Cross Validation (Threshold p < %s)\nwith%s undetermined cell-lines" % (str(threshold),"out" if num_classifiers == 2 else ""))
 	labels = (['Sensitive', 'Resistant'] if num_classifiers == 2 else ['Sensitive', 'Undetermined', 'Resistant'])
 	plt.xticks(arange(num_classifiers),labels,rotation='horizontal')
 	plt.yticks(arange(num_classifiers),labels,rotation='vertical')
