@@ -61,9 +61,8 @@ class SVM_Classification:
 			data_frame = self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
 			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
 			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
-			#feature_selection += "Fold: " + str(fold) + ", Threshold: " + str(threshold) + ", Number of features: " + str(len(data_frame.index)) + "\n" + str(data_frame.index) + "\n"
 			feature_selection += "Fold: %s, Threshold: %s, Number of features: %s\n%s\n\n" % tuple(str(x) for x in [fold,threshold,len(data_frame.index), sorted([str(x) for x in data_frame.index])])
-			model = self.generate_svm_model(training_cell_lines,training_frame)
+			model = self.generate_svc_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
 				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
 				predictions[0].append(cell_line_data[1])
@@ -90,11 +89,13 @@ class SVM_Classification:
 
 	#This method will generate a SVM classifier
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	def generate_svm_model(self,training_subset,data_matrix):
+	def generate_svc_model(self,training_subset,data_matrix):
 		training_data = self.create_training_data(training_subset,data_matrix)
 		model = svm.SVC(kernel=self.kernel)
 		model.fit(training_data[0],[value[0] for value in training_data[1]])
 		return model
+
+	#def generate_svr_model(self,training_subset,data_matrix):
 
 	#This method will return a tuple containing the training input and output for our SVM classifier based on a list of cell_line names
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values

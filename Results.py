@@ -17,12 +17,15 @@ def make_dirs(outdir):
 		if(not os.path.exists(out)):
 			os.makedirs(out)
 
-#def compile_results(outdir,data_type, ic_50_filename, expression_features_filename, mutation_features_filename,increment,max_threshold, exclude_undetermined, kernel_type, normalization):
-#kwargs -- increment
-#		-- max_threshold
-#		-- exclude_undetermined
+#This method saves the results of our classification experiment to a given directory
+#args   -- outdir (directory to save results to)
+#		-- ic50_file (file that contains ic50 data)
+#		-- expression_file (file that contains expression data)
+#kwargs -- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
+#		-- max_threshold (the maximum value of the threshold parameter that you would like to test)
+#		-- exclude_undetermined (whether or not you would like to do training with 'undetermined' cell lines)
 #		-- kernel_type (kernel for SVM to use. Must be one of 'linear','poly','rbf','sigmoid'. Default is 'rbf')
-#		-- normalization
+#		-- normalization (whether or not you want to apply normalization to the gene expression data prior to traininig the model)
 def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	increment = (kwargs['increment'] if 'increment' in kwargs else .01)
 	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
@@ -45,12 +48,15 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds,[svm.model_accuracy(evaluation) for evaluation in all_evaluations])
 
-data_type = "Expression"
+
+
+#Saved filenames, for cconvenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample1000.res"
-#compile_results("Test_Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='linear')
+expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+#expression_features_filename = "CCLE_Data/sample1000.res"
+
+#Examples of how to run program
+#compile_results("Test_Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel_type='linear')
 #compile_results("Test_Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
 #compile_results("Test_RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
-compile_results("Test_Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')
-
+#compile_results("Test_Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')
