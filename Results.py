@@ -21,23 +21,25 @@ def make_dirs(outdir):
 #args   -- outdir (directory to save results to)
 #		-- ic50_file (file that contains ic50 data)
 #		-- expression_file (file that contains expression data)
-#kwargs -- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
-#		-- max_threshold (the maximum value of the threshold parameter that you would like to test)
+#kwargs -- model (the classification model to use, options are 'svc', 'svr', 'nn', default is 'svc')
 #		-- exclude_undetermined (whether or not you would like to do training with 'undetermined' cell lines)
 #		-- kernel_type (kernel for SVM to use. Must be one of 'linear','poly','rbf','sigmoid'. Default is 'rbf')
 #		-- normalization (whether or not you want to apply normalization to the gene expression data prior to traininig the model)
+#		-- num_folds (number of folds to use in cross-validation)
+#		-- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
+#		-- max_threshold (the maximum value of the threshold parameter that you would like to test)
+
 def compile_results(outdir,ic50_file, expression_file,**kwargs):
-	increment = (kwargs['increment'] if 'increment' in kwargs else .01)
-	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
-	exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
-	kernel_type = (kwargs['kernel_type'] if 'kernel_type' in kwargs else 'rbf')
-	normalization = (kwargs['normalization'] if 'normalization' in kwargs else False)
 	outdir += "/"
 	make_dirs(outdir)
+	num_folds = (kwargs['num_folds'] if 'num_folds' in kwargs else 5)
+	increment = (kwargs['increment'] if 'increment' in kwargs else .01)
+	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
 	thresholds = generate_thresholds(increment,max_threshold)
-	svm = svmc.SVM_Classification(ic_50_filename,expression_features_filename,thresholds=thresholds, exclude_undetermined=exclude_undetermined,kernel=kernel_type)
+	kwargs['thresholds'] = thresholds
+	svm = svmc.SVM_Classification(ic_50_filename,expression_features_filename,**kwargs)
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename)
-	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(5)
+	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(num_folds)
 	cell_lines = df.generate_ic_50_dict().keys()
 	results_file = open(outdir + "Results/Results.txt",'wb')
 	features_file = open(outdir + "Results/Feature_Selection.txt",'wb')
@@ -52,11 +54,14 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 
 #Saved filenames, for cconvenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-#expression_features_filename = "CCLE_Data/sample1000.res"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample1000.res"
 
 #Examples of how to run program
-#compile_results("Test_Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel_type='linear')
-#compile_results("Test_Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
-#compile_results("Test_RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
-#compile_results("Test_Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')
+compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
+compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
+compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='linear')
+compile_results("Tests/Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel_type='linear')
+compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
+compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
+compile_results("Tests/Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')

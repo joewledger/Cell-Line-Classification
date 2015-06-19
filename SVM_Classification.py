@@ -17,6 +17,7 @@ class SVM_Classification:
 	def __init__(self,ic50_filename,data_file,**kwargs):
 		#Read data from files
 		self.df = dfm.DataFormatting(ic50_filename,data_file)
+		self.model = (kwargs['model'] if 'model' in kwargs else 'svc')
 		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
 		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
@@ -33,7 +34,8 @@ class SVM_Classification:
 		self.cell_lines = list(self.data_matrix.columns.values)
 		self.num_samples = len(self.cell_lines)
 
-
+	#Evaluates the model at each threshold specified in self.thresholds
+	#Parameters: num_folds - the number of folds we will be using in cross-fold validation
 	def evaluate_all_thresholds(self,num_folds):
 		self.insignificant_gene_dict = self.generate_insignificant_genes_dict(num_folds)
 		all_predictions = list()
@@ -51,8 +53,8 @@ class SVM_Classification:
 	#Saves these predictions along with the actual outputs in a tuple
 	#	First entry in the tuple will be the actual output
 	#	Second entry in the tuple will be the predicted output
-	#Parameters: cell_lines - list of cell lines from IC_50 Data
 	#Parameters: num_folds - the number of folds we will use in the cross-fold validation (usually 5)
+	#Parameters: threshold - the specific threshold that we are using to decide which genes to include as featuress
 	def cross_validate_make_predictions(self,num_folds,threshold):
 		predictions = tuple([[],[]])
 		feature_selection = ""
@@ -62,7 +64,7 @@ class SVM_Classification:
 			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
 			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
 			feature_selection += "Fold: %s, Threshold: %s, Number of features: %s\n%s\n\n" % tuple(str(x) for x in [fold,threshold,len(data_frame.index), sorted([str(x) for x in data_frame.index])])
-			model = self.generate_svc_model(training_cell_lines,training_frame)
+			model = self.generate_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
 				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
 				predictions[0].append(cell_line_data[1])
@@ -70,7 +72,7 @@ class SVM_Classification:
 		return predictions,feature_selection
 
 	#Evaluates the predictions the model makes for accuracy
-	#Returns a 2x2 matrix
+	#Returns a 2x2 matrix or a 3x3 matrix depending on whether or not we are excluding undetermined cell-lines
 	#	Row labels as actual sensitivity values (discretized)
 	#	Column labels as predicted sensitivity values (discretized)
 	#	Each entry is the percentage of times that each event happened during cross-validation
@@ -81,7 +83,8 @@ class SVM_Classification:
 		pred = [[0.0] * 3 for x in range(0,3)]
 		total = float(len(predictions[1]))
 		for index, actual in enumerate(predictions[0]):
-			pred[actual[0]][predictions[1][index][0]] += 1.0
+			if(self.model == 'svc'): pred[actual[0]][predictions[1][index][0]] += 1.0
+			elif(self.model == 'svr'): pred[self.class_bin(actual[0])][self.class_bin(predictions[1][index][0])] += 1
 		pred = np.divide(pred,total)
 		if(self.exclude_undetermined):
 			pred = [[pred[0][0], pred[0][2]], [pred[2][0], pred[2][2]]]
@@ -89,13 +92,14 @@ class SVM_Classification:
 
 	#This method will generate a SVM classifier
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	def generate_svc_model(self,training_subset,data_matrix):
+	#Parameters: data_matrix - a matrix containing the expression values
+	def generate_model(self,training_subset,data_matrix):
 		training_data = self.create_training_data(training_subset,data_matrix)
-		model = svm.SVC(kernel=self.kernel)
+		model = None
+		if(self.model == 'svc'): model = svm.SVC(kernel=self.kernel)
+		if(self.model == 'svr'): model = svm.SVR(kernel=self.kernel)
 		model.fit(training_data[0],[value[0] for value in training_data[1]])
 		return model
-
-	#def generate_svr_model(self,training_subset,data_matrix):
 
 	#This method will return a tuple containing the training input and output for our SVM classifier based on a list of cell_line names
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
@@ -117,12 +121,15 @@ class SVM_Classification:
 	#The second entry in the tuple will be the training output for the sample
 	#	This will be a value that determines which class the cell line is in ("sensitive", "undetermined", "resistant" AKA SUR)
 	#Parameters: cell_line is the name of the cell_line we are interested in
+	#Parameters: data_matrix - a matrix containing the expression values
 	def generate_cell_line_data(self,cell_line, data_matrix):
 		feature_inputs = list(data_matrix.ix[:,cell_line])
 		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(data_matrix.index)):
 			feature_inputs = [0.0] * len(data_matrix.index)
 		ic_50 = self.ic_50_dict[cell_line]
-		classifier = [self.class_bin(ic_50)]
+		classifier = None
+		if(self.model == 'svc'): classifier = [self.class_bin(ic_50)]
+		if(self.model == 'svr'): classifier = [ic_50]
 		return feature_inputs, classifier
 
 	#Returns a function that classifies cell lines as either sensitive or resistant
@@ -136,7 +143,7 @@ class SVM_Classification:
 		upper_bound = ic_50_distribution[int(float(len(ic_50_distribution)) * .85)]
 		return lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
 
-		#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
+	#Generates a dictionary that maps fold/threshold tuples to a list of genes that are insignificant and should be removed.
 	#Parameters: num_folds, number of folds to do cross-validation with
 	def generate_insignificant_genes_dict(self,num_folds):
 		pval_frame = self.get_fold_gene_pvalue_frame(num_folds)
@@ -149,7 +156,10 @@ class SVM_Classification:
 						genes_dict[(fold,threshold)].append(gene)
 		return genes_dict
 
-
+	#Builds a dataframe that contains the p-values for each gene in each fold of cross-validation
+	#We are precomputing these because they will be the same regardless of which threshold we are using
+	#This saves a lot of computations, and it cuts the runtime by a factor of the number of thresholds we are using
+	#Parameters: num_folds - the number of folds we are using in cross-validation
 	def get_fold_gene_pvalue_frame(self,num_folds):
 		sensitive_frame = self.data_matrix[[x for x in self.data_matrix.columns if self.class_bin(self.ic_50_dict[x]) == 0]]
 		resistant_frame = self.data_matrix[[y for y in self.data_matrix.columns if self.class_bin(self.ic_50_dict[y]) == 2]]
@@ -162,6 +172,10 @@ class SVM_Classification:
 			fold_series.append(fold_values)
 		return pd.DataFrame(fold_series)
 
+	#Splits the data into testing and training samples
+	#Does this for a specific fold in cross-validation, must be called repeatedly if all training and testing splits are desired
+	#Parameters: fold - The fold to generate the testing and training split
+	#Parameters: the number of folds we are doing cross-validation with 
 	def split_testing_training_samples(self,fold, num_folds):
 		lower_bound = int(float(fold) / float(num_folds) * float(self.num_samples))
 		upper_bound = int(float(fold + 1) / float(num_folds) * float(self.num_samples))
@@ -170,5 +184,8 @@ class SVM_Classification:
 		training_cell_lines.extend(self.cell_lines[upper_bound:len(self.cell_lines) - 1])
 		return training_cell_lines, testing_cell_lines
 
+	#Determines the accuracy of the model by summing the diagonal entries in the contingency table
+	#Can handle the case of a 2x2 contingency tables as well as a 3x3 contingency table
+	#Parameters: contingency_list - the contingency table to evaluate
 	def model_accuracy(self,contingency_list):
 		return sum(contingency_list[x][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
