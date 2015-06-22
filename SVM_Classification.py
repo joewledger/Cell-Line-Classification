@@ -25,7 +25,6 @@ class SVM_Classification:
 		self.ic_50_dict = self.df.generate_ic_50_dict()
 		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
 		self.class_bin = self.generate_class_bin()
-		self.insignificant_gene_dict = None
 			
 		#Trim data
 		if(self.exclude_undetermined):
@@ -44,7 +43,8 @@ class SVM_Classification:
 		for threshold in self.thresholds:
 			prediction, feature_selction = self.cross_validate_make_predictions(num_folds,threshold)
 			all_predictions.append(prediction)
-			all_feature_selection.append(feature_selction)
+			#all_feature_selection.append(feature_selction)
+			all_feature_selection.extend(feature_selction)
 			evaluation = self.cross_validate_evaluate_predictions(predictions=prediction)
 			all_evaluations.append(evaluation)
 		return all_predictions, all_feature_selection, all_evaluations
@@ -57,13 +57,14 @@ class SVM_Classification:
 	#Parameters: threshold - the specific threshold that we are using to decide which genes to include as featuress
 	def cross_validate_make_predictions(self,num_folds,threshold):
 		predictions = tuple([[],[]])
-		feature_selection = ""
+		feature_selection = list()
 		for fold in range(0,num_folds):
 			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(fold,num_folds)
 			data_frame = self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
 			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
 			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
-			feature_selection += "Fold: %s, Threshold: %s, Number of features: %s\n%s\n\n" % tuple(str(x) for x in [fold,threshold,len(data_frame.index), sorted([str(x) for x in data_frame.index])])
+			#Tuple containing fold, threshold, number of features selected, features selected, and weight of features selected
+			feature_selection.append(tuple([fold,threshold,len(data_frame.index),[str(x) for x in data_frame.index],(self.get_coefficients(fold,threshold) if self.kernel == 'linear' else 0)]))
 			model = self.generate_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
 				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
@@ -189,3 +190,7 @@ class SVM_Classification:
 	#Parameters: contingency_list - the contingency table to evaluate
 	def model_accuracy(self,contingency_list):
 		return sum(contingency_list[x][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
+
+	def get_coefficients(self,fold,threshold):
+		model = self.generate_model(self.cell_lines,self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
+		return model.coef_[0]

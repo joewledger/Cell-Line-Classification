@@ -31,6 +31,7 @@ def make_dirs(outdir):
 def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	outdir += "/"
 	make_dirs(outdir)
+	kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
 	num_folds = (kwargs['num_folds'] if 'num_folds' in kwargs else 5)
 	increment = (kwargs['increment'] if 'increment' in kwargs else .01)
 	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
@@ -45,20 +46,21 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	for i,evaluation in enumerate(all_evaluations):
 		results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
 						  (str(cell_lines), str(thresholds[i]), str([x[0] for x in all_predictions[i][0]]), str(thresholds[i]), str([x[0] for x in all_predictions[i][1]]), str(svm.model_accuracy(evaluation))))
-		features_file.write(all_features[i])
+	for feature in all_features:
+		features_file.write("Fold: %s, Threshold: %s, Number of features: %s\nFeatures Selected: %s\n" % (str(feature[0]), str(feature[1]), str(feature[2]), str(feature[3])))
+		if(kernel == 'linear'): features_file.write("Model coefficients: %s\n\n" % str([str(x) for x in feature[4]]))
 		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
 	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
 	return thresholds,accuracy_values
 
 
-
 def compile_all():
 	all_thresholds = list()
 	all_accuracies = list()
 	all_kernels = list()
-	
-	t1,a1 = compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
+
+	t1,a1 = compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
 	all_thresholds.append(t1)
 	all_accuracies.append(a1)
 	all_kernels.append('linear')
