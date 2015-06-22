@@ -8,8 +8,7 @@ import os
 
 
 def generate_thresholds(increment, max_threshold):
-	thresholds = [float(i) * increment for i in range(1,int(max_threshold / increment) + 1)]
-	return thresholds
+	return [float(i) * increment for i in range(1,int(max_threshold / increment) + 1)]
 
 def make_dirs(outdir):
 	for directory in ["","Results","Visualizations","Visualizations/Cont_Tables"]:
@@ -52,16 +51,16 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 
 
 
-#Saved filenames, for cconvenience
+#Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_features_filename = "CCLE_Data/sample1000.res"
 
 #Examples of how to run program
-compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
-compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
-compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='linear')
-compile_results("Tests/Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel_type='linear')
-compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='poly')
-compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='rbf')
-compile_results("Tests/Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel_type='sigmoid')
+#compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
+#compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
+compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
+compile_results("Tests/Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel='linear')
+compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
+compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
+compile_results("Tests/Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='sigmoid')
