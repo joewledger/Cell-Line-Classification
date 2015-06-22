@@ -22,7 +22,7 @@ def make_dirs(outdir):
 #		-- expression_file (file that contains expression data)
 #kwargs -- model (the classification model to use, options are 'svc', 'svr', 'nn', default is 'svc')
 #		-- exclude_undetermined (whether or not you would like to do training with 'undetermined' cell lines)
-#		-- kernel_type (kernel for SVM to use. Must be one of 'linear','poly','rbf','sigmoid'. Default is 'rbf')
+#		-- kernel (kernel for SVM to use. Must be one of 'linear','poly','rbf','sigmoid'. Default is 'rbf')
 #		-- normalization (whether or not you want to apply normalization to the gene expression data prior to traininig the model)
 #		-- num_folds (number of folds to use in cross-validation)
 #		-- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
@@ -47,9 +47,30 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 						  (str(cell_lines), str(thresholds[i]), str([x[0] for x in all_predictions[i][0]]), str(thresholds[i]), str([x[0] for x in all_predictions[i][1]]), str(svm.model_accuracy(evaluation))))
 		features_file.write(all_features[i])
 		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
-	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds,[svm.model_accuracy(evaluation) for evaluation in all_evaluations])
+	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
+	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
+	return thresholds,accuracy_values
 
 
+
+def compile_all():
+	all_thresholds = list()
+	all_accuracies = list()
+	all_kernels = list()
+	
+	t1,a1 = compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
+	all_thresholds.append(t1)
+	all_accuracies.append(a1)
+	all_kernels.append('linear')
+	t2,a2 = compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
+	all_thresholds.append(t2)
+	all_accuracies.append(a2)
+	all_kernels.append('poly')
+	t3,a3 = compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
+	all_thresholds.append(t3)
+	all_accuracies.append(a3)
+	all_kernels.append('rbf')
+	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold.png",all_thresholds,all_accuracies,all_kernels)
 
 #Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
@@ -59,8 +80,4 @@ expression_features_filename = "CCLE_Data/sample1000.res"
 #Examples of how to run program
 #compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
 #compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
-compile_results("Tests/Linear_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
-compile_results("Tests/Linear_No_Exclude",ic_50_filename,expression_features_filename,exclude_undetermined=False,kernel='linear')
-compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
-compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
-compile_results("Tests/Sigmoid",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='sigmoid')
+compile_all()
