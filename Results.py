@@ -46,33 +46,39 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	for i,evaluation in enumerate(all_evaluations):
 		results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
 						  (str(cell_lines), str(thresholds[i]), str([x[0] for x in all_predictions[i][0]]), str(thresholds[i]), str([x[0] for x in all_predictions[i][1]]), str(svm.model_accuracy(evaluation))))
+		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
 	for feature in all_features:
 		features_file.write("Fold: %s, Threshold: %s, Number of features: %s\nFeatures Selected: %s\n" % (str(feature[0]), str(feature[1]), str(feature[2]), str(feature[3])))
 		if(kernel == 'linear'): features_file.write("Model coefficients: %s\n\n" % str([str(x) for x in feature[4]]))
-		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
 	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
+	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
-	return thresholds,accuracy_values
+	return thresholds,accuracy_values, accuracy_values_sensitive
 
 
 def compile_all():
 	all_thresholds = list()
 	all_accuracies = list()
+	all_accuracies_sensitive = list()
 	all_kernels = list()
 
-	t1,a1 = compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
+	t1,a1,as1 = compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
 	all_thresholds.append(t1)
 	all_accuracies.append(a1)
+	all_accuracies_sensitive.append(as1)
 	all_kernels.append('linear')
-	t2,a2 = compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
+	t2,a2,as2 = compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
 	all_thresholds.append(t2)
 	all_accuracies.append(a2)
+	all_accuracies_sensitive.append(as2)
 	all_kernels.append('poly')
-	t3,a3 = compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
+	t3,a3,as3 = compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
 	all_thresholds.append(t3)
 	all_accuracies.append(a3)
+	all_accuracies_sensitive.append(as3)
 	all_kernels.append('rbf')
 	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold.png",all_thresholds,all_accuracies,all_kernels)
+	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold_Sensitive.png", all_thresholds,all_accuracies_sensitive,all_kernels)
 
 #Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"

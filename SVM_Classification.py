@@ -191,6 +191,9 @@ class SVM_Classification:
 	def model_accuracy(self,contingency_list):
 		return sum(contingency_list[x][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
 
+	def model_accuracy_sensitive(self,contingency_list):
+		return contingency_list[0][0] / sum(contingency_list[0][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
+
 	def get_coefficients(self,fold,threshold):
 		model = self.generate_model(self.cell_lines,self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
 		return model.coef_[0]
