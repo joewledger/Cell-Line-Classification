@@ -67,13 +67,8 @@ class SVM_Classification:
 			feature_selection.append(tuple([fold,threshold,len(data_frame.index),[str(x) for x in data_frame.index],(self.get_coefficients(fold,threshold) if self.kernel == 'linear' else 0)]))
 			model = self.generate_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
-				"""
-				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
-				predictions[0].append(cell_line_data[1])
-				predictions[1].append(model.predict(cell_line_data[0]))
-				"""
 				predictions[0].append(self.generate_cell_line_classifier(cell_line,testing_frame))
-				predictions[1].append(self.generate_cell_line_features(cell_line,testing_frame))
+				predictions[1].append(model.predict(self.generate_cell_line_features(cell_line,testing_frame)))
 		return predictions,feature_selection
 
 	#Evaluates the predictions the model makes for accuracy
@@ -99,7 +94,6 @@ class SVM_Classification:
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
 	#Parameters: training_matrix - a matrix containing the expression values
 	def generate_model(self,training_subset,training_matrix):
-		#training_data = self.create_training_data(training_subset,training_matrix)
 		training_inputs = self.get_training_inputs(training_subset,training_matrix)
 		training_outputs = self.get_training_outputs(training_subset,training_matrix)
 		model = None
@@ -108,48 +102,11 @@ class SVM_Classification:
 		model.fit(training_inputs,[value[0] for value in training_outputs])
 		return model
 
-	#This method will return a tuple containing the training input and output for our SVM classifier based on a list of cell_line names
-	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	#Output: a tuple, first entry is training input, second is training output
-	#	Example for training input --- [[0,0],[1,1]], there are two samples, each with two features
-	#	Example for training output -- [0,1], there are two samples, each with a classification in range (0, n_classes - 1)
-	"""
-	def create_training_data(self,training_subset,training_matrix):
-		training_input = []
-		training_output = []
-		for cell_line in training_subset:
-			cell_line_data = self.generate_cell_line_data(cell_line,training_matrix)
-			training_input.append(cell_line_data[0])
-			training_output.append(cell_line_data[1])
-			training_input.append(self.generate_cell_line_features(cell_line,training_matrix))
-			training_output.append(self.generate_cell_line_classifier(cell_line,training_matrix))
-		return tuple([training_input,training_output])
-	"""
-
 	def get_training_inputs(self,training_subset,training_matrix):
 		return [self.generate_cell_line_features(cell_line,training_matrix) for cell_line in training_subset]
 
 	def get_training_outputs(self,training_subset,training_matrix):
 		return [self.generate_cell_line_classifier(cell_line,training_matrix) for cell_line in training_subset]
-
-	#This method will return a tuple containing the feature inputs and output for a particular cell line
-	#The first entry in the tuple will be the feature inputs for the cell_line
-	#	This will consist of an array of the values for each of the features
-	#The second entry in the tuple will be the training output for the sample
-	#	This will be a value that determines which class the cell line is in ("sensitive", "undetermined", "resistant" AKA SUR)
-	#Parameters: cell_line is the name of the cell_line we are interested in
-	#Parameters: training_matrix - a matrix containing the expression values
-	"""
-	def generate_cell_line_data(self,cell_line, training_matrix):
-		feature_inputs = list(training_matrix.ix[:,cell_line])
-		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
-			feature_inputs = [0.0] * len(training_matrix.index)
-		ic_50 = self.ic_50_dict[cell_line]
-		classifier = None
-		if(self.model == 'svc'): classifier = [self.class_bin(ic_50)]
-		if(self.model == 'svr'): classifier = [ic_50]
-		return feature_inputs, classifier
-	"""
 
 	def generate_cell_line_features(self,cell_line,training_matrix):
 		feature_inputs = list(training_matrix.ix[:,cell_line])
