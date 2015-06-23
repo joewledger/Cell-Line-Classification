@@ -21,8 +21,10 @@ class SVM_Classification:
 		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
 		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
-		self.training_matrix = self.df.generate_cell_line_expression_matrix(True)
-		self.full_matrix = self.training_matrix.copy()
+		
+		self.full_matrix = self.df.generate_cell_line_expression_matrix()
+		self.training_matrix = self.df.strip_cell_lines_without_ic50(self.full_matrix)
+
 		self.ic_50_dict = self.df.generate_ic_50_dict()
 		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.training_matrix.columns.values))
 		self.class_bin = self.generate_class_bin()
@@ -191,4 +193,4 @@ class SVM_Classification:
 		model = self.generate_model(self.cell_lines,self.training_matrix)
 		all_cell_lines = list(self.full_matrix.columns.values)
 		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix)
-		return all_cell_lines, [model.predict(feature) for feature in full_features]
+		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
