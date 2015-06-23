@@ -55,10 +55,12 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 		if(kernel == 'linear'): features_file.write("Model coefficients: %s\n\n" % str([str(x) for x in feature[4]]))
 	features_file.close()
 
-	#full_model_file = open(outdir + "Results/Full_Model_Cell_Groupings.txt","wb")
-	#full_model_predictions = [svm.get_full_model_predictions(threshold) for threshold in thresholds]
-	#for prediction in full_model_predictions:
-	#	full_model_file.write(str(prediction) + "\n")
+	full_model_file = open(outdir + "Results/Full_Model_Cell_Groupings.txt","wb")
+	full_model_predictions = [svm.get_full_model_predictions(threshold) for threshold in thresholds]
+	for i,prediction in enumerate(full_model_predictions):
+		full_model_file.write("Threshold: %s\nCell Line Names: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([str(x[0]) for x in prediction[1]])))
+
+	full_model_file.close()
 
 	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
 	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]

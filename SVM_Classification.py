@@ -186,10 +186,9 @@ class SVM_Classification:
 		model = self.generate_model(self.cell_lines,self.training_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
 		return model.coef_[0]
 
+	#Returns a tuple containing a list of all the cell lines we are predicting and their classifications
 	def get_full_model_predictions(self,threshold):
-		output = list()
 		model = self.generate_model(self.cell_lines,self.training_matrix)
-		#full_data = self.create_training_data(list(self.full_matrix.columns.values), self.full_matrix)
-		output.append(model.predict(full_data[0]))
-		return output
-
+		all_cell_lines = list(self.full_matrix.columns.values)
+		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix)
+		return all_cell_lines, [model.predict(feature) for feature in full_features]
