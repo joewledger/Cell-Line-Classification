@@ -21,16 +21,17 @@ class SVM_Classification:
 		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
 		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
-		self.data_matrix = self.df.generate_cell_line_expression_matrix(True)
+		self.training_matrix = self.df.generate_cell_line_expression_matrix(True)
+		self.full_matrix = self.training_matrix.copy()
 		self.ic_50_dict = self.df.generate_ic_50_dict()
-		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
+		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.training_matrix.columns.values))
 		self.class_bin = self.generate_class_bin()
 			
 		#Trim data
 		if(self.exclude_undetermined):
-			self.data_matrix = self.data_matrix[[x for x in self.data_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
-			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.data_matrix.columns.values))
-		self.cell_lines = list(self.data_matrix.columns.values)
+			self.training_matrix = self.training_matrix[[x for x in self.training_matrix.columns if not self.class_bin(self.ic_50_dict[x]) == 1]]
+			self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.training_matrix.columns.values))
+		self.cell_lines = list(self.training_matrix.columns.values)
 		self.num_samples = len(self.cell_lines)
 
 	#Evaluates the model at each threshold specified in self.thresholds
@@ -43,7 +44,6 @@ class SVM_Classification:
 		for threshold in self.thresholds:
 			prediction, feature_selction = self.cross_validate_make_predictions(num_folds,threshold)
 			all_predictions.append(prediction)
-			#all_feature_selection.append(feature_selction)
 			all_feature_selection.extend(feature_selction)
 			evaluation = self.cross_validate_evaluate_predictions(predictions=prediction)
 			all_evaluations.append(evaluation)
@@ -60,16 +60,20 @@ class SVM_Classification:
 		feature_selection = list()
 		for fold in range(0,num_folds):
 			training_cell_lines, testing_cell_lines = self.split_testing_training_samples(fold,num_folds)
-			data_frame = self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
+			data_frame = self.training_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)])
 			training_frame = data_frame[[x for x in training_cell_lines if x in data_frame.columns]]
 			testing_frame = data_frame[[y for y in testing_cell_lines if y in data_frame.columns]]
 			#Tuple containing fold, threshold, number of features selected, features selected, and weight of features selected
 			feature_selection.append(tuple([fold,threshold,len(data_frame.index),[str(x) for x in data_frame.index],(self.get_coefficients(fold,threshold) if self.kernel == 'linear' else 0)]))
 			model = self.generate_model(training_cell_lines,training_frame)
 			for cell_line in testing_cell_lines:
+				"""
 				cell_line_data = self.generate_cell_line_data(cell_line,testing_frame)
 				predictions[0].append(cell_line_data[1])
 				predictions[1].append(model.predict(cell_line_data[0]))
+				"""
+				predictions[0].append(self.generate_cell_line_classifier(cell_line,testing_frame))
+				predictions[1].append(self.generate_cell_line_features(cell_line,testing_frame))
 		return predictions,feature_selection
 
 	#Evaluates the predictions the model makes for accuracy
@@ -93,13 +97,15 @@ class SVM_Classification:
 
 	#This method will generate a SVM classifier
 	#Parameters: training subset - a list of the cell_line names that we will use to get features from, as well as IC50 values
-	#Parameters: data_matrix - a matrix containing the expression values
-	def generate_model(self,training_subset,data_matrix):
-		training_data = self.create_training_data(training_subset,data_matrix)
+	#Parameters: training_matrix - a matrix containing the expression values
+	def generate_model(self,training_subset,training_matrix):
+		#training_data = self.create_training_data(training_subset,training_matrix)
+		training_inputs = self.get_training_inputs(training_subset,training_matrix)
+		training_outputs = self.get_training_outputs(training_subset,training_matrix)
 		model = None
 		if(self.model == 'svc'): model = svm.SVC(kernel=self.kernel)
 		if(self.model == 'svr'): model = svm.SVR(kernel=self.kernel)
-		model.fit(training_data[0],[value[0] for value in training_data[1]])
+		model.fit(training_inputs,[value[0] for value in training_outputs])
 		return model
 
 	#This method will return a tuple containing the training input and output for our SVM classifier based on a list of cell_line names
@@ -107,14 +113,24 @@ class SVM_Classification:
 	#Output: a tuple, first entry is training input, second is training output
 	#	Example for training input --- [[0,0],[1,1]], there are two samples, each with two features
 	#	Example for training output -- [0,1], there are two samples, each with a classification in range (0, n_classes - 1)
-	def create_training_data(self,training_subset,data_matrix):
+	"""
+	def create_training_data(self,training_subset,training_matrix):
 		training_input = []
 		training_output = []
 		for cell_line in training_subset:
-			cell_line_data = self.generate_cell_line_data(cell_line,data_matrix)
+			cell_line_data = self.generate_cell_line_data(cell_line,training_matrix)
 			training_input.append(cell_line_data[0])
 			training_output.append(cell_line_data[1])
+			training_input.append(self.generate_cell_line_features(cell_line,training_matrix))
+			training_output.append(self.generate_cell_line_classifier(cell_line,training_matrix))
 		return tuple([training_input,training_output])
+	"""
+
+	def get_training_inputs(self,training_subset,training_matrix):
+		return [self.generate_cell_line_features(cell_line,training_matrix) for cell_line in training_subset]
+
+	def get_training_outputs(self,training_subset,training_matrix):
+		return [self.generate_cell_line_classifier(cell_line,training_matrix) for cell_line in training_subset]
 
 	#This method will return a tuple containing the feature inputs and output for a particular cell line
 	#The first entry in the tuple will be the feature inputs for the cell_line
@@ -122,16 +138,31 @@ class SVM_Classification:
 	#The second entry in the tuple will be the training output for the sample
 	#	This will be a value that determines which class the cell line is in ("sensitive", "undetermined", "resistant" AKA SUR)
 	#Parameters: cell_line is the name of the cell_line we are interested in
-	#Parameters: data_matrix - a matrix containing the expression values
-	def generate_cell_line_data(self,cell_line, data_matrix):
-		feature_inputs = list(data_matrix.ix[:,cell_line])
-		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(data_matrix.index)):
-			feature_inputs = [0.0] * len(data_matrix.index)
+	#Parameters: training_matrix - a matrix containing the expression values
+	"""
+	def generate_cell_line_data(self,cell_line, training_matrix):
+		feature_inputs = list(training_matrix.ix[:,cell_line])
+		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
+			feature_inputs = [0.0] * len(training_matrix.index)
 		ic_50 = self.ic_50_dict[cell_line]
 		classifier = None
 		if(self.model == 'svc'): classifier = [self.class_bin(ic_50)]
 		if(self.model == 'svr'): classifier = [ic_50]
 		return feature_inputs, classifier
+	"""
+
+	def generate_cell_line_features(self,cell_line,training_matrix):
+		feature_inputs = list(training_matrix.ix[:,cell_line])
+		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
+			feature_inputs = [0.0] * len(training_matrix.index)
+		return feature_inputs
+
+	def generate_cell_line_classifier(self,cell_line,training_matrix):
+		ic_50 = self.ic_50_dict[cell_line]
+		classifier = None
+		if(self.model == 'svc'): classifier = [self.class_bin(ic_50)]
+		if(self.model == 'svr'): classifier = [ic_50]
+		return classifier
 
 	#Returns a function that classifies cell lines as either sensitive or resistant
 	#Looks at distribution of IC50 values
@@ -162,8 +193,8 @@ class SVM_Classification:
 	#This saves a lot of computations, and it cuts the runtime by a factor of the number of thresholds we are using
 	#Parameters: num_folds - the number of folds we are using in cross-validation
 	def get_fold_gene_pvalue_frame(self,num_folds):
-		sensitive_frame = self.data_matrix[[x for x in self.data_matrix.columns if self.class_bin(self.ic_50_dict[x]) == 0]]
-		resistant_frame = self.data_matrix[[y for y in self.data_matrix.columns if self.class_bin(self.ic_50_dict[y]) == 2]]
+		sensitive_frame = self.training_matrix[[x for x in self.training_matrix.columns if self.class_bin(self.ic_50_dict[x]) == 0]]
+		resistant_frame = self.training_matrix[[y for y in self.training_matrix.columns if self.class_bin(self.ic_50_dict[y]) == 2]]
 		fold_series = []
 		for fold in range(0,num_folds):
 			training,testing = self.split_testing_training_samples(fold,num_folds)
@@ -195,5 +226,13 @@ class SVM_Classification:
 		return contingency_list[0][0] / sum(contingency_list[0][x] for x in range(0,(2 if self.exclude_undetermined else 3)))
 
 	def get_coefficients(self,fold,threshold):
-		model = self.generate_model(self.cell_lines,self.data_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
+		model = self.generate_model(self.cell_lines,self.training_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
 		return model.coef_[0]
+
+	def get_full_model_predictions(self,threshold):
+		output = list()
+		model = self.generate_model(self.cell_lines,self.training_matrix)
+		#full_data = self.create_training_data(list(self.full_matrix.columns.values), self.full_matrix)
+		output.append(model.predict(full_data[0]))
+		return output
+

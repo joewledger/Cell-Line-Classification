@@ -41,15 +41,25 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename)
 	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(num_folds)
 	cell_lines = df.generate_ic_50_dict().keys()
-	results_file = open(outdir + "Results/Results.txt",'wb')
-	features_file = open(outdir + "Results/Feature_Selection.txt",'wb')
+
+	cv_results_file = open(outdir + "Results/Cross-Validation-Results.txt",'wb')
 	for i,evaluation in enumerate(all_evaluations):
-		results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
+		cv_results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
 						  (str(cell_lines), str(thresholds[i]), str([x[0] for x in all_predictions[i][0]]), str(thresholds[i]), str([x[0] for x in all_predictions[i][1]]), str(svm.model_accuracy(evaluation))))
 		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
+	cv_results_file.close()
+
+	features_file = open(outdir + "Results/Feature_Selection.txt",'wb')
 	for feature in all_features:
 		features_file.write("Fold: %s, Threshold: %s, Number of features: %s\nFeatures Selected: %s\n" % (str(feature[0]), str(feature[1]), str(feature[2]), str(feature[3])))
 		if(kernel == 'linear'): features_file.write("Model coefficients: %s\n\n" % str([str(x) for x in feature[4]]))
+	features_file.close()
+
+	#full_model_file = open(outdir + "Results/Full_Model_Cell_Groupings.txt","wb")
+	#full_model_predictions = [svm.get_full_model_predictions(threshold) for threshold in thresholds]
+	#for prediction in full_model_predictions:
+	#	full_model_file.write(str(prediction) + "\n")
+
 	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
 	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
