@@ -25,6 +25,8 @@ class SVM_Classification:
 		self.full_matrix = self.df.generate_cell_line_expression_matrix()
 		self.training_matrix = self.df.strip_cell_lines_without_ic50(self.full_matrix)
 
+		self.patient_matrix = self.df.generate_patients_expression_matrix()
+
 		self.ic_50_dict = self.df.generate_ic_50_dict()
 		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.training_matrix.columns.values))
 		self.class_bin = self.generate_class_bin()
@@ -190,17 +192,22 @@ class SVM_Classification:
 		return model.coef_[0]
 
 	#Returns a tuple containing a list of all the cell lines we are predicting and their classifications
-	def get_full_model_predictions(self,threshold):
-		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
+	def get_full_model_predictions(self,threshold,insignificant_gene_dict):
 		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
 		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
 		all_cell_lines = list(self.full_matrix.columns.values)
 		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]))
 		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
 
+	def get_all_full_model_predictions(self):
+		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
+		return [self.get_full_model_predictions(threshold,insignificant_gene_dict) for threshold in self.thresholds]
+
+
+
 	#def get_patient_predictions(self,threshold):
-	#	model = self.generate_model()
-	#	all_cell_lines = 
+		#model = self.generate_model()
+		#all_cell_lines = 
 
 
 

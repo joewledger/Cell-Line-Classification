@@ -56,7 +56,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	features_file.close()
 
 	full_model_file = open(outdir + "Results/Full_Model_Cell_Groupings.txt","wb")
-	full_model_predictions = [svm.get_full_model_predictions(threshold) for threshold in thresholds]
+	full_model_predictions = svm.get_all_full_model_predictions()
 	for i,prediction in enumerate(full_model_predictions):
 		full_model_file.write("Threshold: %s\nCell Line Names: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([str(x[0]) for x in prediction[1]])))
 	full_model_file.close()
