@@ -190,10 +190,15 @@ class SVM_Classification:
 
 	#Returns a tuple containing a list of all the cell lines we are predicting and their classifications
 	def get_full_model_predictions(self,threshold):
-		model = self.generate_model(self.cell_lines,self.training_matrix)
+		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
+		model = self.generate_model(self.cell_lines,self.training_matrix.drop(labels=self.insignificant_gene_dict[(0,threshold)]))
 		all_cell_lines = list(self.full_matrix.columns.values)
 		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix)
 		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
 
-	def get_patient_predictions(self,threshold):
-		model = self.generate_model()
+	#def get_patient_predictions(self,threshold):
+	#	model = self.generate_model()
+	#	all_cell_lines = 
+
+
+
