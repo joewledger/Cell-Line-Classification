@@ -37,8 +37,8 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
 	thresholds = generate_thresholds(increment,max_threshold)
 	kwargs['thresholds'] = thresholds
-	svm = svmc.SVM_Classification(ic_50_filename,expression_features_filename,**kwargs)
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
+	svm = svmc.SVM_Classification(df,**kwargs)
 	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(num_folds)
 	cell_lines = df.generate_ic_50_dict().keys()
 
@@ -93,14 +93,14 @@ def compile_all():
 
 #Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-#expression_features_filename = "CCLE_Data/sample1000.res"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample1000.res"
 tcga_dirctory = "TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
 #Examples of how to run program
 #compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
 #compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
-#compile_all()
+compile_all()
 
-df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
-df.generate_patients_expression_matrix()
+#df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
+#df.generate_patients_expression_matrix()

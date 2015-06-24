@@ -14,9 +14,9 @@ import time
 
 class SVM_Classification:
 
-	def __init__(self,ic50_filename,data_file,**kwargs):
+	def __init__(self,data_formatter,**kwargs):
 		#Read data from files
-		self.df = dfm.DataFormatting(ic50_filename,data_file)
+		self.df = data_formatter
 		self.model = (kwargs['model'] if 'model' in kwargs else 'svc')
 		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
@@ -157,6 +157,7 @@ class SVM_Classification:
 		fold_series = []
 		for fold in range(0,num_folds):
 			training,testing = self.split_testing_training_samples(fold,num_folds)
+			if(num_folds == 1): training = testing
 			sensitive_fold = sensitive_frame[[x for x in sensitive_frame.columns if x in training]]
 			resistant_fold = resistant_frame[[y for y in resistant_frame.columns if y in training]]
 			fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
@@ -191,9 +192,10 @@ class SVM_Classification:
 	#Returns a tuple containing a list of all the cell lines we are predicting and their classifications
 	def get_full_model_predictions(self,threshold):
 		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
-		model = self.generate_model(self.cell_lines,self.training_matrix.drop(labels=self.insignificant_gene_dict[(0,threshold)]))
+		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
+		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
 		all_cell_lines = list(self.full_matrix.columns.values)
-		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix)
+		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]))
 		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
 
 	#def get_patient_predictions(self,threshold):
