@@ -6,19 +6,32 @@ import numpy as np
 import scipy.stats.mstats as sp
 import pandas as pd
 import csv
+import os
 
 class DataFormatting:
 
-	def __init__(self,ic50_filename,datafile):
+	def __init__(self,ic50_filename,datafile,patients_directory):
 		self.ic_50_filename = ic50_filename
 		self.expression_features_filename = datafile
-			
+		self.patients_directory = patients_directory
+	
+	def generate_patients_expression_matrix(self):
+		full_path = os.getcwd() + "/" + self.patients_directory
+		files = [x for x in os.listdir(full_path) if x.endswith(".txt")]
+		all_series = []
+		for f in files:
+			s = pd.Series.from_csv(full_path + "/" + f,header=-1,sep="\t")
+			s.index.name = "Gene"
+			s.name = s['Hybridization REF'] 
+			s = s[2:]
+			all_series.append(s)
+		df = pd.DataFrame(all_series).T
+		return df
 
 	#Returns a tuple containing
 	#	1) A matrix of cell lines x genes
 	#	2) A list of cell line names
 	#	3) A list of gene names
-	#	4) A matrix of z-scores
 	#Parameter: filter_cells - boolean that tells us whether or not to filter out cell lines not in ic_50 data
 	#	True -- filter all cell lines not in IC50 data, False -- don't filter
 	def generate_cell_line_expression_matrix(self):

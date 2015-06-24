@@ -194,3 +194,6 @@ class SVM_Classification:
 		all_cell_lines = list(self.full_matrix.columns.values)
 		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix)
 		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
+
+	def get_patient_predictions(self,threshold):
+		model = self.generate_model()
