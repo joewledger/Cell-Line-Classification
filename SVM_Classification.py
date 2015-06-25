@@ -116,7 +116,7 @@ class SVM_Classification:
 		feature_inputs = list(training_matrix.ix[:,cell_line])
 		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
 			feature_inputs = [0.0] * len(training_matrix.index)
-		return feature_inputs
+		return [(x if not x == 'null' else '0.0') for x in feature_inputs]
 
 	def generate_cell_line_classifier(self,cell_line,training_matrix):
 		ic_50 = self.ic_50_dict[cell_line]
@@ -191,6 +191,10 @@ class SVM_Classification:
 		model = self.generate_model(self.cell_lines,self.training_matrix.drop(labels=self.insignificant_gene_dict[(fold,threshold)]))
 		return model.coef_[0]
 
+	def get_all_full_model_predictions(self):
+		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
+		return [self.get_full_model_predictions(threshold,insignificant_gene_dict) for threshold in self.thresholds]
+
 	#Returns a tuple containing a list of all the cell lines we are predicting and their classifications
 	def get_full_model_predictions(self,threshold,insignificant_gene_dict):
 		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
@@ -199,15 +203,17 @@ class SVM_Classification:
 		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]))
 		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
 
-	def get_all_full_model_predictions(self):
+	def get_all_patient_predictions(self):
 		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
-		return [self.get_full_model_predictions(threshold,insignificant_gene_dict) for threshold in self.thresholds]
+		return [self.get_patient_predictions(threshold,insignificant_gene_dict) for threshold in self.thresholds]
 
+	def get_patient_predictions(self,threshold,insignificant_gene_dict):
+		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]).sort_index()
+		patient_matrix = self.df.generate_patients_expression_matrix().sort_index()
+		thresholded_training_matrix = thresholded_training_matrix.reindex(list(patient_matrix.index)).dropna()
+		patient_matrix = patient_matrix.reindex(list(thresholded_training_matrix.index)).dropna()
 
-
-	#def get_patient_predictions(self,threshold):
-		#model = self.generate_model()
-		#all_cell_lines = 
-
-
-
+		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
+		patient_identifiers = list(patient_matrix.columns.values)
+		patient_features = self.get_training_inputs(patient_identifiers,patient_matrix)
+		return patient_identifiers, [model.predict(feature_set) for feature_set in patient_features]
