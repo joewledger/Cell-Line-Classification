@@ -99,8 +99,8 @@ def compile_all():
 
 #Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-#expression_features_filename = "CCLE_Data/sample100.res"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample100.res"
 tcga_dirctory = "TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
 #Examples of how to run program

@@ -26,6 +26,11 @@ class DataFormatting:
 			s = s[2:]
 			all_series.append(s)
 		df = pd.DataFrame(all_series).T
+		for row in df.iterrows():
+			for col in row[1].iteritems():
+				if(col[1] == 'null'):
+					df.ix[row[0],col[0]] == '0.0'
+		df = df.convert_objects(convert_numeric=True)
 		return df
 
 	#Returns a tuple containing
@@ -43,6 +48,13 @@ class DataFormatting:
 		df = df.drop(labels=[x for x in df.index if not type(x) == str or not x[0].isupper()])
 		df = df.drop(labels=[x for x in df.index if type(df.ix[x,df.columns[0]]) != np.float64])
 		return df
+
+	def normalize_expression_matrix(self,matrix):
+		cols = list(matrix.columns.values)
+		for col in cols:
+			matrix[col] = (matrix[col] - matrix[col].mean()) / matrix[col].std(ddof=0)
+		return matrix
+
 
 	def strip_cell_lines_without_ic50(self,data_matrix):
 		return data_matrix.drop(labels=[x for x in data_matrix.columns if x not in self.generate_ic_50_dict().keys()],axis=1)
