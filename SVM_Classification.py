@@ -200,8 +200,9 @@ class SVM_Classification:
 		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
 		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
 		all_cell_lines = list(self.full_matrix.columns.values)
-		full_features = self.get_training_inputs(all_cell_lines, self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]))
-		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features]
+		trimmed_matrix = self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
+		full_features = self.get_training_inputs(all_cell_lines, trimmed_matrix)
+		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features], [str(x) for x in trimmed_matrix.index], model.coef_[0]
 
 	def get_all_patient_predictions(self):
 		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
@@ -212,7 +213,6 @@ class SVM_Classification:
 		patient_matrix = self.df.generate_patients_expression_matrix().sort_index()
 		patient_matrix = patient_matrix.reindex(list(thresholded_training_matrix.index)).dropna()
 		thresholded_training_matrix = thresholded_training_matrix.reindex(list(patient_matrix.index)).dropna()
-		
 
 		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
 		patient_identifiers = list(patient_matrix.columns.values)

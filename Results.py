@@ -6,15 +6,24 @@ import DataFormatting as dfm
 import Plotting as plt
 import os
 
+#Saved filenames, for convenience
+ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
+#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
+expression_features_filename = "CCLE_Data/sample100.res"
+tcga_dirctory = "TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
-def generate_thresholds(increment, max_threshold):
-	return [float(i) * increment for i in range(1,int(max_threshold / increment) + 1)]
+all_thresholds = list()
+all_accuracies = list()
+all_accuracies_sensitive = list()
+all_kernels = list()
 
-def make_dirs(outdir):
-	for directory in ["","Results","Visualizations","Visualizations/Cont_Tables"]:
-		out = outdir + directory
-		if(not os.path.exists(out)):
-			os.makedirs(out)
+def compile_all():
+	reset_stored_values()
+	compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
+	compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
+	compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
+	plot_kernel_accuracies(all_accuracies,all_accuracies_sensitive,all_kernels,all_thresholds)
+
 
 #This method saves the results of our classification experiment to a given directory
 #args   -- outdir (directory to save results to)
@@ -27,8 +36,8 @@ def make_dirs(outdir):
 #		-- num_folds (number of folds to use in cross-validation)
 #		-- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
 #		-- max_threshold (the maximum value of the threshold parameter that you would like to test)
-
 def compile_results(outdir,ic50_file, expression_file,**kwargs):
+	print("Now working on SVM with properties: " + str(kwargs))
 	outdir += "/"
 	make_dirs(outdir)
 	kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
@@ -37,11 +46,39 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
 	thresholds = generate_thresholds(increment,max_threshold)
 	kwargs['thresholds'] = thresholds
+
+	print("Now working on importing data matrices")
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
 	svm = svmc.SVM_Classification(df,**kwargs)
+	print("Done importing data matrices")
+
+	#cell_lines = df.generate_ic_50_dict().keys()
+	print("Now working on Cross Validation")
 	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(num_folds)
-	cell_lines = df.generate_ic_50_dict().keys()
+	print("Done with Cross Validation")
+
+	print("Now working on predictions using full model")
+	full_model_predictions = svm.get_all_full_model_predictions()
+	print("Done making predictions using full model")
+
+	print("Now working on patient predictions")
+	patient_predictions = svm.get_all_patient_predictions()
+	print("Done working on patient predictions")
 	
+	write_cv_results(outdir,svm,all_predictions,all_evaluations,thresholds)
+	write_cv_features(outdir,all_features,kernel)
+	write_full_model_predictions(outdir,full_model_predictions, thresholds)
+	write_full_model_features(outdir, full_model_predictions, thresholds)
+	write_patient_results(outdir, patient_predictions,thresholds)
+
+	plot_accuracies(outdir,all_evaluations,thresholds)
+	
+	all_thresholds.append(thresholds)
+	all_accuracies.append(accuracy_values)
+	all_accuracies_sensitive.append(accuracy_values_sensitive)
+	all_kernels.append(kernel)
+
+def write_cv_results(outdir,svm, all_predictions,all_evaluations, thresholds):
 	cv_results_file = open(outdir + "Results/Cross-Validation-Results.txt",'wb')
 	for i,evaluation in enumerate(all_evaluations):
 		cv_results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
@@ -49,64 +86,52 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 		plt.generate_prediction_heat_maps(outdir + "Visualizations/Cont_Tables/", evaluation,thresholds[i])
 	cv_results_file.close()
 
+def write_cv_features(outdir,all_features,kernel):
 	features_file = open(outdir + "Results/Feature_Selection.txt",'wb')
 	for feature in all_features:
 		features_file.write("Fold: %s, Threshold: %s, Number of features: %s\nFeatures Selected: %s\n" % (str(feature[0]), str(feature[1]), str(feature[2]), str(feature[3])))
 		if(kernel == 'linear'): features_file.write("Model coefficients: %s\n\n" % str([str(x) for x in feature[4]]))
 	features_file.close()
 
+def write_full_model_predictions(outdir, full_model_predictions,thresholds):
 	full_model_file = open(outdir + "Results/Full_Model_Cell_Groupings.txt","wb")
-	full_model_predictions = svm.get_all_full_model_predictions()
 	for i,prediction in enumerate(full_model_predictions):
 		full_model_file.write("Threshold: %s\nCell Line Names: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([str(x[0]) for x in prediction[1]])))
 	full_model_file.close()
-	
+
+def write_full_model_features(outdir, full_model_features,thresholds,kernel):
+	full_model_features_file = open(outdir + "Results/Full_Model_Feature_Selection.txt","wb")
+	for i,prediction in enumerate(full_model_features):
+		full_model_features_file.write("Threshold: %s , Number of Features: %s\nFeatures Selected: %s\n" % (thresholds[i], str(len(prediction[2])), str(prediction[2])))
+		if(kernel == 'linear'): full_model_features_file.write("Model coefficients: %s\n\n" % str(prediction[3]))
+	full_model_features_file.close()
+
+def write_patient_results(outdir, patient_predictions, thresholds):
 	patient_file = open(outdir + "Results/Patient_Groupings.txt","wb")
-	patient_predictions = svm.get_all_patient_predictions()
 	for i,prediction in enumerate(patient_predictions):
-		patient_file.write("Threshold: %s\nPatient Identifiers: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([str(x[0]) for x in prediction[1]])))
+		patient_file.write("Threshold: %s\nPatient Identifiers: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([x[0] for x in prediction[1]])))
 	patient_file.close()
 
+def plot_accuracies(outdir, all_evaluations, thresholds):
 	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
 	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
-	return thresholds,accuracy_values, accuracy_values_sensitive
 
+def plot_kernel_accuracies(all_accuracies,all_accuracies_sensitive,all_kernels,all_thresholds):
+	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold.png",all_thresholds,all_accuracies,all_kernels)
+	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold_Sensitive.png", all_thresholds,all_accuracies_sensitive,all_kernels)
 
-def compile_all():
+def generate_thresholds(increment, max_threshold):
+	return [float(i) * increment for i in range(1,int(max_threshold / increment) + 1)]
+
+def make_dirs(outdir):
+	for directory in ["","Results","Visualizations","Visualizations/Cont_Tables"]:
+		out = outdir + directory
+		if(not os.path.exists(out)):
+			os.makedirs(out)
+
+def reset_stored_values():
 	all_thresholds = list()
 	all_accuracies = list()
 	all_accuracies_sensitive = list()
 	all_kernels = list()
-
-	t1,a1,as1 = compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
-	all_thresholds.append(t1)
-	all_accuracies.append(a1)
-	all_accuracies_sensitive.append(as1)
-	all_kernels.append('linear')
-	t2,a2,as2 = compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
-	all_thresholds.append(t2)
-	all_accuracies.append(a2)
-	all_accuracies_sensitive.append(as2)
-	all_kernels.append('poly')
-	t3,a3,as3 = compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
-	all_thresholds.append(t3)
-	all_accuracies.append(a3)
-	all_accuracies_sensitive.append(as3)
-	all_kernels.append('rbf')
-	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold.png",all_thresholds,all_accuracies,all_kernels)
-	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold_Sensitive.png", all_thresholds,all_accuracies_sensitive,all_kernels)
-
-#Saved filenames, for convenience
-ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
-#expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample100.res"
-tcga_dirctory = "TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
-
-#Examples of how to run program
-#compile_results("Tests/SVR",ic_50_filename,expression_features_filename,model='svr')
-#compile_results("Tests/SVR_Exclude",ic_50_filename,expression_features_filename,model='svr',exclude_undetermined=True)
-compile_all()
-
-#df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
-#df.generate_patients_expression_matrix()
