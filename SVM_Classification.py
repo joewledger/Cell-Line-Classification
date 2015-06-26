@@ -210,9 +210,8 @@ class SVM_Classification:
 	def get_patient_predictions(self,threshold,insignificant_gene_dict):
 		thresholded_training_matrix = self.training_matrix.drop(labels=insignificant_gene_dict[(0,threshold)]).sort_index()
 		patient_matrix = self.df.generate_patients_expression_matrix().sort_index()
-		patient_matrix = patient_matrix.reindex(list(thresholded_training_matrix.index)).dropna()
 		thresholded_training_matrix = thresholded_training_matrix.reindex(list(patient_matrix.index)).dropna()
-		
+		patient_matrix = patient_matrix.reindex(list(thresholded_training_matrix.index)).dropna()
 
 		model = self.generate_model(self.cell_lines,thresholded_training_matrix)
 		patient_identifiers = list(patient_matrix.columns.values)
