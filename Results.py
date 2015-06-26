@@ -36,6 +36,7 @@ def compile_all():
 #		-- num_folds (number of folds to use in cross-validation)
 #		-- increment (the increment at which you want to change the threshold parameter, also used as the minimum threshold)
 #		-- max_threshold (the maximum value of the threshold parameter that you would like to test)
+#		-- patients (boolean indicating whether or not you want to use model to classify patients in TCGA, default False)
 def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	print("Now working on SVM with properties: " + str(kwargs))
 	outdir += "/"
@@ -44,6 +45,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	num_folds = (kwargs['num_folds'] if 'num_folds' in kwargs else 5)
 	increment = (kwargs['increment'] if 'increment' in kwargs else .01)
 	max_threshold = (kwargs['max_threshold'] if 'max_threshold' in kwargs else .20)
+	patients = (kwargs['patients'] if 'patients' in kwargs else False)
 	thresholds = generate_thresholds(increment,max_threshold)
 	kwargs['thresholds'] = thresholds
 
@@ -60,17 +62,18 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	print("Now working on predictions using full model")
 	full_model_predictions = svm.get_all_full_model_predictions()
 	print("Done making predictions using full model")
-
-	print("Now working on patient predictions")
-	patient_predictions = svm.get_all_patient_predictions()
-	print("Done working on patient predictions")
 	
 	write_cv_results(outdir,svm,all_predictions,all_evaluations,thresholds)
 	write_cv_features(outdir,all_features,kernel)
 	write_full_model_predictions(outdir,full_model_predictions, thresholds)
 	write_full_model_features(outdir, full_model_predictions, thresholds)
-	write_patient_results(outdir, patient_predictions,thresholds)
 
+	if(patients):
+		print("Now working on patient predictions")
+		patient_predictions = svm.get_all_patient_predictions()
+		write_patient_results(outdir, patient_predictions,thresholds)
+		print("Done working on patient predictions")
+	
 	plot_accuracies(outdir,all_evaluations,thresholds)
 	
 	all_thresholds.append(thresholds)
