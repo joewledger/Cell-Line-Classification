@@ -46,15 +46,11 @@ class DataFormatting:
 		renamed_columns = {c: c[:c.find('_')] for c in df.columns}
 		df = df.rename(columns=renamed_columns)
 		df = df.drop(labels=[x for x in df.index if not type(x) == str or not x[0].isupper()])
-		df = df.drop(labels=[x for x in df.index if type(df.ix[x,df.columns[0]]) != np.float64])
+		#df = df.drop(labels=[x for x in df.index if type(df.ix[x,df.columns[0]]) != np.float64])
 		return df
 
-	def normalize_expression_matrix(self,matrix):
-		cols = list(matrix.columns.values)
-		for col in cols:
-			matrix[col] = (matrix[col] - matrix[col].mean()) / matrix[col].std(ddof=0)
-		return matrix
-
+	def normalize_expression_matrix(self,matrix,**kwargs):
+		return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in matrix.iteritems()],axis=1)
 
 	def strip_cell_lines_without_ic50(self,data_matrix):
 		return data_matrix.drop(labels=[x for x in data_matrix.columns if x not in self.generate_ic_50_dict().keys()],axis=1)

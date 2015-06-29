@@ -81,6 +81,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	all_accuracies_sensitive.append(accuracy_values_sensitive)
 	all_kernels.append(kernel)
 
+
 def write_cv_results(outdir,svm, all_predictions,all_evaluations, thresholds):
 	cv_results_file = open(outdir + "Results/Cross-Validation-Results.txt",'wb')
 	for i,evaluation in enumerate(all_evaluations):
