@@ -52,21 +52,25 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	print("Now working on importing data matrices")
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
 	svm = svmc.SVM_Classification(df,**kwargs)
+	cell_lines = df.generate_ic_50_dict().keys()
 	print("Done importing data matrices")
 
 	#cell_lines = df.generate_ic_50_dict().keys()
 	print("Now working on Cross Validation")
 	all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(num_folds)
+	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
+	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
 	print("Done with Cross Validation")
 
 	print("Now working on predictions using full model")
 	full_model_predictions = svm.get_all_full_model_predictions()
 	print("Done making predictions using full model")
 	
-	write_cv_results(outdir,svm,all_predictions,all_evaluations,thresholds)
+	write_cv_results(outdir,svm,all_predictions,all_evaluations,cell_lines,thresholds)
 	write_cv_features(outdir,all_features,kernel)
 	write_full_model_predictions(outdir,full_model_predictions, thresholds)
-	write_full_model_features(outdir, full_model_predictions, thresholds)
+	if(kernel == 'linear'):
+		write_full_model_features(outdir, full_model_predictions, thresholds,kernel)
 
 	if(patients):
 		print("Now working on patient predictions")
@@ -74,7 +78,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 		write_patient_results(outdir, patient_predictions,thresholds)
 		print("Done working on patient predictions")
 	
-	plot_accuracies(outdir,all_evaluations,thresholds)
+	plot_accuracies(outdir,accuracy_values,accuracy_values_sensitive,thresholds)
 	
 	all_thresholds.append(thresholds)
 	all_accuracies.append(accuracy_values)
@@ -82,7 +86,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 	all_kernels.append(kernel)
 
 
-def write_cv_results(outdir,svm, all_predictions,all_evaluations, thresholds):
+def write_cv_results(outdir,svm, all_predictions,all_evaluations,cell_lines, thresholds):
 	cv_results_file = open(outdir + "Results/Cross-Validation-Results.txt",'wb')
 	for i,evaluation in enumerate(all_evaluations):
 		cv_results_file.write("Cell line names:\n%s\nActual IC50 values for threshold: %s\n%s\nModel predictions for threshold: %s\n%s\nModel accuracy: %s\n\n" % 
@@ -106,8 +110,7 @@ def write_full_model_predictions(outdir, full_model_predictions,thresholds):
 def write_full_model_features(outdir, full_model_features,thresholds,kernel):
 	full_model_features_file = open(outdir + "Results/Full_Model_Feature_Selection.txt","wb")
 	for i,prediction in enumerate(full_model_features):
-		full_model_features_file.write("Threshold: %s , Number of Features: %s\nFeatures Selected: %s\n" % (thresholds[i], str(len(prediction[2])), str(prediction[2])))
-		if(kernel == 'linear'): full_model_features_file.write("Model coefficients: %s\n\n" % str(prediction[3]))
+		full_model_features_file.write("Threshold: %s , Number of Features: %s\nFeatures Selected: %s\nModel coefficients: %s\n\n" % (thresholds[i], str(len(prediction[2])), str(prediction[2]),str(prediction[3])))
 	full_model_features_file.close()
 
 def write_patient_results(outdir, patient_predictions, thresholds):
@@ -116,10 +119,9 @@ def write_patient_results(outdir, patient_predictions, thresholds):
 		patient_file.write("Threshold: %s\nPatient Identifiers: %s\nPredictions: %s\n\n" % (thresholds[i], str(prediction[0]), str([x[0] for x in prediction[1]])))
 	patient_file.close()
 
-def plot_accuracies(outdir, all_evaluations, thresholds):
-	accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
-	accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
+def plot_accuracies(outdir,accuracy_values,accuracy_values_sensitive, thresholds):
 	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold.png",thresholds, accuracy_values)
+	plt.plot_accuracy_threshold_curve(outdir + "Visualizations/Accuracy_Threshold_Sensitive.png",thresholds, accuracy_values_sensitive)
 
 def plot_kernel_accuracies(all_accuracies,all_accuracies_sensitive,all_kernels,all_thresholds):
 	plt.plot_accuracy_threshold_multiple_kernels("Tests/Kernel_Accuracy_Threshold.png",all_thresholds,all_accuracies,all_kernels)
@@ -139,3 +141,5 @@ def reset_stored_values():
 	all_accuracies = list()
 	all_accuracies_sensitive = list()
 	all_kernels = list()
+
+compile_all()

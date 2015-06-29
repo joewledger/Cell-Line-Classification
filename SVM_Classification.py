@@ -162,7 +162,15 @@ class SVM_Classification:
 			if(num_folds == 1): training = testing
 			sensitive_fold = sensitive_frame[[x for x in sensitive_frame.columns if x in training]]
 			resistant_fold = resistant_frame[[y for y in resistant_frame.columns if y in training]]
-			fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
+			all_pvals = list()
+			for x in sensitive_fold.index:
+				try:
+					all_pvals.append(sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1])
+				except TypeError:
+					all_pvals.append(1.0)
+			fold_values = pd.Series(all_pvals,index=sensitive_fold.index)
+			fold_values = fold_values.groupby(level=0).first()
+			#fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
 			fold_series.append(fold_values)
 		return pd.DataFrame(fold_series)
 
@@ -202,7 +210,7 @@ class SVM_Classification:
 		all_cell_lines = list(self.full_matrix.columns.values)
 		trimmed_matrix = self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
 		full_features = self.get_training_inputs(all_cell_lines, trimmed_matrix)
-		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features], [str(x) for x in trimmed_matrix.index], model.coef_[0]
+		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features], [str(x) for x in trimmed_matrix.index], (model.coef_[0] if self.kernel == 'linear' else 0)
 
 	def get_all_patient_predictions(self):
 		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
