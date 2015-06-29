@@ -9,7 +9,7 @@ import os
 #Saved filenames, for convenience
 ic_50_filename = "IC_50_Data/CL_Sensitivity.txt"
 #expression_features_filename = "CCLE_Data/CCLE_Expression_2012-09-29.res"
-expression_features_filename = "CCLE_Data/sample100.res"
+expression_features_filename = "CCLE_Data/sample1000.res"
 tcga_dirctory = "TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
 all_thresholds = list()
@@ -17,11 +17,23 @@ all_accuracies = list()
 all_accuracies_sensitive = list()
 all_kernels = list()
 
+
+def check_model_accuracy(ic50_file,expression_file):
+	thresholds = generate_thresholds(.01,.20)
+	for kernel in ['linear','poly','rbf']:
+		svm = svmc.SVM_Classification(ic50_file,expression_file,exclude_undetermined=True,kernel=kernel,normalization=True,thresholds=thresholds)
+		for i in range(0,1000):
+			all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(5)
+			accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
+			accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
+			print(kernel,thresholds, accuracy_values, accuracy_values_sensitive)
+			print("\n")
+
 def compile_all():
 	reset_stored_values()
-	compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear')
-	compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly')
-	compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf')
+	compile_results("Tests/Linear",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='linear',normalization=True)
+	compile_results("Tests/Poly",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='poly',normalization=True)
+	compile_results("Tests/RBF",ic_50_filename,expression_features_filename,exclude_undetermined=True,kernel='rbf',normalization=True)
 	plot_kernel_accuracies(all_accuracies,all_accuracies_sensitive,all_kernels,all_thresholds)
 
 
@@ -110,7 +122,7 @@ def write_full_model_predictions(outdir, full_model_predictions,thresholds):
 def write_full_model_features(outdir, full_model_features,thresholds,kernel):
 	full_model_features_file = open(outdir + "Results/Full_Model_Feature_Selection.txt","wb")
 	for i,prediction in enumerate(full_model_features):
-		full_model_features_file.write("Threshold: %s , Number of Features: %s\nFeatures Selected: %s\nModel coefficients: %s\n\n" % (thresholds[i], str(len(prediction[2])), str(prediction[2]),str(prediction[3])))
+		full_model_features_file.write("Threshold: %s , Number of Features: %s\nFeatures Selected: %s\nModel coefficients: %s\n\n" % (thresholds[i], str(len(prediction[2])), str(prediction[2]),str([str(x) for x in prediction[3]])))
 	full_model_features_file.close()
 
 def write_patient_results(outdir, patient_predictions, thresholds):
@@ -142,4 +154,6 @@ def reset_stored_values():
 	all_accuracies_sensitive = list()
 	all_kernels = list()
 
-compile_all()
+if __name__ == '__main__':
+	#compile_all()
+	check_model_accuracy(ic_50_filename,expression_features_filename)

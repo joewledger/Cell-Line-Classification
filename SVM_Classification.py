@@ -11,21 +11,25 @@ import DataFormatting as dfm
 import pandas as pd
 import scipy.stats as sp
 import time
+from random import shuffle
 
 class SVM_Classification:
 
-	def __init__(self,data_formatter,**kwargs):
+	def __init__(self,ic50_file,expression_file,**kwargs):
 		#Read data from files
-		self.df = data_formatter
+		self.df = dfm.DataFormatting(ic50_file,expression_file,(kwargs['patient_file'] if 'patient_file' in kwargs else None))
 		self.model = (kwargs['model'] if 'model' in kwargs else 'svc')
 		self.thresholds = (kwargs['thresholds'] if 'thresholds' in kwargs else None)
 		self.exclude_undetermined = (kwargs['exclude_undetermined'] if 'exclude_undetermined' in kwargs else False)
 		self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else 'rbf')
-		
+		self.normalization = (kwargs['normalization'] if 'normalization' in kwargs else False)
+
 		self.full_matrix = self.df.generate_cell_line_expression_matrix()
+		if(self.normalization):
+			self.full_matrix = self.df.normalize_expression_matrix(self.full_matrix)
 		self.training_matrix = self.df.strip_cell_lines_without_ic50(self.full_matrix)
 
-		self.patient_matrix = self.df.generate_patients_expression_matrix()
+		self.patient_matrix = None
 
 		self.ic_50_dict = self.df.generate_ic_50_dict()
 		self.ic_50_dict = self.df.trim_dict(self.ic_50_dict,list(self.training_matrix.columns.values))
@@ -38,9 +42,11 @@ class SVM_Classification:
 		self.cell_lines = list(self.training_matrix.columns.values)
 		self.num_samples = len(self.cell_lines)
 
+
 	#Evaluates the model at each threshold specified in self.thresholds
 	#Parameters: num_folds - the number of folds we will be using in cross-fold validation
 	def evaluate_all_thresholds(self,num_folds):
+		#shuffle(self.cell_lines)
 		self.insignificant_gene_dict = self.generate_insignificant_genes_dict(num_folds)
 		all_predictions = list()
 		all_feature_selection = list()
@@ -114,8 +120,8 @@ class SVM_Classification:
 
 	def generate_cell_line_features(self,cell_line,training_matrix):
 		feature_inputs = list(training_matrix.ix[:,cell_line])
-		if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
-			feature_inputs = [0.0] * len(training_matrix.index)
+		#if(any(type(x) == np.ndarray for x in feature_inputs) or len(feature_inputs) != len(training_matrix.index)):
+		#	feature_inputs = [0.0] * len(training_matrix.index)
 		return [(x if not x == 'null' else '0.0') for x in feature_inputs]
 
 	def generate_cell_line_classifier(self,cell_line,training_matrix):
@@ -170,7 +176,6 @@ class SVM_Classification:
 					all_pvals.append(1.0)
 			fold_values = pd.Series(all_pvals,index=sensitive_fold.index)
 			fold_values = fold_values.groupby(level=0).first()
-			#fold_values = pd.Series([sp.ttest_ind(list(sensitive_fold.ix[x]),list(resistant_fold.ix[x]))[1] for x in sensitive_fold.index], index=sensitive_fold.index)
 			fold_series.append(fold_values)
 		return pd.DataFrame(fold_series)
 
@@ -210,9 +215,17 @@ class SVM_Classification:
 		all_cell_lines = list(self.full_matrix.columns.values)
 		trimmed_matrix = self.full_matrix.drop(labels=insignificant_gene_dict[(0,threshold)])
 		full_features = self.get_training_inputs(all_cell_lines, trimmed_matrix)
-		return all_cell_lines, [model.predict(feature_set) for feature_set in full_features], [str(x) for x in trimmed_matrix.index], (model.coef_[0] if self.kernel == 'linear' else 0)
+
+		model_predictions = [model.predict(feature_set) for feature_set in full_features]
+		feature_names = [str(x) for x in trimmed_matrix.index]
+		model_coefficients = (model.coef_[0] if self.kernel == 'linear' else 0)
+
+		return all_cell_lines, model_predictions, feature_names, model_coefficients
 
 	def get_all_patient_predictions(self):
+		self.patient_matrix = self.df.generate_patients_expression_matrix()
+		if(self.normalization):
+			self.patient_matrix = self.df.normalize_expression_matrix(self.patient_matrix)
 		insignificant_gene_dict = self.generate_insignificant_genes_dict(1)
 		return [self.get_patient_predictions(threshold,insignificant_gene_dict) for threshold in self.thresholds]
 
