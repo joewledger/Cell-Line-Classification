@@ -1,6 +1,7 @@
 import Src.DataFormatting as data
 import os
 import math
+import random
 
 patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 #expression_file = "Data/CCLE_Data/CCLE_Expression_2012-09-29.res"
@@ -28,3 +29,14 @@ def test_normalize_expression_matrix():
     row_sums = [sum(x for x in normalized_matrix.ix[name]) for name in normalized_matrix.index]
     assert(not any(math.fabs(x) > .01 for x in row_sums))
     pass
+
+def test_shuffle_matrix_columns():
+    expression_matrix = data.generate_cell_line_expression_matrix(expression_file)
+    shuffled_matrix = data.shuffle_matrix_columns(expression_matrix.copy())
+    for i in xrange(0,20):
+        cell_line = random.choice(list(expression_matrix.columns))
+        assert all(expression_matrix[cell_line] == shuffled_matrix[cell_line])
+
+
+
+

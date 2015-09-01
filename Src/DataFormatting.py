@@ -5,6 +5,10 @@ from random import shuffle
 
 
 def generate_patients_expression_matrix(patients_directory):
+    """
+    Generates gene x patient matrix
+    :param patients_directory: the directory where the patient files are stored.
+    """
     full_path = os.getcwd() + "/" + patients_directory
     files = [x for x in os.listdir(full_path) if x.endswith(".txt")]
     all_series = []
@@ -21,8 +25,7 @@ def generate_patients_expression_matrix(patients_directory):
 
 def generate_cell_line_expression_matrix(expression_features_filename):
     """
-    Returns a tuple containing
-        1) A matrix of cell lines x genes
+    Generates a gene x cell_line matrix
     """
     df = pd.DataFrame.from_csv(expression_features_filename, index_col=0, sep='\t')
     df = df.reindex_axis([c for c in df.columns[1:] if not c.startswith('Unnamed')], 1)
@@ -31,9 +34,14 @@ def generate_cell_line_expression_matrix(expression_features_filename):
     df = df.drop(labels=[x for x in df.index if not type(x) == str or not x[0].isupper()])
     df = df.groupby(axis=1,level=0).first()
     df = df.groupby(axis=0,level=0).first()
+    df.index.name = "Genes"
+    df.columns.name = "Cell_Lines"
     return df
 
 def shuffle_matrix_columns(df):
+    """
+    Shuffles the columns of a given dataframe.
+    """
     columns = list(df.columns.values)
     shuffle(columns)
     df = df.reindex_axis(columns,axis=1)
