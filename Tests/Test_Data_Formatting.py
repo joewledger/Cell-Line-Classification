@@ -6,36 +6,42 @@ import random
 patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 #expression_file = "Data/CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_file = "Data/CCLE_Data/sample1000.res"
+ic_50_filename = "Data/IC_50_Data/CL_Sensitivity.txt"
 
 
-def test_generate_patients_matrix():
-    patient_matrix = data.generate_patients_expression_matrix(patient_directory)
+def test_generate_patients_frame():
+    patient_frame = data.generate_patients_expression_frame(patient_directory)
     num_patients = len([name for name in os.listdir(patient_directory) if os.path.isfile(patient_directory + "/" + name)])
-    assert len(patient_matrix.columns) == num_patients
+    assert len(patient_frame.columns) == num_patients
     pass
 
-def test_generate_expression_matrix():
-    expression_matrix = data.generate_cell_line_expression_matrix(expression_file)
-    assert len(list(set(expression_matrix.index))) == len(list(expression_matrix.index))
-    assert len(list(set(expression_matrix.columns))) == len(list(expression_matrix.columns))
-    assert not expression_matrix.isnull().values.any()
+def test_generate_expression_frame():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    assert len(list(set(expression_frame.index))) == len(list(expression_frame.index))
+    assert len(list(set(expression_frame.columns))) == len(list(expression_frame.columns))
+    assert not expression_frame.isnull().values.any()
     pass
 
-def test_normalize_expression_matrix():
-    expression_matrix = data.generate_cell_line_expression_matrix(expression_file)
-    normalized_matrix = data.normalize_expression_matrix(expression_matrix)
-    assert len(expression_matrix.index) == len(normalized_matrix.index)
-    assert len(expression_matrix.columns) == len(normalized_matrix.columns)
-    row_sums = [sum(x for x in normalized_matrix.ix[name]) for name in normalized_matrix.index]
+def test_generate_ic50_series():
+    ic_50_series = data.generate_ic_50_series(ic_50_filename)
+    assert not ic_50_series.isnull().values.any()
+    assert len(ic_50_series.index) == len(set(ic_50_series.index))
+
+def test_normalize_expression_frame():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    normalized_frame = data.normalize_expression_frame(expression_frame)
+    assert len(expression_frame.index) == len(normalized_frame.index)
+    assert len(expression_frame.columns) == len(normalized_frame.columns)
+    row_sums = [sum(x for x in normalized_frame.ix[name]) for name in normalized_frame.index]
     assert(not any(math.fabs(x) > .01 for x in row_sums))
     pass
 
-def test_shuffle_matrix_columns():
-    expression_matrix = data.generate_cell_line_expression_matrix(expression_file)
-    shuffled_matrix = data.shuffle_matrix_columns(expression_matrix.copy())
+def test_shuffle_frame_columns():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    shuffled_frame = data.shuffle_frame_columns(expression_frame.copy())
     for i in xrange(0,20):
-        cell_line = random.choice(list(expression_matrix.columns))
-        assert all(expression_matrix[cell_line] == shuffled_matrix[cell_line])
+        cell_line = random.choice(list(expression_frame.columns))
+        assert all(expression_frame[cell_line] == shuffled_frame[cell_line])
 
 
 

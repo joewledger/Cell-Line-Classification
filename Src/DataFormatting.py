@@ -4,9 +4,9 @@ import os
 from random import shuffle
 
 
-def generate_patients_expression_matrix(patients_directory):
+def generate_patients_expression_frame(patients_directory):
     """
-    Generates gene x patient matrix
+    Generates gene x patient frame
     :param patients_directory: the directory where the patient files are stored.
     """
     full_path = os.getcwd() + "/" + patients_directory
@@ -23,9 +23,9 @@ def generate_patients_expression_matrix(patients_directory):
     return df
 
 
-def generate_cell_line_expression_matrix(expression_features_filename):
+def generate_cell_line_expression_frame(expression_features_filename):
     """
-    Generates a gene x cell_line matrix
+    Generates a gene x cell_line frame
     """
     df = pd.DataFrame.from_csv(expression_features_filename, index_col=0, sep='\t')
     df = df.reindex_axis([c for c in df.columns[1:] if not c.startswith('Unnamed')], 1)
@@ -38,30 +38,31 @@ def generate_cell_line_expression_matrix(expression_features_filename):
     df.columns.name = "Cell_Lines"
     return df
 
-def shuffle_matrix_columns(df):
+def generate_ic_50_series(ic_50_filename):
+    """
+    Generates a pandas series with cell_lines as the labels and ic50 values as the entries
+    """
+    ic_50_values = enumerate(open(ic_50_filename,"rb"))
+    ic_50_dict = {str(row.split()[0]) : float(row.split()[1]) for row_num,row in ic_50_values if row_num > 0}
+    return pd.Series(ic_50_dict)
+
+
+def shuffle_frame_columns(dataframe):
     """
     Shuffles the columns of a given dataframe.
     """
-    columns = list(df.columns.values)
+    columns = list(dataframe.columns.values)
     shuffle(columns)
-    df = df.reindex_axis(columns,axis=1)
-    return df
+    return dataframe.reindex_axis(columns,axis=1)
 
-def normalize_expression_matrix(matrix):
+
+def normalize_expression_frame(dataframe):
     """
-    Performs z-score normalization on a given gene-expression matrix.
+    Performs z-score normalization on a given gene-expression frame.
     Normalizes each gene expression value by (expression_value - mean_expression) / std_dev_expression
     """
-    return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in matrix.T.iteritems()],axis=1).T
+    return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in dataframe.T.iteritems()],axis=1).T
 
-def strip_cell_lines_without_ic50(data_matrix):
-    return data_matrix.drop(labels=[x for x in data_matrix.columns if x not in generate_ic_50_dict().keys()],axis=1)
 
-def generate_ic_50_dict(ic_50_filename):
-    """creates a dictionary that maps cell line names to ic_50 values"""
-    ic_50_dict = {}
-    with open(ic_50_filename,'rb') as ic_50_values:
-        for row_num,row in enumerate(ic_50_values):
-            fields = row.split()
-            if(row_num > 0): ic_50_dict[str(fields[0])] = float(fields[1])
-    return ic_50_dict
+def strip_cell_lines_without_ic50(dataframe):
+    return dataframe.drop(labels=[x for x in dataframe.columns if x not in generate_ic_50_series().keys()],axis=1)
