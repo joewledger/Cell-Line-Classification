@@ -43,6 +43,9 @@ def test_shuffle_frame_columns():
         cell_line = random.choice(list(expression_frame.columns))
         assert all(expression_frame[cell_line] == shuffled_frame[cell_line])
 
-
-
+def test_generate_cell_line_intersection():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    ic50_series = data.generate_ic_50_series(ic_50_filename)
+    trimmed_expression_frame, trimmed_ic50_series = data.generate_cell_line_intersection(expression_frame,ic50_series)
+    assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series.index)
 

@@ -63,6 +63,10 @@ def normalize_expression_frame(dataframe):
     """
     return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in dataframe.T.iteritems()],axis=1).T
 
-
-def strip_cell_lines_without_ic50(dataframe):
-    return dataframe.drop(labels=[x for x in dataframe.columns if x not in generate_ic_50_series().keys()],axis=1)
+def generate_cell_line_intersection(expression_frame, ic50_series):
+    """
+    Trims both an gene expression frame and an ic50 series so they have the same cell lines
+    :return: trimmed expression frame, trimmed ic50 series
+    """
+    cell_line_intersection = expression_frame.columns.intersection(ic50_series.index)
+    return expression_frame[cell_line_intersection], ic50_series[cell_line_intersection]
