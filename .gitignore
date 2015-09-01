@@ -1,3 +1,5 @@
 Results/
 Data/
 .idea/
+Tests/*.pyc
+Src/*.pyc
