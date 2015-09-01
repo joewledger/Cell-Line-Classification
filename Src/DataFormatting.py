@@ -7,6 +7,7 @@ import scipy.stats.mstats as sp
 import pandas as pd
 import csv
 import os
+from random import shuffle
 
 class DataFormatting:
 
@@ -49,6 +50,13 @@ class DataFormatting:
 		df = df.groupby(axis=1,level=0).first()
 		return df
 
+	def shuffle_matrix_columns(self,df):
+		columns = list(df.columns.values)
+		shuffle(columns)
+		df = df.reindex_axis(columns,axis=1)
+		return df
+
+
 	def normalize_expression_matrix(self,matrix):
 		return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in matrix.iteritems()],axis=1)
 
@@ -83,7 +91,8 @@ class DataFormatting:
 		ic_50_dict = {}
 		with open(self.ic_50_filename,'rb') as ic_50_values:
 			for row_num,row in enumerate(ic_50_values):
-				fields = row.split("\t")
+				#fields = row.split("\t")
+				fields = row.split()
 				if(row_num > 0): ic_50_dict[str(fields[0])] = float(fields[1])
 		return ic_50_dict
 
@@ -121,6 +130,6 @@ class DataFormatting:
 
 	def trim_dict(self,dictionary,array):
 		trimmed_dict = dictionary.copy()
-		for key in trimmed_dict.keys():
+		for key in list(trimmed_dict.keys()):
 			if(not key in array): trimmed_dict.pop(key,None)
 		return trimmed_dict

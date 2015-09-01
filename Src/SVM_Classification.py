@@ -11,7 +11,7 @@ import DataFormatting as dfm
 import pandas as pd
 import scipy.stats as sp
 import time
-from random import shuffle
+
 
 class SVM_Classification:
 
@@ -47,6 +47,9 @@ class SVM_Classification:
 	#Parameters: num_folds - the number of folds we will be using in cross-fold validation
 	def evaluate_all_thresholds(self,num_folds):
 		#shuffle(self.cell_lines)
+		self.training_matrix = self.df.shuffle_matrix_columns(self.training_matrix)
+		self.cell_lines = list(self.training_matrix.columns.values)
+
 		self.insignificant_gene_dict = self.generate_insignificant_genes_dict(num_folds)
 		all_predictions = list()
 		all_feature_selection = list()

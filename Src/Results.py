@@ -21,8 +21,8 @@ all_kernels = list()
 def check_model_accuracy(ic50_file,expression_file):
 	thresholds = generate_thresholds(.01,.20)
 	for kernel in ['linear','poly','rbf']:
-		svm = svmc.SVM_Classification(ic50_file,expression_file,exclude_undetermined=True,kernel=kernel,normalization=True,thresholds=thresholds)
-		for i in range(0,1000):
+		svm = svmc.SVM_Classification(ic50_file,expression_file,exclude_undetermined=True,kernel=kernel,thresholds=thresholds)
+		for i in range(0,10):
 			all_predictions,all_features, all_evaluations = svm.evaluate_all_thresholds(5)
 			accuracy_values = [svm.model_accuracy(evaluation) for evaluation in all_evaluations]
 			accuracy_values_sensitive = [svm.model_accuracy_sensitive(evaluation) for evaluation in all_evaluations]
@@ -63,7 +63,7 @@ def compile_results(outdir,ic50_file, expression_file,**kwargs):
 
 	print("Now working on importing data matrices")
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
-	svm = svmc.SVM_Classification(df,**kwargs)
+	svm = svmc.SVM_Classification(ic_50_filename,expression_features_filename,**kwargs)
 	cell_lines = df.generate_ic_50_dict().keys()
 	print("Done importing data matrices")
 

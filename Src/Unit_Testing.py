@@ -29,3 +29,9 @@ def test_matrix_normalization():
 	df = dfm.DataFormatting(ic_50_filename ,expression_features_filename,tcga_dirctory)
 	expression_matrix = df.generate_cell_line_expression_matrix()
 	print(df.normalize_expression_matrix(expression_matrix))
+
+def test_matrix_generation():
+	df = dfm.DataFormatting(ic_50_filename,expression_features_filename,None)
+	print(df.generate_cell_line_expression_matrix())
+
+test_matrix_generation()
