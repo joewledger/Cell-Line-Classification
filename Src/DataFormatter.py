@@ -51,7 +51,7 @@ def bin_ic50_series(ic50_series):
     """
     Bin ic50 values into "sensitive", "undetermined", or "resistant" bins based on ic50 values
     Top and bottom 20% are sensitive and resistant respectively, and the rest are undetermined
-    :param ic_50_series: the IC50 series to bin
+    :param ic50_series: the IC50 series to bin
     :return: the discretized ic50_series
     """
     ic50_values = sorted(list(ic50_series))
@@ -121,3 +121,12 @@ def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
     data = np.array([list(expression_frame[cell_line]) for cell_line in expression_frame.columns])
     target = np.array([binned_ic50_series[cell_line] for cell_line in binned_ic50_series.index])
     return data,target
+
+def generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,threshold):
+    expression_frame = generate_cell_line_expression_frame(expression_filename)
+    ic50_series = generate_ic50_series(ic50_filename)
+    binned_ic50_series = bin_ic50_series(ic50_series)
+    expression_frame,binned_ic50_series = generate_cell_line_intersection(expression_frame,binned_ic50_series)
+    trimmed_expression_frame,binned_ic50_series = trim_undetermined_cell_lines(expression_frame,binned_ic50_series)
+    thresholded_expression_frame = apply_pval_threshold(trimmed_expression_frame,binned_ic50_series,threshold)
+    return generate_scikit_data_and_target(thresholded_expression_frame,binned_ic50_series)

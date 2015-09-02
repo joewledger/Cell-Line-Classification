@@ -27,14 +27,8 @@ def get_svm_model_accuracy(expression_filename,ic50_filename,**kwargs):
 		kernel
 
     """
-    expression_frame = dfm.generate_cell_line_expression_frame(expression_filename)
-    ic50_series = dfm.generate_ic50_series(ic50_filename)
-    binned_ic50_series = dfm.bin_ic50_series(ic50_series)
-    expression_frame,binned_ic50_series = dfm.generate_cell_line_intersection(expression_frame,binned_ic50_series)
-    trimmed_expression_frame,binned_ic50_series = dfm.trim_undetermined_cell_lines(expression_frame,binned_ic50_series)
-    thresholded_expression_frame = dfm.apply_pval_threshold(trimmed_expression_frame,binned_ic50_series,.05)
-    scikit_data,scikit_target = dfm.generate_scikit_data_and_target(thresholded_expression_frame,binned_ic50_series)
 
+    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,kwargs.get('threshold',.05))
     model = svm.SVC(kernel='linear')
     return cross_validation.cross_val_score(model,scikit_data,scikit_target,cv=5)
 
