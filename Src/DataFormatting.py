@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from random import shuffle
+import scipy.stats as sp
 
 
 def generate_patients_expression_frame(patients_directory):
@@ -86,13 +87,25 @@ def generate_cell_line_intersection(expression_frame, ic50_series):
 def trim_undetermined_cell_lines(expression_frame,binned_ic50_series):
     """
     Removes any cell lines from an expression frame that are labeled undetermined in the ic50_series
+
     Assumes that expression_frame and binned_ic50_series have the same list of cell lines
     """
     dropped_cell_lines = [cell_line for cell_line in expression_frame.columns if binned_ic50_series[cell_line] == 1]
     return expression_frame.drop(labels=dropped_cell_lines,axis=1)
 
-def apply_pval_threshold(expression_frame,binned_ic50_series):
+def apply_pval_threshold(expression_frame,binned_ic50_series,threshold):
     """
-    Selects genes from a
+    Trims the expression frame to include only the genes whose p-value falls under a certain threshold.
+    P-value is determined by using a student t-test on the distribution of gene expression values for
+    sensitive cell lines compared to the distribution of values for resistant cell lines.
+
+    Assumes that expression_frame and binned_ic50_series have the same list of cell lines
     """
-    raise NotImplementedError
+    sensitive_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 0]]
+    resistant_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 2]]
+    t_test = lambda gene : sp.ttest_ind(list(sensitive_frame.ix[gene]),list(resistant_frame.ix[gene]))[1]
+    p_val_series = pd.Series({gene : t_test(gene) for gene in sensitive_frame.index})
+    expression_frame['pval'] = p_val_series
+    expression_frame = expression_frame[expression_frame['pval'] < threshold]
+    del(expression_frame['pval'])
+    return expression_frame

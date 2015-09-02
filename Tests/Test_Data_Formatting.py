@@ -26,6 +26,7 @@ def test_generate_ic50_series():
     ic_50_series = data.generate_ic_50_series(ic_50_filename)
     assert not ic_50_series.isnull().values.any()
     assert len(ic_50_series.index) == len(set(ic_50_series.index))
+    pass
 
 def test_normalize_expression_frame():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
@@ -42,12 +43,14 @@ def test_shuffle_frame_columns():
     for i in xrange(0,20):
         cell_line = random.choice(list(expression_frame.columns))
         assert all(expression_frame[cell_line] == shuffled_frame[cell_line])
+    pass
 
 def test_generate_cell_line_intersection():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
     ic50_series = data.generate_ic_50_series(ic_50_filename)
     trimmed_expression_frame, trimmed_ic50_series = data.generate_cell_line_intersection(expression_frame,ic50_series)
     assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series.index)
+    pass
 
 def test_bin_ic50_series():
     ic50_series = data.generate_ic_50_series(ic_50_filename)
@@ -55,6 +58,7 @@ def test_bin_ic50_series():
     assert len(ic50_series) == len(binned_ic50)
     assert all(x in [0,1,2] for x in binned_ic50)
     assert math.fabs(sum(x for x in binned_ic50) - len(binned_ic50)) < 2
+    pass
 
 def test_trim_undetermined_cell_lines():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
@@ -62,3 +66,12 @@ def test_trim_undetermined_cell_lines():
     expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
     trimmed_expression_frame = data.trim_undetermined_cell_lines(expression_frame,binned_ic50)
     assert len(trimmed_expression_frame.columns) == len([x for x in binned_ic50 if not x == 1])
+    pass
+
+def test_apply_pval_threshold():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    binned_ic50 = data.bin_ic_50_series(data.generate_ic_50_series(ic_50_filename))
+    expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
+    thresholded_expression_frame = data.apply_pval_threshold(expression_frame,binned_ic50,.05)
+    assert len(thresholded_expression_frame.index) < len(expression_frame.index)
+    pass
