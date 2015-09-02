@@ -64,8 +64,8 @@ def test_trim_undetermined_cell_lines():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
     binned_ic50 = data.bin_ic_50_series(data.generate_ic_50_series(ic_50_filename))
     expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
-    trimmed_expression_frame = data.trim_undetermined_cell_lines(expression_frame,binned_ic50)
-    assert len(trimmed_expression_frame.columns) == len([x for x in binned_ic50 if not x == 1])
+    trimmed_expression_frame,trimmed_ic50_series = data.trim_undetermined_cell_lines(expression_frame,binned_ic50)
+    assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series)
     pass
 
 def test_apply_pval_threshold():

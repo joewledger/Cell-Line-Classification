@@ -86,12 +86,13 @@ def generate_cell_line_intersection(expression_frame, ic50_series):
 
 def trim_undetermined_cell_lines(expression_frame,binned_ic50_series):
     """
-    Removes any cell lines from an expression frame that are labeled undetermined in the ic50_series
+    Removes any cell lines from an expression frame that are labeled undetermined in the ic50_series.
+    Returns a tuple containing the expression_frame and ic50_series without undetermined cell lines.
 
     Assumes that expression_frame and binned_ic50_series have the same list of cell lines
     """
     dropped_cell_lines = [cell_line for cell_line in expression_frame.columns if binned_ic50_series[cell_line] == 1]
-    return expression_frame.drop(labels=dropped_cell_lines,axis=1)
+    return expression_frame.drop(labels=dropped_cell_lines,axis=1),binned_ic50_series.drop(labels=dropped_cell_lines)
 
 def apply_pval_threshold(expression_frame,binned_ic50_series,threshold):
     """
@@ -109,3 +110,12 @@ def apply_pval_threshold(expression_frame,binned_ic50_series,threshold):
     expression_frame = expression_frame[expression_frame['pval'] < threshold]
     del(expression_frame['pval'])
     return expression_frame
+
+def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
+    """
+    Returns a data array and a target array for use in a scikit-learn cross-validation experiment.
+
+    Assumes that expression_frame and binned_ic50_series have the same list of cell lines.
+    """
+
+    raise NotImplementedError
