@@ -37,14 +37,6 @@ def test_normalize_expression_frame():
     assert(not any(math.fabs(x) > .01 for x in row_sums))
     pass
 
-def test_shuffle_frame_columns():
-    expression_frame = data.generate_cell_line_expression_frame(expression_file)
-    shuffled_frame = data.shuffle_frame_columns(expression_frame.copy())
-    for i in xrange(0,20):
-        cell_line = random.choice(list(expression_frame.columns))
-        assert all(expression_frame[cell_line] == shuffled_frame[cell_line])
-    pass
-
 def test_generate_cell_line_intersection():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
     ic50_series = data.generate_ic50_series(ic50_filename)

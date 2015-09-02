@@ -61,15 +61,6 @@ def bin_ic50_series(ic50_series):
     return ic50_series.apply(binning_function,convert_dtype=True)
 
 
-def shuffle_frame_columns(dataframe):
-    """
-    Shuffles the columns of a given dataframe.
-    """
-    columns = list(dataframe.columns.values)
-    shuffle(columns)
-    return dataframe.reindex_axis(columns,axis=1)
-
-
 def normalize_expression_frame(dataframe):
     """
     Performs z-score normalization on a given gene-expression frame.

@@ -20,17 +20,18 @@ The training output values are the IC50 values discretized into several bins: "s
 def get_neural_network_model_accuracy(expression_frame, classifier_series):
     raise NotImplementedError
 
-def get_svm_model_accuracy(expression_filename,ic50_filename,**kwargs):
+def get_svm_model_accuracy(expression_filename,ic50_filename,threshold,**kwargs):
     """
 	Gets the cross-validation accuracy for an SVM model with given parameters
-	kwargs:
-		kernel
-
     """
 
-    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,kwargs.get('threshold',.05))
+    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,threshold)
     model = svm.SVC(kernel='linear')
     return cross_validation.cross_val_score(model,scikit_data,scikit_target,cv=5)
+
+def get_svm_model_accuracy_multiple_thresholds(expression_filename,ic50_filename,thresholds,**kwargs):
+    return [get_svm_model_accuracy(expression_filename,ic50_filename,threshold,**kwargs) for threshold in thresholds]
+
 
 
 def get_svm_model_parameters(expression_frame,classifier_series,**kwargs):
