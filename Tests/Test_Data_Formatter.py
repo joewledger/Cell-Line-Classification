@@ -23,9 +23,9 @@ def test_generate_expression_frame():
     pass
 
 def test_generate_ic50_series():
-    ic_50_series = data.generate_ic_50_series(ic_50_filename)
-    assert not ic_50_series.isnull().values.any()
-    assert len(ic_50_series.index) == len(set(ic_50_series.index))
+    ic50_series = data.generate_ic50_series(ic_50_filename)
+    assert not ic50_series.isnull().values.any()
+    assert len(ic50_series.index) == len(set(ic50_series.index))
     pass
 
 def test_normalize_expression_frame():
