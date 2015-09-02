@@ -20,18 +20,22 @@ The training output values are the IC50 values discretized into several bins: "s
 def get_neural_network_model_accuracy(expression_frame, classifier_series):
     raise NotImplementedError
 
-def get_svm_model_accuracy(expression_filename,ic50_filename,threshold,**kwargs):
+def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold):
     """
 	Gets the cross-validation accuracy for an SVM model with given parameters
     """
 
     scikit_data,scikit_target = dfm.generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,threshold)
-    model = svm.SVC(kernel='linear')
     return cross_validation.cross_val_score(model,scikit_data,scikit_target,cv=5)
 
-def get_svm_model_accuracy_multiple_thresholds(expression_filename,ic50_filename,thresholds,**kwargs):
-    return [get_svm_model_accuracy(expression_filename,ic50_filename,threshold,**kwargs) for threshold in thresholds]
-
+def get_svm_model_accuracy_multiple_thresholds(model,expression_filename,ic50_filename,thresholds):
+    """
+    Gets the cross-validation accuracy for an SVM model given multiple thresholds.
+    Returns a list of tuples: (threshold, (mean of scores for each fold, confidence interval of scores))
+    """
+    get_mean_and_conf_int = lambda array : (array.mean(), array.std() * 2)
+    accuracy = lambda threshold : (threshold, get_mean_and_conf_int(get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold)))
+    return [accuracy(threshold) for threshold in thresholds]
 
 
 def get_svm_model_parameters(expression_frame,classifier_series,**kwargs):
