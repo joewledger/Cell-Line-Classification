@@ -59,7 +59,6 @@ def bin_ic_50_series(ic_50_series):
     return ic_50_series.apply(binning_function,convert_dtype=True)
 
 
-
 def shuffle_frame_columns(dataframe):
     """
     Shuffles the columns of a given dataframe.
@@ -83,3 +82,17 @@ def generate_cell_line_intersection(expression_frame, ic50_series):
     """
     cell_line_intersection = expression_frame.columns.intersection(ic50_series.index)
     return expression_frame[cell_line_intersection], ic50_series[cell_line_intersection]
+
+def trim_undetermined_cell_lines(expression_frame,binned_ic50_series):
+    """
+    Removes any cell lines from an expression frame that are labeled undetermined in the ic50_series
+    Assumes that expression_frame and binned_ic50_series have the same list of cell lines
+    """
+    dropped_cell_lines = [cell_line for cell_line in expression_frame.columns if binned_ic50_series[cell_line] == 1]
+    return expression_frame.drop(labels=dropped_cell_lines,axis=1)
+
+def apply_pval_threshold(expression_frame,binned_ic50_series):
+    """
+    Selects genes from a
+    """
+    raise NotImplementedError

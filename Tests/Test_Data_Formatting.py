@@ -55,3 +55,10 @@ def test_bin_ic50_series():
     assert len(ic50_series) == len(binned_ic50)
     assert all(x in [0,1,2] for x in binned_ic50)
     assert math.fabs(sum(x for x in binned_ic50) - len(binned_ic50)) < 2
+
+def test_trim_undetermined_cell_lines():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    binned_ic50 = data.bin_ic_50_series(data.generate_ic_50_series(ic_50_filename))
+    expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
+    trimmed_expression_frame = data.trim_undetermined_cell_lines(expression_frame,binned_ic50)
+    assert len(trimmed_expression_frame.columns) == len([x for x in binned_ic50 if not x == 1])
