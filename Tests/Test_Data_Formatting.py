@@ -75,3 +75,11 @@ def test_apply_pval_threshold():
     thresholded_expression_frame = data.apply_pval_threshold(expression_frame,binned_ic50,.05)
     assert len(thresholded_expression_frame.index) < len(expression_frame.index)
     pass
+
+def test_generate_scikit_data_and_target():
+    expression_frame = data.generate_cell_line_expression_frame(expression_file)
+    binned_ic50 = data.bin_ic_50_series(data.generate_ic_50_series(ic_50_filename))
+    expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
+    dat,target = data.generate_scikit_data_and_target(expression_frame,binned_ic50)
+    assert len(dat) == len(target)
+    assert all(len(x) == len(dat[0]) for x in dat)

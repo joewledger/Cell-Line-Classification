@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from random import shuffle
 import scipy.stats as sp
+import numpy as np
 
 
 def generate_patients_expression_frame(patients_directory):
@@ -117,5 +118,6 @@ def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
 
     Assumes that expression_frame and binned_ic50_series have the same list of cell lines.
     """
-
-    raise NotImplementedError
+    data = np.array([list(expression_frame[cell_line]) for cell_line in expression_frame.columns])
+    target = np.array([binned_ic50_series[cell_line] for cell_line in binned_ic50_series.index])
+    return data,target
