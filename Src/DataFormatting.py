@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import os
 from random import shuffle
@@ -45,6 +44,20 @@ def generate_ic_50_series(ic_50_filename):
     ic_50_values = enumerate(open(ic_50_filename,"rb"))
     ic_50_dict = {str(row.split()[0]) : float(row.split()[1]) for row_num,row in ic_50_values if row_num > 0}
     return pd.Series(ic_50_dict)
+
+def bin_ic_50_series(ic_50_series):
+    """
+    Bin ic50 values into "sensitive", "undetermined", or "resistant" bins based on ic50 values
+    Top and bottom 20% are sensitive and resistant respectively, and the rest are undetermined
+    :param ic_50_series: the IC50 series to bin
+    :return: the discretized ic50_series
+    """
+    ic50_values = sorted(list(ic_50_series))
+    lower_bound = ic50_values[int(float(len(ic50_values)) * .20)]
+    upper_bound = ic50_values[int(float(len(ic50_values)) * .80)]
+    binning_function = lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
+    return ic_50_series.apply(binning_function,convert_dtype=True)
+
 
 
 def shuffle_frame_columns(dataframe):

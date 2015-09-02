@@ -1,18 +1,39 @@
-##---Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
-##---Working with Elena Svenson under the direction of Dr. Mehmet Koyuturk
-##---We have IC50 values for a bunch of different cell lines for the drug we are testing (SMAPs -- Small Molecular Activators of PP2A)
-##---We are going to apply SVM to classify cell lines as either sensitive or resistant to this drug
-##---The training input values are the gene expression measurements for each cell line
-##---The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
-
 from sklearn import *
 import numpy as np
 import DataFormatting as dfm
 import pandas as pd
 import scipy.stats as sp
-import time
+
+from sklearn import cross_validation
+from sklearn import datasets
+from sklearn import svm
+
+"""
+Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
+Working with Elena Svenson under the direction of Dr. Mehmet Koyuturk
+We have IC50 values for a bunch of different cell lines for the drug we are testing (SMAPs -- Small Molecular Activators of PP2A)
+We are going to apply SVM to classify cell lines as either sensitive or resistant to this drug
+The training input values are the gene expression measurements for each cell line
+The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
+"""
+
+def get_neural_network_model_accuracy(expression_frame, classifier_series):
+    raise NotImplementedError
+
+def get_svm_model_accuracy(expression_frame,classifier_series,**kwargs):
+    """
+	Gets the cross-validation accuracy for an SVM model with given parameters
+	kwargs:
+		kernel
+
+    """
+    raise NotImplementedError
+
+def get_svm_model_parameters(expression_frame,classifier_series,**kwargs):
+    raise NotImplementedError
 
 
+"""
 class SVM_Classification:
 
 	def __init__(self,ic50_file,expression_file,**kwargs):
@@ -242,3 +263,4 @@ class SVM_Classification:
 		patient_identifiers = list(patient_matrix.columns.values)
 		patient_features = self.get_training_inputs(patient_identifiers,patient_matrix)
 		return patient_identifiers, [model.predict(feature_set) for feature_set in patient_features]
+"""

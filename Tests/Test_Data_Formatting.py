@@ -49,3 +49,9 @@ def test_generate_cell_line_intersection():
     trimmed_expression_frame, trimmed_ic50_series = data.generate_cell_line_intersection(expression_frame,ic50_series)
     assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series.index)
 
+def test_bin_ic50_series():
+    ic50_series = data.generate_ic_50_series(ic_50_filename)
+    binned_ic50 = data.bin_ic_50_series(ic50_series)
+    assert len(ic50_series) == len(binned_ic50)
+    assert all(x in [0,1,2] for x in binned_ic50)
+    assert math.fabs(sum(x for x in binned_ic50) - len(binned_ic50)) < 2
