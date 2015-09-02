@@ -1,4 +1,4 @@
-import Src.DataFormatting as data
+import Src.DataFormatter as data
 import os
 import math
 import random

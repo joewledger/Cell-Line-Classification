@@ -1,6 +1,6 @@
 from sklearn import *
 import numpy as np
-import DataFormatting as dfm
+import DataFormatter as dfm
 import pandas as pd
 import scipy.stats as sp
 
