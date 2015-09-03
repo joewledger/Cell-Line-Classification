@@ -18,7 +18,6 @@ def get_neural_network_model_accuracy(expression_frame, classifier_series):
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
 
-
 def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold):
     """
 	Gets the cross-validation accuracy for an SVM model with given parameters
