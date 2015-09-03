@@ -25,5 +25,5 @@ def test_get_svm_model_coefficients():
     model = classify.construct_svc_model(kernel='linear')
     parameters = classify.get_svm_model_coefficients(model,expression_file,ic50_file,threshold)
     expression_frame,ic50_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
-    assert len(parameters) == len(expression_frame.columns)
+    assert len(parameters) == len(expression_frame.index)
     pass
