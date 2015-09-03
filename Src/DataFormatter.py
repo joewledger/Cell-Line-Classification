@@ -113,8 +113,9 @@ def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
     target = np.array([binned_ic50_series[cell_line] for cell_line in binned_ic50_series.index])
     return data,target
 
-def generate_trimmed_thresholded_scikit_data_and_target(expression_filename,ic50_filename,threshold):
+def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold):
     expression_frame = generate_cell_line_expression_frame(expression_filename)
+    expression_frame = normalize_expression_frame(expression_frame)
     ic50_series = generate_ic50_series(ic50_filename)
     binned_ic50_series = bin_ic50_series(ic50_series)
     expression_frame,binned_ic50_series = generate_cell_line_intersection(expression_frame,binned_ic50_series)
