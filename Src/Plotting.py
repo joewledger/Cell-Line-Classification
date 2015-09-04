@@ -18,7 +18,10 @@ def plot_accuracy_threshold_multiple_kernels(outfile, thresholds, accuracy_value
 
 def plot_accuracy_threshold_curve(outfile, thresholds,accuracy_values):
 	plt.figure()
-	plt.plot(thresholds,accuracy_values)
+	accuracy_scores = [x[0] for x in accuracy_values]
+	error_bars = [x[1] for x in accuracy_values]
+	plt.plot(thresholds, accuracy_scores)
+	plt.errorbar(thresholds,accuracy_scores,yerr=error_bars)
 	plt.xlabel("Threshold")
 	plt.ylabel("Accuracy")
 	plt.title("Accuracy vs. Threshold Curve")
