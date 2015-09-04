@@ -15,8 +15,11 @@ ic50_filename = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity.
 def main():
     results_directory = get_results_filepath()
     make_results_directory_and_subdirectories(results_directory)
-    save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,[float(x) * .01 for x in xrange(1,101)])
-    save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,[float(x) * .01 for x in xrange(1,4)])
+    thresholds = [float(x) * .01 for x in xrange(1,4)]
+    save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
+    save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
+    save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
+    save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
 
 def get_results_filepath():
     """
@@ -31,12 +34,13 @@ def make_results_directory_and_subdirectories(results_directory):
         os.mkdir(base_results_directory)
     os.mkdir(results_directory)
     os.mkdir(results_directory + "Plots")
+    os.mkdir(results_directory + "Plots/SVM_Accuracies")
     os.mkdir(results_directory + "Model_Coefficients")
 
-def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds):
-    model = classify.construct_svc_model(kernel="linear")
+def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,model_parameters={'kernel' : 'linear'}):
+    model = classify.construct_svc_model(**model_parameters)
     accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds)
-    outfile = results_directory + "Plots/accuracy_threshold.png"
+    outfile = results_directory + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
     plt.plot_accuracy_threshold_curve(outfile,[x[0] for x in accuracies],[x[1] for x in accuracies])
 
 def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thresholds):
