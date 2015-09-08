@@ -2,6 +2,9 @@ import DataFormatter as dfm
 
 from sklearn import cross_validation
 from sklearn import svm
+from pybrain.structure import LinearLayer
+from pybrain.structure import FeedForwardNetwork
+from pybrain.structure import FullConnection
 
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
@@ -11,6 +14,35 @@ We are going to apply SVM to classify cell lines as either sensitive or resistan
 The training input values are the gene expression measurements for each cell line
 The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
 """
+
+def construct_neural_net_model(num_hidden_layers,num_inputs,num_hidden_nodes,num_outputs):
+    """
+    Constructs a recurrent neural network with num_hidden_layers hidden layers
+    Each hidden layer consists of num_hidden_nodes.
+    Each hidden layer is fully connected to the next layer.
+    """
+
+    network = FeedForwardNetwork()
+
+    input_layer = LinearLayer(num_inputs)
+    hidden_layers = [LinearLayer(num_hidden_nodes)] * num_hidden_layers
+    output_layer = LinearLayer(num_outputs)
+
+    network.addInputModule(input_layer)
+    for layer in hidden_layers:
+        network.addModule(layer)
+    network.addOutputModule(output_layer)
+
+    connections = FullConnection(input_layer,hidden_layers[0])
+    for i,layer in enumerate(hidden_layers[:-1]):
+        connections.append(FullConnection(layer, hidden_layers[i + 1]))
+    connections.append(FullConnection(hidden_layers[-1], output_layer))
+
+    for connection in connections:
+        network.addConnection(connection)
+
+    return network
+
 
 def get_neural_network_model_accuracy(expression_frame, classifier_series):
     raise NotImplementedError
