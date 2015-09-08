@@ -24,29 +24,41 @@ def main():
     """
     parser = argparse.ArgumentParser(description=description,formatter_class=RawTextHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
-    parser.set_defaults(experiments=[x for x in xrange(0,5)])
+    parser.add_argument('--results_dir',type=str,help='The directory to save results to.')
+    parser.add_argument('--expression_file',type=str,help='The file to read gene expression measurements from.')
+    parser.add_argument('--ic50_file',type=str,help='The file to read the IC50 measurements from.')
+    parser.add_argument('--patient_dir',type=str,help='The directory containing the patient information')
+    parser.add_argument('--threshold_increment',type=float,help='The increment to test thresholds at.')
+    parser.add_argument('--num_thresholds',type=int,help='The number of thresholds to test.')
+    parser.set_defaults(**default_parameters())
     args = parser.parse_args()
-    
-    base_results_directory,expression_filename,ic50_filename,thresholds = define_parameters()
-    results_directory = get_results_filepath(base_results_directory)
-    make_results_directory_and_subdirectories(base_results_directory,results_directory)
 
-    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'}) if (0 in args.experiments) else None
-    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'}) if (1 in args.experiments) else None
-    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'}) if (2 in args.experiments) else None
-    if (3 in args.experiments):
+    results_directory = get_results_filepath(args.results_dir)
+    make_results_directory_and_subdirectories(args.results_dir,results_directory)
+
+    thresholds = [args.threshold_increment * x for x in xrange(1,args.num_thresholds + 1)]
+    run_experiments(results_directory,args.experiments,args.expression_file,args.ic50_file,args.patient_dir,thresholds)
+
+
+def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds):
+    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'}) if (0 in experiments) else None
+    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'}) if (1 in experiments) else None
+    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'}) if (2 in experiments) else None
+    if (3 in experiments):
         save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
-    if (4 in args.experiments):
+    if (4 in experiments):
         save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
 
-
-
-def define_parameters():
-    base_results_directory = os.path.dirname(__file__) + '/../Results/'
-    expression_filename = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
-    ic50_filename = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity.txt'
-    thresholds = [float(x) * .01 for x in xrange(1,5)]
-    return base_results_directory,expression_filename,ic50_filename,thresholds
+def default_parameters():
+    parameters = {}
+    parameters['experiments'] = [x for x in xrange(0,5)]
+    parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
+    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
+    parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity.txt'
+    parameters['patient_dir'] = os.path.dirname(__file__) + "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
+    parameters['threshold_increment'] = .01
+    parameters['num_thresholds'] = 100
+    return parameters
 
 def get_results_filepath(base_results_directory):
     """
@@ -91,13 +103,3 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-

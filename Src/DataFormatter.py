@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-from random import shuffle
 import scipy.stats as sp
 import numpy as np
 
@@ -22,7 +21,6 @@ def generate_patients_expression_frame(patients_directory):
     df = pd.DataFrame(all_series).T
     df = df.convert_objects(convert_numeric=True)
     return df
-
 
 def generate_cell_line_expression_frame(expression_features_filename):
     """

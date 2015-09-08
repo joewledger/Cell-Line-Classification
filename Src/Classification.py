@@ -82,10 +82,12 @@ def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold
     model.fit(scikit_data,scikit_target)
     return model.coef_[0]
 
-def get_svm_patient_predictions(model,expression_filename,ic50_filename,threshold):
+def get_svm_patient_predictions(model,expression_filename,ic50_filename,patient_directory,threshold):
     """
     Returns the predictions for which patients are likely to be sensitive to SMAPs and which are likely to be resistant.
     First trains a given SVM model on expression data, and then uses the trained model to predict patient outcome.
     """
+    #scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
+    #patient_frame = dfm.generate_patients_expression_frame(patient_directory)
 
     raise NotImplementedError
