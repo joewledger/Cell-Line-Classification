@@ -69,6 +69,23 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_filename,ic50_fi
 
 
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
+    """
+    Returns the model coefficients for a SVM model
+    :param model:
+    :param expression_filename:
+    :param ic50_filename:
+    :param threshold:
+    :return:
+    """
+
     scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
     model.fit(scikit_data,scikit_target)
     return model.coef_[0]
+
+def get_svm_patient_predictions(model,expression_filename,ic50_filename,threshold):
+    """
+    Returns the predictions for which patients are likely to be sensitive to SMAPs and which are likely to be resistant.
+    First trains a given SVM model on expression data, and then uses the trained model to predict patient outcome.
+    """
+
+    raise NotImplementedError

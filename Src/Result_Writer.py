@@ -1,3 +1,5 @@
+import argparse
+from argparse import RawTextHelpFormatter
 import datetime
 import os
 import DataFormatter as dfm
@@ -10,14 +12,34 @@ Writes results to a results directory
 """
 
 def main():
+    description = """
+    A tool for predicting patient response to cancer drugs using several different machine learning models.\n
+    These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.\n
+    Depending on the parameters given, this module will run different experiments.\n
+    \t0 : Graph SVM Linear kernel accuracy vs. threshold\n
+    \t1 : Graph SVM RBF kernel accuracy vs. threshold\n
+    \t2 : Graph SVM Polynomial kernel accuracy vs. threshold\n
+    \t3 : Graph all SVM kernel accuracies vs. threshold on same graph\n
+    \t4 : Save SVM Linear kernel model coefficients
+    """
+    parser = argparse.ArgumentParser(description=description,formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
+    parser.set_defaults(experiments=[x for x in xrange(0,5)])
+    args = parser.parse_args()
+    
     base_results_directory,expression_filename,ic50_filename,thresholds = define_parameters()
     results_directory = get_results_filepath(base_results_directory)
     make_results_directory_and_subdirectories(base_results_directory,results_directory)
-    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
-    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
-    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
-    save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
-    save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
+
+    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'}) if (0 in args.experiments) else None
+    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'}) if (1 in args.experiments) else None
+    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'}) if (2 in args.experiments) else None
+    if (3 in args.experiments):
+        save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
+    if (4 in args.experiments):
+        save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
+
+
 
 def define_parameters():
     base_results_directory = os.path.dirname(__file__) + '/../Results/'
