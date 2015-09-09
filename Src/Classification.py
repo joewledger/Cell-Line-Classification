@@ -62,15 +62,13 @@ def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold,num
         accuracy_scores.append(cross_validation.cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean())
     return accuracy_scores
 
-def get_svm_model_accuracy_multiple_thresholds(model,expression_filename,ic50_filename,thresholds):
+def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,thresholds,num_permutations):
     """
     Gets the cross-validation accuracy for an SVM model given multiple thresholds.
-    Returns a list of tuples: (threshold, (mean of scores across fold, confidence interval of scores))
+    Returns a dictionary mapping threshold -> a list of accuracy scores for each permutation at that threshold
     """
-    get_mean_and_conf_int = lambda array : (array.mean(), array.std())
-    model_accuracy = lambda threshold : get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold)
-    accuracy = lambda threshold : (threshold, get_mean_and_conf_int(model_accuracy(threshold)))
-    return [accuracy(threshold) for threshold in thresholds]
+    accuracy = lambda threshold : get_svm_model_accuracy(model,expression_file,ic50_file,threshold,num_permutations)
+    return {threshold : accuracy(threshold) for threshold in thresholds}
 
 
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
