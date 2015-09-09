@@ -38,13 +38,13 @@ def main():
     make_results_directory_and_subdirectories(args.results_dir,results_directory)
 
     thresholds = [args.threshold_increment * x for x in xrange(1,args.num_thresholds + 1)]
-    run_experiments(results_directory,args.experiments,args.expression_file,args.ic50_file,args.patient_dir,thresholds)
+    run_experiments(results_directory,args.experiments,args.expression_file,args.ic50_file,args.patient_dir,thresholds,args.num_permutations)
 
 
-def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds):
-    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'}) if (0 in experiments) else None
-    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'}) if (1 in experiments) else None
-    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'}) if (2 in experiments) else None
+def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds,num_permutations):
+    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}) if (0 in experiments) else None
+    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'rbf'}) if (1 in experiments) else None
+    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'poly'}) if (2 in experiments) else None
     if (3 in experiments):
         save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
     if (4 in experiments):
@@ -78,11 +78,11 @@ def make_results_directory_and_subdirectories(base_results_directory,results_dir
     os.mkdir(results_directory + "Plots/SVM_Accuracies")
     os.mkdir(results_directory + "Model_Coefficients")
 
-def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,model_parameters={'kernel' : 'linear'}):
+def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}):
     model = classify.construct_svc_model(**model_parameters)
-    accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds)
+    accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
     outfile = results_directory + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
-    plt.plot_accuracy_threshold_curve(outfile,[x[0] for x in accuracies],[x[1] for x in accuracies])
+    plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % model_parameters['kernel'])
     return accuracies
 
 def save_svm_accuracy_threshold_graph_multiple_kernels(results_directory, linear,rbf,poly):

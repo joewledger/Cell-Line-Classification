@@ -2,6 +2,7 @@
 #This includes data matrix visualizations, Accuracy v. Threshold graphs, and AUC graphs
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_accuracy_threshold_multiple_kernels(outfile, kernels):
@@ -24,14 +25,21 @@ def plot_accuracy_threshold_multiple_kernels(outfile, kernels):
     plt.close()
 
 
-def plot_accuracy_threshold_curve(outfile, thresholds,accuracy_values):
+def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name):
+    """
+    Plots a threshold accuracy curve for a given model.
+    :param outfile: the file to save the plot to (str)
+    :param model_name: the name of the model tested (str)
+    :param thresholds: the thresholds the model was tested at (list of floats)
+    :param accuracy_scores: a dictionary mapping threshold -> nparray of accuracy scores
+    """
     plt.figure()
-    accuracy_scores = [x[0] for x in accuracy_values]
-    error_bars = [x[1] for x in accuracy_values]
-    plt.plot(thresholds, accuracy_scores)
-    plt.errorbar(thresholds,accuracy_scores,yerr=error_bars)
+    accuracy_means = [np.array(accuracy_scores[threshold]).mean() for threshold in thresholds]
+    accuracy_std = [np.array(accuracy_scores[threshold]).std() for threshold in thresholds]
+    plt.plot(thresholds, accuracy_means)
+    plt.errorbar(thresholds,accuracy_means,yerr=accuracy_std)
     plt.xlabel("Threshold")
     plt.ylabel("Accuracy")
-    plt.title("Accuracy vs. Threshold Curve")
+    plt.title("%s Accuracy vs. Threshold Curve" % model_name)
     plt.savefig(outfile)
     plt.close()
