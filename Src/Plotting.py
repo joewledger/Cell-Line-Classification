@@ -6,13 +6,13 @@ import numpy as np
 
 
 def plot_accuracy_threshold_multiple_kernels(outfile, kernels):
-    thresholds = kernels[0].keys()
+    thresholds = sorted(kernels[0].keys())
     kernel_labels={0:'linear',1:'rbf',2:'poly'}
     kernel_colors={0:'red',1:'blue',2:'green'}
     plt.figure()
     lines = [0] * 3
     for i,kernel in enumerate(kernels):
-        accuracy_means = [np.array(kernel[threshold]).mean for threshold in thresholds]
+        accuracy_means = [np.array(kernel[threshold]).mean() for threshold in thresholds]
         accuracy_std = [np.array(kernel[threshold]).std() for threshold in thresholds]
         lines[i], = plt.plot(thresholds,accuracy_means,label=kernel_labels[i],color=kernel_colors[i])
         plt.errorbar(thresholds,accuracy_means,yerr=accuracy_std)
