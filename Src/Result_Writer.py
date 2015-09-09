@@ -86,6 +86,10 @@ def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_fil
     return accuracies
 
 def save_svm_accuracy_threshold_graph_multiple_kernels(results_directory, linear,rbf,poly):
+    """
+    Saves accuracy threshold graphs for multiple SVM kernels on the same set of axes.
+    The parameters linear, rbf, and poly are dictionaries mapping threshold to a list of accuracy values for that particular kernels
+    """
     outfile = results_directory + "Plots/SVM_Accuracies/multiple_kernel_accuracy_threshold.png"
     kernels = [linear,rbf,poly]
     plt.plot_accuracy_threshold_multiple_kernels(outfile,kernels)
