@@ -137,3 +137,9 @@ def shuffle_scikit_data_target(scikit_data,scikit_target):
     random.shuffle(combined)
     scikit_data[:], scikit_target[:] = zip(*combined)
     return np.array(scikit_data),np.array(scikit_target)
+
+def generate_scikit_patient_data(patient_frame):
+    print(patient_frame)
+
+    raise NotImplementedError
+

@@ -83,3 +83,8 @@ def test_shuffle_scikit_data_target():
     row_sums = {sum(row) : starget[i] for i,row in enumerate(sdata)}
     shuffled_sums = {sum(row) : shuffled_target[i] for i,row in enumerate(shuffled_data)}
     assert all(row_sums[key] == shuffled_sums[key] for key in row_sums.keys())
+
+def test_generate_scikit_patient_data():
+    patient_frame = data.generate_patients_expression_frame(patient_directory)
+
+    assert False

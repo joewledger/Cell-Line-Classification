@@ -13,14 +13,17 @@ Writes results to a results directory
 
 def main():
     description = """
-    A tool for predicting patient response to cancer drugs using several different machine learning models.\n
-    These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.\n
-    Depending on the parameters given, this module will run different experiments.\n
-    \t0 : Graph SVM Linear kernel accuracy vs. threshold\n
-    \t1 : Graph SVM RBF kernel accuracy vs. threshold\n
-    \t2 : Graph SVM Polynomial kernel accuracy vs. threshold\n
-    \t3 : Graph all SVM kernel accuracies vs. threshold on same graph\n
+    A tool for predicting patient response to cancer drugs using several different machine learning models.
+    These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.
+    Depending on the parameters given, this module will run different experiments.
+    \t0 : Graph SVM Linear kernel accuracy vs. threshold
+    \t1 : Graph SVM RBF kernel accuracy vs. threshold
+    \t2 : Graph SVM Polynomial kernel accuracy vs. threshold
+    \t3 : Graph all SVM kernel accuracies vs. threshold on same graph
     \t4 : Save SVM Linear kernel model coefficients
+    \t5 : Save SVM Linear kernel patient predictions
+    \t6 : Save SVM RBF kernel patient predictions
+    \t7 : Save SVM Polynomial kernel patient predictions
     """
     parser = argparse.ArgumentParser(description=description,formatter_class=RawTextHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
@@ -50,6 +53,13 @@ def run_experiments(results_directory, experiments, expression_filename,ic50_fil
         save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
     if (4 in experiments):
         save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
+    if 5 in experiments:
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'linear'})
+    if 6 in experiments:
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'})
+    if 7 in experiments:
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'})
+
 
 def default_parameters():
     parameters = {}
@@ -79,6 +89,7 @@ def make_results_directory_and_subdirectories(base_results_directory,results_dir
     os.mkdir(results_directory + "Plots")
     os.mkdir(results_directory + "Plots/SVM_Accuracies")
     os.mkdir(results_directory + "Model_Coefficients")
+    os.mkdir(results_directory + "Patient_Predictions")
 
 def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}):
     model = classify.construct_svc_model(**model_parameters)
@@ -108,6 +119,10 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
         writer.write("\t".join(str(gene) for gene in genes) + "\n")
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
+
+def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'}):
+
+    raise NotImplementedError
 
 if __name__ == '__main__':
     main()
