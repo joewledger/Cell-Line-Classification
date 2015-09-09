@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--patient_dir',type=str,help='The directory containing the patient information')
     parser.add_argument('--threshold_increment',type=float,help='The increment to test thresholds at.')
     parser.add_argument('--num_thresholds',type=int,help='The number of thresholds to test.')
+    parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
     parser.set_defaults(**default_parameters())
     args = parser.parse_args()
 
@@ -58,6 +59,7 @@ def default_parameters():
     parameters['patient_dir'] = os.path.dirname(__file__) + "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
+    parameters['num_permutations'] = 20
     return parameters
 
 def get_results_filepath(base_results_directory):

@@ -19,7 +19,7 @@ def test_get_svm_model_accuracy_multiple_thresholds():
 
     model = classify.construct_svc_model(kernel='linear')
     scores = classify.get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,thresholds,num_permutations)
-    
+
     assert all(all(0.0 <= x <= 1.0 for x in array) for array in scores.values())
     assert len(scores.keys()) == num_thresholds
     assert all(len(value) == num_permutations for value in scores.values())
