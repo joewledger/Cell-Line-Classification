@@ -75,3 +75,8 @@ def test_generate_scikit_data_and_target():
     dat,target = data.generate_scikit_data_and_target(expression_frame,binned_ic50)
     assert len(dat) == len(target)
     assert all(len(x) == len(dat[0]) for x in dat)
+
+def test_shuffle_scikit_data_target():
+    sdata,starget = data.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_filename,.05)
+    sdata,starget = data.shuffle_scikit_data_target(sdata,starget)
+    assert len(sdata) == len(starget)

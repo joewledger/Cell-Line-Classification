@@ -6,9 +6,10 @@ ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
 
 def test_get_svm_model_accuracy():
     model = classify.construct_svc_model(kernel='linear')
-    scores = classify.get_svm_model_accuracy(model,expression_file,ic50_file,.05)
+    scores = classify.get_svm_model_accuracy(model,expression_file,ic50_file,.05,5)
     assert len(scores) == 5
     assert all(0.0 <= x <= 1.0 for x in scores)
+    assert any(not x == scores[0] for x in scores)
     pass
 
 def test_get_svm_model_accuracy_multiple_thresholds():

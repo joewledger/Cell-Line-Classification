@@ -50,12 +50,17 @@ def get_neural_network_model_accuracy(expression_frame, classifier_series):
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
 
-def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold):
+def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold,num_permutations):
     """
-	Gets the cross-validation accuracy for an SVM model with given parameters
+	Gets the cross-validation accuracy for an SVM model with given parameters.
+    Returns a list containing num_permutations accuracy scores.
     """
     scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
-    return cross_validation.cross_val_score(model,scikit_data,scikit_target,cv=5)
+    accuracy_scores = []
+    for i in range(0,num_permutations):
+        shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+        accuracy_scores.append(cross_validation.cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean())
+    return accuracy_scores
 
 def get_svm_model_accuracy_multiple_thresholds(model,expression_filename,ic50_filename,thresholds):
     """
@@ -71,11 +76,6 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_filename,ic50_fi
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
     """
     Returns the model coefficients for a SVM model
-    :param model:
-    :param expression_filename:
-    :param ic50_filename:
-    :param threshold:
-    :return:
     """
 
     scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)

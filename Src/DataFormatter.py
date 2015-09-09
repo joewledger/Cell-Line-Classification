@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import scipy.stats as sp
 import numpy as np
+import random
 
 
 def generate_patients_expression_frame(patients_directory):
@@ -125,3 +126,9 @@ def generate_trimmed_thresholded_normalized_expression_frame(expression_filename
 def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold):
     expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_filename,ic50_filename,threshold)
     return generate_scikit_data_and_target(expression_frame,ic50_series)
+
+def shuffle_scikit_data_target(scikit_data,scikit_target):
+    combined = zip(scikit_data, scikit_target)
+    random.shuffle(combined)
+    scikit_data[:], scikit_target[:] = zip(*combined)
+    return scikit_data,scikit_target
