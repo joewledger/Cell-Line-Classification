@@ -128,7 +128,12 @@ def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_fi
     return generate_scikit_data_and_target(expression_frame,ic50_series)
 
 def shuffle_scikit_data_target(scikit_data,scikit_target):
-    combined = zip(scikit_data, scikit_target)
+    """
+    Shuffles a scikit data and target so the cell lines appear in a different order for cross-validation.
+    Preserves the pairing of scikit_data -> scikit_target
+    :return:
+    """
+    combined = zip(scikit_data.tolist(), scikit_target.tolist())
     random.shuffle(combined)
     scikit_data[:], scikit_target[:] = zip(*combined)
-    return scikit_data,scikit_target
+    return np.array(scikit_data),np.array(scikit_target)

@@ -31,7 +31,7 @@ def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name)
     :param outfile: the file to save the plot to (str)
     :param model_name: the name of the model tested (str)
     :param thresholds: the thresholds the model was tested at (list of floats)
-    :param accuracy_scores: a dictionary mapping threshold -> nparray of accuracy scores
+    :param accuracy_scores: a dictionary mapping threshold -> list of accuracy scores
     """
     plt.figure()
     accuracy_means = [np.array(accuracy_scores[threshold]).mean() for threshold in thresholds]

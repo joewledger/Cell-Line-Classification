@@ -78,5 +78,8 @@ def test_generate_scikit_data_and_target():
 
 def test_shuffle_scikit_data_target():
     sdata,starget = data.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_filename,.05)
-    sdata,starget = data.shuffle_scikit_data_target(sdata,starget)
-    assert len(sdata) == len(starget)
+    shuffled_data,shuffled_target = data.shuffle_scikit_data_target(sdata,starget)
+    assert len(shuffled_data) == len(shuffled_target)
+    row_sums = {sum(row) : starget[i] for i,row in enumerate(sdata)}
+    shuffled_sums = {sum(row) : shuffled_target[i] for i,row in enumerate(shuffled_data)}
+    assert all(row_sums[key] == shuffled_sums[key] for key in row_sums.keys())
