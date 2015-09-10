@@ -5,12 +5,12 @@ import numpy as np
 import random
 
 
-def generate_patients_expression_frame(patients_directory):
+def generate_patients_expression_frame(patient_directory):
     """
     Generates gene x patient frame
-    :param patients_directory: the directory where the patient files are stored.
+    :param patient_directory: the directory where the patient files are stored.
     """
-    full_path = os.getcwd() + "/" + patients_directory
+    full_path = os.getcwd() + "/" + patient_directory
     files = [x for x in os.listdir(full_path) if x.endswith(".txt")]
     all_series = []
     for f in files:
@@ -23,11 +23,11 @@ def generate_patients_expression_frame(patients_directory):
     df = df.convert_objects(convert_numeric=True)
     return df
 
-def generate_cell_line_expression_frame(expression_features_filename):
+def generate_cell_line_expression_frame(expression_features_file):
     """
     Generates a gene x cell_line frame
     """
-    df = pd.DataFrame.from_csv(expression_features_filename, index_col=0, sep='\t')
+    df = pd.DataFrame.from_csv(expression_features_file, index_col=0, sep='\t')
     df = df.reindex_axis([c for c in df.columns[1:] if not c.startswith('Unnamed')], 1)
     renamed_columns = {c: c[:c.find('_')] for c in df.columns}
     df = df.rename(columns=renamed_columns)
@@ -38,11 +38,11 @@ def generate_cell_line_expression_frame(expression_features_filename):
     df.columns.name = "Cell_Lines"
     return df
 
-def generate_ic50_series(ic50_filename):
+def generate_ic50_series(ic50_file):
     """
     Generates a pandas series with cell_lines as the labels and ic50 values as the entries
     """
-    ic50_values = enumerate(open(ic50_filename,"rb"))
+    ic50_values = enumerate(open(ic50_file,"rb"))
     ic50_dict = {str(row.split()[0]) : float(row.split()[1]) for row_num,row in ic50_values if row_num > 0}
     return pd.Series(ic50_dict)
 
@@ -112,10 +112,10 @@ def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
     target = np.array([binned_ic50_series[cell_line] for cell_line in binned_ic50_series.index])
     return data,target
 
-def generate_trimmed_thresholded_normalized_expression_frame(expression_filename,ic50_filename,threshold):
-    expression_frame = generate_cell_line_expression_frame(expression_filename)
+def generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold):
+    expression_frame = generate_cell_line_expression_frame(expression_file)
     expression_frame = normalize_expression_frame(expression_frame)
-    ic50_series = generate_ic50_series(ic50_filename)
+    ic50_series = generate_ic50_series(ic50_file)
     binned_ic50_series = bin_ic50_series(ic50_series)
     expression_frame,binned_ic50_series = generate_cell_line_intersection(expression_frame,binned_ic50_series)
     trimmed_expression_frame,binned_ic50_series = trim_undetermined_cell_lines(expression_frame,binned_ic50_series)
@@ -123,8 +123,8 @@ def generate_trimmed_thresholded_normalized_expression_frame(expression_filename
     return thresholded_expression_frame,binned_ic50_series
 
 
-def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold):
-    expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_filename,ic50_filename,threshold)
+def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold):
+    expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
     return generate_scikit_data_and_target(expression_frame,ic50_series)
 
 def shuffle_scikit_data_target(scikit_data,scikit_target):
@@ -146,7 +146,7 @@ def generate_patient_expression_gene_intersection(patient_frame,expression_frame
 
     raise NotImplementedError
 
-def generate_expression_patient_data_target(expression_filename,ic50_filename,patient_directory,threshold):
+def generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold):
     """
     Does all steps needed to generate the training expression data and target along with the patient data for patient stratificiation.
     First generates a patient dataframe and an expression dataframe.
@@ -158,6 +158,22 @@ def generate_expression_patient_data_target(expression_filename,ic50_filename,pa
     Converts the patient frame into a list of patient identifiers and a scikit dataset.
     Returns a tuple containing the expression_data,expression_target,patient_identifiers, and patient_data
 
+    """
+    patient_frame = generate_patients_expression_frame(patient_directory)
+    expression_frame = generate_cell_line_expression_frame(expression_file)
+    patient_frame,expression_frame = generate_patient_expression_gene_intersection(patient_frame,expression_frame)
+    patient_frame = normalize_expression_frame(patient_frame)
+    expression_frame = normalize_expression_frame(expression_frame)
+    binned_ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
+    expression_frame = apply_pval_threshold(expression_frame,binned_ic50_series,threshold)
+    patient_frame,expression_frame = generate_patient_expression_gene_intersection(patient_frame,expression_frame)
+    expression_data,expression_target = generate_scikit_data_and_target(expression_frame,binned_ic50_series)
+    patient_identifiers,patient_data = generate_patient_identifiers_and_data(patient_frame)
+    return expression_data,expression_target,patient_identifiers,patient_data
+
+def generate_patient_identifiers_and_data(patient_frame):
+    """
+    Converts a patient dataframe into a list of patient identifiers and a scikit patient dataset
     """
 
     raise NotImplementedError
