@@ -87,11 +87,9 @@ def get_svm_patient_predictions(model,expression_filename,ic50_filename,patient_
 
     Returns a list of patient identifiers, and a list of predictions about the patients response to a given drug.
     """
-    training_data,training_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
-    model.fit(training_data,training_target)
-
-    patient_frame = dfm.generate_patients_expression_frame(patient_directory)
-    patient_data = dfm.generate_scikit_patient_data(patient_frame)
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_patients_expression_frame(expression_filename,ic50_filename,patient_directory,threshold)
+    model.fit(expression_data,expression_target)
 
     predictions = model.predict(patient_data)
-    return patient_frame.index,predictions
+
+    return patient_identifiers,predictions

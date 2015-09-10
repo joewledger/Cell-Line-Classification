@@ -138,8 +138,26 @@ def shuffle_scikit_data_target(scikit_data,scikit_target):
     scikit_data[:], scikit_target[:] = zip(*combined)
     return np.array(scikit_data),np.array(scikit_target)
 
-def generate_scikit_patient_data(patient_frame):
-    print(patient_frame)
+def generate_patient_expression_gene_intersection(patient_frame,expression_frame):
+    """
+    Trims a patient_expression dataframe and a cell_line expression dataframe so each contains the same set of genes.
+    Returns a tuple containing the patient_expression dataframe and the cell_line expression dataframe.
+    """
 
     raise NotImplementedError
 
+def generate_expression_patient_data_target(expression_filename,ic50_filename,patient_directory,threshold):
+    """
+    Does all steps needed to generate the training expression data and target along with the patient data for patient stratificiation.
+    First generates a patient dataframe and an expression dataframe.
+    Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
+    Normalizes both dataframes by gene.
+    Removes genes from the expression frame by applying the pvalue threshold.
+    Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
+    Converts the expression frame into a scikit expression data and target.
+    Converts the patient frame into a list of patient identifiers and a scikit dataset.
+    Returns a tuple containing the expression_data,expression_target,patient_identifiers, and patient_data
+
+    """
+
+    raise NotImplementedError

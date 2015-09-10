@@ -84,7 +84,10 @@ def test_shuffle_scikit_data_target():
     shuffled_sums = {sum(row) : shuffled_target[i] for i,row in enumerate(shuffled_data)}
     assert all(row_sums[key] == shuffled_sums[key] for key in row_sums.keys())
 
-def test_generate_scikit_patient_data():
-    patient_frame = data.generate_patients_expression_frame(patient_directory)
+def test_generate_patient_expression_gene_intersection(patient_frame,expression_frame):
+
+    assert False
+
+def test_generate_expression_patient_data_target():
 
     assert False
