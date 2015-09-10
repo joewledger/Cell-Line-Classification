@@ -70,6 +70,14 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,t
     accuracy = lambda threshold : get_svm_model_accuracy(model,expression_file,ic50_file,threshold,num_permutations)
     return {threshold : accuracy(threshold) for threshold in thresholds}
 
+def get_svm_predictions_full_dataset():
+    """
+    Trains a SVM model using the partial CCLE dataset that we have IC50 values for.
+    Then uses the model to make predictons for all cell lines in the CCLE dataset.
+    Returns a tuple containing the list of cell lines and their predicted sensitivity
+    """
+
+    raise NotImplementedError
 
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
     """
