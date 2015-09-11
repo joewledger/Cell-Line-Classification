@@ -21,6 +21,7 @@ def generate_patients_expression_frame(patient_directory):
         all_series.append(s)
     df = pd.DataFrame(all_series).T
     df = df.convert_objects(convert_numeric=True)
+    df = df.dropna()
     return df
 
 def generate_cell_line_expression_frame(expression_features_file):
@@ -144,31 +145,43 @@ def generate_patient_expression_gene_intersection(patient_frame,expression_frame
     Returns a tuple containing the patient_expression dataframe and the cell_line expression dataframe.
     """
 
-    raise NotImplementedError
+    gene_intersection = patient_frame.index.intersection(expression_frame.index)
+    return patient_frame.ix[gene_intersection], expression_frame.ix[gene_intersection]
 
 def generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold):
     """
     Does all steps needed to generate the training expression data and target along with the patient data for patient stratificiation.
-    First generates a patient dataframe and an expression dataframe.
-    Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
-    Normalizes both dataframes by gene.
-    Removes genes from the expression frame by applying the pvalue threshold.
-    Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
-    Converts the expression frame into a scikit expression data and target.
-    Converts the patient frame into a list of patient identifiers and a scikit dataset.
-    Returns a tuple containing the expression_data,expression_target,patient_identifiers, and patient_data
-
+    Returns scikit expression data and target, along with a list of patient identifiers and scikit patient data
+    Expression data and patient data are normalized and have the same set of genes.
+    Expression data has been trimmed by using a p_value filter.
     """
+
+    #Generates a patient dataframe and an expression dataframe.
     patient_frame = generate_patients_expression_frame(patient_directory)
     expression_frame = generate_cell_line_expression_frame(expression_file)
+
+    #Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
     patient_frame,expression_frame = generate_patient_expression_gene_intersection(patient_frame,expression_frame)
+
+    #Normalizes both dataframes by gene.
     patient_frame = normalize_expression_frame(patient_frame)
     expression_frame = normalize_expression_frame(expression_frame)
-    binned_ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
-    expression_frame = apply_pval_threshold(expression_frame,binned_ic50_series,threshold)
+
+    #Removes genes from the expression frame by applying the pvalue threshold.
+    ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
+    expression_frame, ic50_series = generate_cell_line_intersection(expression_frame, ic50_series)
+    expression_frame = apply_pval_threshold(expression_frame,ic50_series,threshold)
+
+    #Trims both dataframes so the set of genes they contain is the intersection of the two gene sets.
     patient_frame,expression_frame = generate_patient_expression_gene_intersection(patient_frame,expression_frame)
-    expression_data,expression_target = generate_scikit_data_and_target(expression_frame,binned_ic50_series)
+
+    #Converts the expression frame into a scikit expression data and target.
+    expression_data,expression_target = generate_scikit_data_and_target(expression_frame,ic50_series)
+
+    #Converts the patient frame into a list of patient identifiers and a scikit dataset.
     patient_identifiers,patient_data = generate_patient_identifiers_and_data(patient_frame)
+
+    #Returns a tuple containing the expression_data,expression_target,patient_identifiers, and patient_data
     return expression_data,expression_target,patient_identifiers,patient_data
 
 def generate_patient_identifiers_and_data(patient_frame):
@@ -176,4 +189,6 @@ def generate_patient_identifiers_and_data(patient_frame):
     Converts a patient dataframe into a list of patient identifiers and a scikit patient dataset
     """
 
-    raise NotImplementedError
+    patient_identifiers = list(patient_frame.columns)
+    patient_data = np.array([list(patient_frame[column]) for column in patient_identifiers])
+    return patient_identifiers,patient_data

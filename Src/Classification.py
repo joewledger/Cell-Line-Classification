@@ -70,7 +70,7 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,t
     accuracy = lambda threshold : get_svm_model_accuracy(model,expression_file,ic50_file,threshold,num_permutations)
     return {threshold : accuracy(threshold) for threshold in thresholds}
 
-def get_svm_predictions_full_dataset():
+def get_svm_predictions_full_dataset(model,expression_file,ic50_file,thresholds):
     """
     Trains a SVM model using the partial CCLE dataset that we have IC50 values for.
     Then uses the model to make predictons for all cell lines in the CCLE dataset.
@@ -88,14 +88,14 @@ def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold
     model.fit(scikit_data,scikit_target)
     return model.coef_[0]
 
-def get_svm_patient_predictions(model,expression_filename,ic50_filename,patient_directory,threshold):
+def get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold):
     """
     Returns the predictions for which patients are likely to be sensitive to SMAPs and which are likely to be resistant.
     First trains a given SVM model on expression data, and then uses the trained model to predict patient outcome.
 
     Returns a list of patient identifiers, and a list of predictions about the patients response to a given drug.
     """
-    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_patients_expression_frame(expression_filename,ic50_filename,patient_directory,threshold)
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold)
     model.fit(expression_data,expression_target)
 
     predictions = model.predict(patient_data)

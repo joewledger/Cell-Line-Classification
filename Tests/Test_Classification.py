@@ -3,6 +3,7 @@ import Src.DataFormatter as dfm
 
 expression_file = "Data/CCLE_Data/sample1000.res"
 ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
+patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
 def test_get_svm_model_accuracy():
     model = classify.construct_svc_model(kernel='linear')
@@ -35,5 +36,11 @@ def test_get_svm_model_coefficients():
 
 def test_get_patient_predictions():
     model = classify.construct_svc_model(kernel='linear')
-    predictions = classify.get_svm_patient_predictions()
+    patient_identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,.05)
+    assert len(patient_identifiers) == len(predictions)
+    print(predictions)
+    assert all(prediction in [0,1,2] for prediction in predictions)
+
+def test_get_svm_predictions_full_dataset():
+
     assert False

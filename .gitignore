@@ -3,3 +3,4 @@ Data/
 .idea/
 Tests/*.pyc
 Src/*.pyc
+todo.txt
