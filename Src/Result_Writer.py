@@ -68,7 +68,7 @@ def default_parameters():
     parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
     parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity.txt'
-    parameters['patient_dir'] = os.path.dirname(__file__) + "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
+    parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
     parameters['num_permutations'] = 20
@@ -121,8 +121,15 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
     writer.close()
 
 def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'}):
-
-    raise NotImplementedError
+    results_file = results_directory + "Patient_Predictions/SVM_%s_kernel.txt" % model_parameters['kernel']
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        model = classify.construct_svc_model(kernel="linear")
+        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold)
+        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
 
 if __name__ == '__main__':
     main()
