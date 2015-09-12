@@ -49,26 +49,52 @@ def main():
 
 
 def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds,num_permutations):
-    linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}) if (0 in experiments) else None
-    rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'rbf'}) if (1 in experiments) else None
-    poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'poly'}) if (2 in experiments) else None
+    log_file = results_directory + "log.txt"
+    linear_acc,rbf_acc,poly_acc = None,None,None
+    if(0 in experiments):
+        log(log_file,"Starting Experiment 0 at %s\n" % str(datetime.datetime.today()))
+        linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'linear'})
+        log(log_file,"Finished Experiment 0 at %s\n" % str(datetime.datetime.today()))
+    if(1 in experiments):
+        log(log_file,"Starting Experiment 1 at %s\n" % str(datetime.datetime.today()))
+        rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'rbf'})
+        log(log_file,"Finished Experiment 1 at %s\n" % str(datetime.datetime.today()))
+    if(2 in experiments):
+        log(log_file,"Starting Experiment 2 at %s\n" % str(datetime.datetime.today()))
+        poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'poly'})
+        log(log_file,"Finished Experiment 2 at %s\n" % str(datetime.datetime.today()))
     if (3 in experiments):
+        log(log_file,"Starting Experiment 3 at %s\n" % str(datetime.datetime.today()))
         save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
+        log(log_file,"Finished Experiment 3 at %s\n" % str(datetime.datetime.today()))
     if (4 in experiments):
+        log(log_file,"Starting Experiment 4 at %s\n" % str(datetime.datetime.today()))
         save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
+        log(log_file,"Finished Experiment 4 at %s\n" % str(datetime.datetime.today()))
     if 5 in experiments:
+        log(log_file,"Starting Experiment 5 at %s\n" % str(datetime.datetime.today()))
         save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'linear'})
+        log(log_file,"Finished Experiment 5 at %s\n" % str(datetime.datetime.today()))
     if 6 in experiments:
+        log(log_file,"Starting Experiment 6 at %s\n" % str(datetime.datetime.today()))
         save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'})
+        log(log_file,"Finished Experiment 6 at %s\n" % str(datetime.datetime.today()))
     if 7 in experiments:
+        log(log_file,"Starting Experiment 7 at %s\n" % str(datetime.datetime.today()))
         save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'})
+        log(log_file,"Finished Experiment 7 at %s\n" % str(datetime.datetime.today()))
     if 8 in experiments:
+        log(log_file,"Starting Experiment 8 at %s\n" % str(datetime.datetime.today()))
         save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
+        log(log_file,"Finished Experiment 8 at %s\n" % str(datetime.datetime.today()))
     if 9 in experiments:
+        log(log_file,"Starting Experiment 9 at %s\n" % str(datetime.datetime.today()))
         save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
+        log(log_file,"Finished Experiment 9 at %s\n" % str(datetime.datetime.today()))
     if 10 in experiments:
+        log(log_file,"Starting Experiment 10 at %s\n" % str(datetime.datetime.today()))
         save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
-
+        log(log_file,"Finished Experiment 10 at %s\n" % str(datetime.datetime.today()))
 
 
 def default_parameters():
@@ -81,7 +107,7 @@ def default_parameters():
     parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
-    parameters['num_permutations'] = 20
+    parameters['num_permutations'] = 100
     return parameters
 
 def get_results_filepath(base_results_directory):
@@ -150,6 +176,11 @@ def save_svm_full_CCLE_dataset_predictions(results_directory,expression_file,ic5
         cell_lines, predictions = classify.get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold)
         writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
+
+def log(log_file, message):
+    writer = open(log_file,"a+")
+    writer.write(message)
     writer.close()
 
 if __name__ == '__main__':
