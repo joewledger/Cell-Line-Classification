@@ -80,7 +80,7 @@ def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     training_frame,training_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
     training_data,training_target = dfm.generate_scikit_data_and_target(training_frame,training_series)
 
-    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,ic50_file,training_frame.index,threshold)
+    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
 
     model.fit(training_data,training_target)
     predictions = model.predict(testing_data)

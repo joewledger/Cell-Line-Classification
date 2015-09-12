@@ -24,6 +24,9 @@ def main():
     \t5 : Save SVM Linear kernel patient predictions
     \t6 : Save SVM RBF kernel patient predictions
     \t7 : Save SVM Polynomial kernel patient predictions
+    \t8 : Save SVM Linear kernel full CCLE dataset predictions
+    \t9 : Save SVM RBF kernel full CCLE dataset predictions
+    \t10 : Save SVM Polynomial kernel full CCLE dataset predictions
     """
     parser = argparse.ArgumentParser(description=description,formatter_class=RawTextHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
@@ -59,11 +62,18 @@ def run_experiments(results_directory, experiments, expression_filename,ic50_fil
         save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'})
     if 7 in experiments:
         save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'})
+    if 8 in experiments:
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
+    if 9 in experiments:
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
+    if 10 in experiments:
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
+
 
 
 def default_parameters():
     parameters = {}
-    parameters['experiments'] = [x for x in xrange(0,5)]
+    parameters['experiments'] = [x for x in xrange(0,11)]
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
     parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
@@ -89,7 +99,7 @@ def make_results_directory_and_subdirectories(base_results_directory,results_dir
     os.mkdir(results_directory + "Plots")
     os.mkdir(results_directory + "Plots/SVM_Accuracies")
     os.mkdir(results_directory + "Model_Coefficients")
-    os.mkdir(results_directory + "Patient_Predictions")
+    os.mkdir(results_directory + "Predictions")
 
 def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}):
     model = classify.construct_svc_model(**model_parameters)
@@ -121,13 +131,24 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
     writer.close()
 
 def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'}):
-    results_file = results_directory + "Patient_Predictions/SVM_%s_kernel.txt" % model_parameters['kernel']
+    results_file = results_directory + "Predictions/SVM_patient_prediction_%s_kernel.txt" % model_parameters['kernel']
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
         model = classify.construct_svc_model(kernel="linear")
         identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
+
+def save_svm_full_CCLE_dataset_predictions(results_directory,expression_file,ic50_file,thresholds,model_parameters={'kernel' : 'linear'}):
+    results_file = results_directory + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % model_parameters['kernel']
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        model = classify.construct_svc_model(kernel="linear")
+        cell_lines, predictions = classify.get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold)
+        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
