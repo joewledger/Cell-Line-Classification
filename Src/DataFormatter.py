@@ -24,11 +24,11 @@ def generate_patients_expression_frame(patient_directory):
     df = df.dropna()
     return df
 
-def generate_cell_line_expression_frame(expression_features_file):
+def generate_cell_line_expression_frame(expression_file):
     """
     Generates a gene x cell_line frame
     """
-    df = pd.DataFrame.from_csv(expression_features_file, index_col=0, sep='\t')
+    df = pd.DataFrame.from_csv(expression_file, index_col=0, sep='\t')
     df = df.reindex_axis([c for c in df.columns[1:] if not c.startswith('Unnamed')], 1)
     renamed_columns = {c: c[:c.find('_')] for c in df.columns}
     df = df.rename(columns=renamed_columns)
@@ -59,6 +59,10 @@ def bin_ic50_series(ic50_series):
     upper_bound = ic50_values[int(float(len(ic50_values)) * .80)]
     binning_function = lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
     return ic50_series.apply(binning_function,convert_dtype=True)
+
+def generate_binned_ic50_series(ic50_file):
+    ic50_series = generate_ic50_series(ic50_file)
+    return bin_ic50_series(ic50_series)
 
 
 def normalize_expression_frame(dataframe):
@@ -192,3 +196,13 @@ def generate_patient_identifiers_and_data(patient_frame):
     patient_identifiers = list(patient_frame.columns)
     patient_data = np.array([list(patient_frame[column]) for column in patient_identifiers])
     return patient_identifiers,patient_data
+
+def generate_normalized_full_expression_identifiers_and_data(expression_file,genes):
+
+    expression_frame = generate_cell_line_expression_frame(expression_file)
+    expression_frame = normalize_expression_frame(expression_frame)
+    expression_frame = expression_frame.ix[expression_frame.index.intersection(genes)]
+
+    cell_lines = expression_frame.columns
+    return cell_lines, np.array([list(expression_frame[column]) for column in expression_frame.columns])
+

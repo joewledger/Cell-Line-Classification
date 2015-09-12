@@ -1,5 +1,6 @@
 import DataFormatter as dfm
 
+import numpy as np
 from sklearn import cross_validation
 from sklearn import svm
 from pybrain.structure import LinearLayer
@@ -70,14 +71,22 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,t
     accuracy = lambda threshold : get_svm_model_accuracy(model,expression_file,ic50_file,threshold,num_permutations)
     return {threshold : accuracy(threshold) for threshold in thresholds}
 
-def get_svm_predictions_full_dataset(model,expression_file,ic50_file,thresholds):
+def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     """
     Trains a SVM model using the partial CCLE dataset that we have IC50 values for.
     Then uses the model to make predictons for all cell lines in the CCLE dataset.
     Returns a tuple containing the list of cell lines and their predicted sensitivity
     """
+    training_frame,training_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
+    training_data,training_target = dfm.generate_scikit_data_and_target(training_frame,training_series)
 
-    raise NotImplementedError
+    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,ic50_file,training_frame.index,threshold)
+
+    model.fit(training_data,training_target)
+    predictions = model.predict(testing_data)
+
+    return cell_lines, predictions
+
 
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
     """
