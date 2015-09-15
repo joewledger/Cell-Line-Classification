@@ -117,14 +117,14 @@ def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold
     model.fit(scikit_data,scikit_target)
     return model.coef_[0]
 
-def get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold):
+def get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold,trimmed=False):
     """
     Returns the predictions for which patients are likely to be sensitive to SMAPs and which are likely to be resistant.
     First trains a given SVM model on expression data, and then uses the trained model to predict patient outcome.
 
     Returns a list of patient identifiers, and a list of predictions about the patients response to a given drug.
     """
-    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold)
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
     model.fit(expression_data,expression_target)
 
     predictions = model.predict(patient_data)

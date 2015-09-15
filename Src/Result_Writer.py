@@ -85,16 +85,28 @@ def run_experiments(results_directory, experiments, expression_filename,ic50_fil
         log(log_file,"Finished Experiment 7 at %s\n" % str(datetime.datetime.today()))
     if 8 in experiments:
         log(log_file,"Starting Experiment 8 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'linear'},trimmed=True)
         log(log_file,"Finished Experiment 8 at %s\n" % str(datetime.datetime.today()))
     if 9 in experiments:
         log(log_file,"Starting Experiment 9 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'},trimmed=True)
         log(log_file,"Finished Experiment 9 at %s\n" % str(datetime.datetime.today()))
     if 10 in experiments:
         log(log_file,"Starting Experiment 10 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
+        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'},trimmed=True)
         log(log_file,"Finished Experiment 10 at %s\n" % str(datetime.datetime.today()))
+    if 11 in experiments:
+        log(log_file,"Starting Experiment 11 at %s\n" % str(datetime.datetime.today()))
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
+        log(log_file,"Finished Experiment 11 at %s\n" % str(datetime.datetime.today()))
+    if 12 in experiments:
+        log(log_file,"Starting Experiment 12 at %s\n" % str(datetime.datetime.today()))
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
+        log(log_file,"Finished Experiment 12 at %s\n" % str(datetime.datetime.today()))
+    if 13 in experiments:
+        log(log_file,"Starting Experiment 13 at %s\n" % str(datetime.datetime.today()))
+        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
+        log(log_file,"Finished Experiment 13 at %s\n" % str(datetime.datetime.today()))
 
 
 def default_parameters():
@@ -156,8 +168,8 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
-def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'}):
-    results_file = results_directory + "Predictions/SVM_patient_prediction_%s_kernel.txt" % model_parameters['kernel']
+def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'},trimmed=False):
+    results_file = results_directory + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (model_parameters['kernel'],"out" if trimmed else "")
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))

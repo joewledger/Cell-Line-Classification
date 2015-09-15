@@ -153,7 +153,7 @@ def generate_patient_expression_gene_intersection(patient_frame,expression_frame
     gene_intersection = patient_frame.index.intersection(expression_frame.index)
     return patient_frame.ix[gene_intersection], expression_frame.ix[gene_intersection]
 
-def generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold):
+def generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=False):
     """
     Does all steps needed to generate the training expression data and target along with the patient data for patient stratificiation.
     Returns scikit expression data and target, along with a list of patient identifiers and scikit patient data
@@ -174,6 +174,8 @@ def generate_expression_patient_data_target(expression_file,ic50_file,patient_di
 
     #Removes genes from the expression frame by applying the pvalue threshold.
     ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
+    if(trimmed):
+        expression_frame,ic50_series = trim_undetermined_cell_lines(expression_frame,ic50_series)
     expression_frame, ic50_series = generate_cell_line_intersection(expression_frame, ic50_series)
     expression_frame = apply_pval_threshold(expression_frame,ic50_series,threshold)
 
