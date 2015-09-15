@@ -6,6 +6,8 @@ from sklearn import svm
 from pybrain.structure import LinearLayer
 from pybrain.structure import FeedForwardNetwork
 from pybrain.structure import FullConnection
+from pybrain.tools.validation import CrossValidator
+from pybrain.supervised.trainers import BackpropTrainer
 
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
@@ -45,8 +47,12 @@ def construct_neural_net_model(num_hidden_layers,num_inputs,num_hidden_nodes,num
     return network
 
 
-def get_neural_network_model_accuracy(expression_frame, classifier_series):
-    raise NotImplementedError
+def get_neural_network_model_accuracy(network, expression_file, ic50_file,threshold):
+
+    trainer = BackpropTrainer(network)
+    dataset = dfm.generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50_file,threshold)
+    validator = CrossValidator(trainer,dataset,n_folds=5)
+    return validator.validate()
 
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
