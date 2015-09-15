@@ -3,6 +3,7 @@ import DataFormatter as dfm
 import numpy as np
 from sklearn import cross_validation
 from sklearn import svm
+from sklearn import tree
 from pybrain.structure import LinearLayer
 from pybrain.structure import FeedForwardNetwork
 from pybrain.structure import FullConnection
@@ -17,6 +18,15 @@ We are going to apply SVM to classify cell lines as either sensitive or resistan
 The training input values are the gene expression measurements for each cell line
 The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
 """
+
+def get_decision_tree_model_accuracy(model,expression_file, ic50_file,threshold):
+    raise NotImplementedError
+
+def get_decision_tree_patient_predictions(model,expression_file, ic50_file,threshold):
+    raise NotImplementedError
+
+def get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,threshold):
+    raise NotImplementedError
 
 def construct_neural_net_model(num_hidden_layers,num_inputs,num_hidden_nodes,num_outputs):
     """
@@ -46,13 +56,18 @@ def construct_neural_net_model(num_hidden_layers,num_inputs,num_hidden_nodes,num
 
     return network
 
-
 def get_neural_network_model_accuracy(network, expression_file, ic50_file,threshold):
 
     trainer = BackpropTrainer(network)
     dataset = dfm.generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50_file,threshold)
     validator = CrossValidator(trainer,dataset,n_folds=5)
     return validator.validate()
+
+def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
+    raise NotImplementedError
+
+def get_neural_network_predictions_full_dataset(network,expression_file,ic50_file,threshold):
+    raise NotImplementedError
 
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
@@ -92,7 +107,6 @@ def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     predictions = model.predict(testing_data)
 
     return cell_lines, predictions
-
 
 def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
     """
