@@ -1,5 +1,5 @@
 import argparse
-from argparse import RawTextHelpFormatter
+from argparse import RawDescriptionHelpFormatter
 import datetime
 import os
 import DataFormatter as dfm
@@ -13,22 +13,12 @@ Writes results to a results directory
 
 def main():
     description = """
-    A tool for predicting patient response to cancer drugs using several different machine learning models.
-    These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.
-    Depending on the parameters given, this module will run different experiments.
-    \t0 : Graph SVM Linear kernel accuracy vs. threshold
-    \t1 : Graph SVM RBF kernel accuracy vs. threshold
-    \t2 : Graph SVM Polynomial kernel accuracy vs. threshold
-    \t3 : Graph all SVM kernel accuracies vs. threshold on same graph
-    \t4 : Save SVM Linear kernel model coefficients
-    \t5 : Save SVM Linear kernel patient predictions
-    \t6 : Save SVM RBF kernel patient predictions
-    \t7 : Save SVM Polynomial kernel patient predictions
-    \t8 : Save SVM Linear kernel full CCLE dataset predictions
-    \t9 : Save SVM RBF kernel full CCLE dataset predictions
-    \t10 : Save SVM Polynomial kernel full CCLE dataset predictions
-    """
-    parser = argparse.ArgumentParser(description=description,formatter_class=RawTextHelpFormatter)
+    A tool for predicting patient response to cancer drugs using several different machine learning models.\n\n
+    These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.\n\n
+    Depending on the parameters given, this module will run different experiments.\n\n""" + get_experiment_descriptions()
+    description = description.replace("    ","")
+
+    parser = argparse.ArgumentParser(description=description,formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
     parser.add_argument('--results_dir',type=str,help='The directory to save results to.')
     parser.add_argument('--expression_file',type=str,help='The file to read gene expression measurements from (Use \'full\' for full dataset).')
@@ -51,6 +41,7 @@ def main():
 def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds,num_permutations):
     log_file = results_directory + "log.txt"
     linear_acc,rbf_acc,poly_acc = None,None,None
+    """
     if(0 in experiments):
         log(log_file,"Starting Experiment 0 at %s\n" % str(datetime.datetime.today()))
         linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'linear'})
@@ -107,11 +98,101 @@ def run_experiments(results_directory, experiments, expression_filename,ic50_fil
         log(log_file,"Starting Experiment 13 at %s\n" % str(datetime.datetime.today()))
         save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
         log(log_file,"Finished Experiment 13 at %s\n" % str(datetime.datetime.today()))
+    """
+
+def define_experiments():
+    """
+    Returns a dictionary of tuples, where key is the experiment number, and each value is a tuple containing:
+    1) A description of the experiment
+    2) The unbound method corresponding to the experiment
+    3) Any positional args to be passed to the unbound method
+    4) Any keyword args to be passed to the unbound method (optional)
+    5) The variable name to save the results of the experiment to. (optional)
+    """
+
+    experiments = {}
+
+    experiments[0] = ('Graph SVM Linear kernel accuracy vs. threshold',
+                      save_svm_accuracy_threshold_graph,
+                      ['results_directory','expression_file','ic50_file','thresholds','num_permutations'],
+                      {'kernel' : 'linear'},
+                      'linear_acc')
+
+    experiments[1] = ('Graph SVM RBF kernel accuracy vs. threshold',
+                      save_svm_accuracy_threshold_graph,
+                      ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      {'kernel' : 'rbf'},
+                      'rbf_acc')
+
+    experiments[2] = ('Graph SVM Poly kernel accuracy vs. threshold',
+                      save_svm_accuracy_threshold_graph,
+                      ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      {'kernel' : 'poly'},
+                      'poly_acc')
+
+    experiments[3] = ('Graph all SVM kernel accuracies vs. threshold on same graph',
+                      save_svm_accuracy_threshold_graph_multiple_kernels,
+                      ['results_directory','linear_acc','rbf_acc','poly_acc'])
+
+    experiments[4] = ('Save SVM Linear kernel model coefficients',
+                      save_svm_model_coefficients,
+                      ['results_directory','expression_filename','ic50_filename','thresholds'])
+
+    experiments[5] = ('Save SVM Linear kernel patient predictions with undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'linear', 'trimmed' : False})
+
+    experiments[6] = ('Save SVM RBF kernel patient predictions with undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'rbf', 'trimmed' : False})
+
+    experiments[7] = ('Save SVM Poly kernel patient predictions with undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'poly', 'trimmed' : False})
+
+    experiments[8] = ('Save SVM Linear kernel patient predictions without undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'linear', 'trimmed' : True})
+
+    experiments[9] = ('Save SVM RBF kernel patient predictions without undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'rbf', 'trimmed' : True})
+
+    experiments[10] = ('Save SVM Poly kernel patient predictions without undetermined cell lines',
+                      save_svm_patient_predictions,
+                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      {'kernel' : 'poly', 'trimmed' : True})
+
+    experiments[11] = ('Save SVM Linear kernel full CCLE dataset predictions',
+                       save_svm_full_CCLE_dataset_predictions,
+                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       {'kernel' : 'linear'})
+
+    experiments[12] = ('Save SVM RBF kernel full CCLE dataset predictions',
+                       save_svm_full_CCLE_dataset_predictions,
+                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       {'kernel' : 'rbf'})
+
+    experiments[13] = ('Save SVM Poly kernel full CCLE dataset predictions',
+                       save_svm_full_CCLE_dataset_predictions,
+                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       {'kernel' : 'polynomial'})
+
+    return experiments
+
+def get_experiment_descriptions():
+    experiments = define_experiments()
+    return "\n".join(str(key) + " : " + experiments[key][0] for key in experiments.keys())
 
 
 def default_parameters():
     parameters = {}
-    parameters['experiments'] = [x for x in xrange(0,11)]
+    parameters['experiments'] = [x for x in xrange(0,len(define_experiments()))]
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
     parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
