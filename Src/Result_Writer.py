@@ -60,13 +60,13 @@ def define_experiments():
 
     experiments[1] = ('Graph SVM RBF kernel accuracy vs. threshold',
                       save_svm_accuracy_threshold_graph,
-                      ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      ['results_dir', 'expression_file', 'ic50_file', 'thresholds', 'num_permutations'],
                       {'kernel' : 'rbf'},
                       'rbf_acc')
 
     experiments[2] = ('Graph SVM Poly kernel accuracy vs. threshold',
                       save_svm_accuracy_threshold_graph,
-                      ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      ['results_dir', 'expression_file', 'ic50_file', 'thresholds', 'num_permutations'],
                       {'kernel' : 'poly'},
                       'poly_acc')
 
@@ -76,51 +76,51 @@ def define_experiments():
 
     experiments[4] = ('Save SVM Linear kernel model coefficients',
                       save_svm_model_coefficients,
-                      ['results_dir','expression_filename','ic50_filename','thresholds'])
+                      ['results_dir','expression_file','ic50_file','thresholds'])
 
     experiments[5] = ('Save SVM Linear kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : False})
 
     experiments[6] = ('Save SVM RBF kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : False})
 
     experiments[7] = ('Save SVM Poly kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : False})
 
     experiments[8] = ('Save SVM Linear kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : True})
 
     experiments[9] = ('Save SVM RBF kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : True})
 
     experiments[10] = ('Save SVM Poly kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : True})
 
     experiments[11] = ('Save SVM Linear kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'linear'})
 
     experiments[12] = ('Save SVM RBF kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'rbf'})
 
     experiments[13] = ('Save SVM Poly kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'polynomial'})
 
     return experiments
@@ -212,13 +212,13 @@ def save_svm_model_coefficients(results_dir, expression_file,ic50_file,threshold
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
-def save_svm_patient_predictions(results_dir,expression_file, ic50_file,patient_directory, thresholds,**kwargs):
+def save_svm_patient_predictions(results_dir,expression_file, ic50_file,patient_dir, thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
         model = classify.construct_svc_model(kernel="linear")
-        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_directory,threshold)
+        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
