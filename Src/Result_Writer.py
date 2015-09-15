@@ -6,11 +6,6 @@ import DataFormatter as dfm
 import Classification as classify
 import Plotting as plt
 
-"""
-Writes results to a results directory
-
-"""
-
 def main():
     description = """
     A tool for predicting patient response to cancer drugs using several different machine learning models.\n\n
@@ -30,75 +25,20 @@ def main():
     parser.set_defaults(**default_parameters())
     args = parser.parse_args()
 
-    results_directory = get_results_filepath(args.results_dir)
-    make_results_directory_and_subdirectories(args.results_dir,results_directory)
-    expression_file = args.full_expression_file if args.expression_file == "full" else args.expression_file
+    params = dict(vars(args))
 
-    thresholds = [args.threshold_increment * x for x in xrange(1,args.num_thresholds + 1)]
-    run_experiments(results_directory,args.experiments,expression_file,args.ic50_file,args.patient_dir,thresholds,args.num_permutations)
+    params['results_dir'] = get_results_filepath(params['results_dir'])
+    make_results_dir_and_subdirectories(args.results_dir,params['results_dir'])
 
+    if params['expression_file'] == "full":
+        params['expression_file'] = params['full_expression_file']
 
-def run_experiments(results_directory, experiments, expression_filename,ic50_filename,patient_directory, thresholds,num_permutations):
-    log_file = results_directory + "log.txt"
-    linear_acc,rbf_acc,poly_acc = None,None,None
-    """
-    if(0 in experiments):
-        log(log_file,"Starting Experiment 0 at %s\n" % str(datetime.datetime.today()))
-        linear_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'linear'})
-        log(log_file,"Finished Experiment 0 at %s\n" % str(datetime.datetime.today()))
-    if(1 in experiments):
-        log(log_file,"Starting Experiment 1 at %s\n" % str(datetime.datetime.today()))
-        rbf_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'rbf'})
-        log(log_file,"Finished Experiment 1 at %s\n" % str(datetime.datetime.today()))
-    if(2 in experiments):
-        log(log_file,"Starting Experiment 2 at %s\n" % str(datetime.datetime.today()))
-        poly_acc = save_svm_accuracy_threshold_graph(results_directory, expression_filename,ic50_filename,thresholds,num_permutations,model_parameters={'kernel' : 'poly'})
-        log(log_file,"Finished Experiment 2 at %s\n" % str(datetime.datetime.today()))
-    if (3 in experiments):
-        log(log_file,"Starting Experiment 3 at %s\n" % str(datetime.datetime.today()))
-        save_svm_accuracy_threshold_graph_multiple_kernels(results_directory,linear_acc,rbf_acc,poly_acc)
-        log(log_file,"Finished Experiment 3 at %s\n" % str(datetime.datetime.today()))
-    if (4 in experiments):
-        log(log_file,"Starting Experiment 4 at %s\n" % str(datetime.datetime.today()))
-        save_svm_model_coefficients(results_directory,expression_filename,ic50_filename,thresholds)
-        log(log_file,"Finished Experiment 4 at %s\n" % str(datetime.datetime.today()))
-    if 5 in experiments:
-        log(log_file,"Starting Experiment 5 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'linear'})
-        log(log_file,"Finished Experiment 5 at %s\n" % str(datetime.datetime.today()))
-    if 6 in experiments:
-        log(log_file,"Starting Experiment 6 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'})
-        log(log_file,"Finished Experiment 6 at %s\n" % str(datetime.datetime.today()))
-    if 7 in experiments:
-        log(log_file,"Starting Experiment 7 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'})
-        log(log_file,"Finished Experiment 7 at %s\n" % str(datetime.datetime.today()))
-    if 8 in experiments:
-        log(log_file,"Starting Experiment 8 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'linear'},trimmed=True)
-        log(log_file,"Finished Experiment 8 at %s\n" % str(datetime.datetime.today()))
-    if 9 in experiments:
-        log(log_file,"Starting Experiment 9 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'rbf'},trimmed=True)
-        log(log_file,"Finished Experiment 9 at %s\n" % str(datetime.datetime.today()))
-    if 10 in experiments:
-        log(log_file,"Starting Experiment 10 at %s\n" % str(datetime.datetime.today()))
-        save_svm_patient_predictions(results_directory,expression_filename, ic50_filename,patient_directory, thresholds,model_parameters={'kernel' : 'poly'},trimmed=True)
-        log(log_file,"Finished Experiment 10 at %s\n" % str(datetime.datetime.today()))
-    if 11 in experiments:
-        log(log_file,"Starting Experiment 11 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'linear'})
-        log(log_file,"Finished Experiment 11 at %s\n" % str(datetime.datetime.today()))
-    if 12 in experiments:
-        log(log_file,"Starting Experiment 12 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'rbf'})
-        log(log_file,"Finished Experiment 12 at %s\n" % str(datetime.datetime.today()))
-    if 13 in experiments:
-        log(log_file,"Starting Experiment 13 at %s\n" % str(datetime.datetime.today()))
-        save_svm_full_CCLE_dataset_predictions(results_directory,expression_filename,ic50_filename,thresholds,model_parameters={'kernel' : 'poly'})
-        log(log_file,"Finished Experiment 13 at %s\n" % str(datetime.datetime.today()))
-    """
+    params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
+
+    experiment_definitions = define_experiments()
+    experiments = [key for key in experiment_definitions.keys() if key in params['experiments']]
+
+    run_experiments(experiments,params)
 
 def define_experiments():
     """
@@ -114,81 +54,76 @@ def define_experiments():
 
     experiments[0] = ('Graph SVM Linear kernel accuracy vs. threshold',
                       save_svm_accuracy_threshold_graph,
-                      ['results_directory','expression_file','ic50_file','thresholds','num_permutations'],
+                      ['results_dir','expression_file','ic50_file','thresholds','num_permutations'],
                       {'kernel' : 'linear'},
                       'linear_acc')
 
     experiments[1] = ('Graph SVM RBF kernel accuracy vs. threshold',
                       save_svm_accuracy_threshold_graph,
-                      ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
                       {'kernel' : 'rbf'},
                       'rbf_acc')
 
     experiments[2] = ('Graph SVM Poly kernel accuracy vs. threshold',
                       save_svm_accuracy_threshold_graph,
-                      ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
+                      ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds', 'num_permutations'],
                       {'kernel' : 'poly'},
                       'poly_acc')
 
     experiments[3] = ('Graph all SVM kernel accuracies vs. threshold on same graph',
                       save_svm_accuracy_threshold_graph_multiple_kernels,
-                      ['results_directory','linear_acc','rbf_acc','poly_acc'])
+                      ['results_dir','linear_acc','rbf_acc','poly_acc'])
 
     experiments[4] = ('Save SVM Linear kernel model coefficients',
                       save_svm_model_coefficients,
-                      ['results_directory','expression_filename','ic50_filename','thresholds'])
+                      ['results_dir','expression_filename','ic50_filename','thresholds'])
 
     experiments[5] = ('Save SVM Linear kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : False})
 
     experiments[6] = ('Save SVM RBF kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : False})
 
     experiments[7] = ('Save SVM Poly kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : False})
 
     experiments[8] = ('Save SVM Linear kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : True})
 
     experiments[9] = ('Save SVM RBF kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : True})
 
     experiments[10] = ('Save SVM Poly kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
-                      ['results_directory', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
+                      ['results_dir', 'expression_filename', 'ic50_filename','patient_directory', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : True})
 
     experiments[11] = ('Save SVM Linear kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
                        {'kernel' : 'linear'})
 
     experiments[12] = ('Save SVM RBF kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
                        {'kernel' : 'rbf'})
 
     experiments[13] = ('Save SVM Poly kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
-                       ['results_directory', 'expression_filename', 'ic50_filename', 'thresholds'],
+                       ['results_dir', 'expression_filename', 'ic50_filename', 'thresholds'],
                        {'kernel' : 'polynomial'})
 
     return experiments
-
-def get_experiment_descriptions():
-    experiments = define_experiments()
-    return "\n".join(str(key) + " : " + experiments[key][0] for key in experiments.keys())
-
 
 def default_parameters():
     parameters = {}
@@ -203,41 +138,69 @@ def default_parameters():
     parameters['num_permutations'] = 100
     return parameters
 
-def get_results_filepath(base_results_directory):
+def run_experiments(experiments, params):
+    experiment_definitions = define_experiments()
+    log_file = params['results_dir'] + "log.txt"
+
+    for experiment in experiments:
+        curr_exp = experiment_definitions[experiment]
+        experiment_description = "%s (%s)" % (str(experiment),curr_exp[0])
+        log(log_file, "Starting Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
+        method = curr_exp[1]
+        args = curr_exp[2]
+        kwargs = curr_exp[3] if len(curr_exp) > 3 else {}
+        save_var = curr_exp[4] if len(curr_exp) > 4 else None
+
+        if save_var:
+            params[save_var] = experiment_wrapper(method,args,kwargs)
+        else:
+            experiment_wrapper(method,args,kwargs)
+
+        log(log_file, "Finished Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
+
+def experiment_wrapper(func,*args,**kwargs):
+    return func(*args,**kwargs)
+
+def get_experiment_descriptions():
+    experiments = define_experiments()
+    return "\n".join(str(key) + " : " + experiments[key][0] for key in experiments.keys())
+
+def get_results_filepath(base_results_dir):
     """
     Gets the filepath for a new results directory based on the current date and time
     """
     curr_time = str(datetime.datetime.today()).replace(" ","_").replace(":","-")
     curr_time = curr_time[:curr_time.rfind("-")]
-    return base_results_directory + curr_time + "/"
+    return base_results_dir + curr_time + "/"
 
-def make_results_directory_and_subdirectories(base_results_directory,results_directory):
-    if not os.path.isdir(base_results_directory):
-        os.mkdir(base_results_directory)
-    os.mkdir(results_directory)
-    os.mkdir(results_directory + "Plots")
-    os.mkdir(results_directory + "Plots/SVM_Accuracies")
-    os.mkdir(results_directory + "Model_Coefficients")
-    os.mkdir(results_directory + "Predictions")
+def make_results_dir_and_subdirectories(base_results_dir,results_dir):
 
-def save_svm_accuracy_threshold_graph(results_directory,expression_file,ic50_file,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}):
+    if not os.path.isdir(base_results_dir):
+        os.mkdir(base_results_dir)
+    os.mkdir(results_dir)
+    os.mkdir(results_dir + "Plots")
+    os.mkdir(results_dir + "Plots/SVM_Accuracies")
+    os.mkdir(results_dir + "Model_Coefficients")
+    os.mkdir(results_dir + "Predictions")
+
+def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,model_parameters={'kernel' : 'linear'}):
     model = classify.construct_svc_model(**model_parameters)
     accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
-    outfile = results_directory + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
+    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
     plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % model_parameters['kernel'])
     return accuracies
 
-def save_svm_accuracy_threshold_graph_multiple_kernels(results_directory, linear,rbf,poly):
+def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,poly):
     """
     Saves accuracy threshold graphs for multiple SVM kernels on the same set of axes.
     The parameters linear, rbf, and poly are dictionaries mapping threshold to a list of accuracy values for that particular kernels
     """
-    outfile = results_directory + "Plots/SVM_Accuracies/multiple_kernel_accuracy_threshold.png"
+    outfile = results_dir + "Plots/SVM_Accuracies/multiple_kernel_accuracy_threshold.png"
     kernels = [linear,rbf,poly]
     plt.plot_accuracy_threshold_multiple_kernels(outfile,kernels)
 
-def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thresholds):
-    results_file = results_directory + "Model_Coefficients/svm_linear.txt"
+def save_svm_model_coefficients(results_dir, expression_file,ic50_file,thresholds):
+    results_file = results_dir + "Model_Coefficients/svm_linear.txt"
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
@@ -249,8 +212,8 @@ def save_svm_model_coefficients(results_directory, expression_file,ic50_file,thr
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
-def save_svm_patient_predictions(results_directory,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'},trimmed=False):
-    results_file = results_directory + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (model_parameters['kernel'],"out" if trimmed else "")
+def save_svm_patient_predictions(results_dir,expression_file, ic50_file,patient_directory, thresholds,model_parameters={'kernel' : 'linear'},trimmed=False):
+    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (model_parameters['kernel'],"out" if trimmed else "")
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
@@ -260,8 +223,8 @@ def save_svm_patient_predictions(results_directory,expression_file, ic50_file,pa
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
-def save_svm_full_CCLE_dataset_predictions(results_directory,expression_file,ic50_file,thresholds,model_parameters={'kernel' : 'linear'}):
-    results_file = results_directory + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % model_parameters['kernel']
+def save_svm_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds,model_parameters={'kernel' : 'linear'}):
+    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % model_parameters['kernel']
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
