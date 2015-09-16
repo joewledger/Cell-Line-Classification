@@ -123,6 +123,18 @@ def define_experiments():
                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'polynomial'})
 
+    experiments[14] = ('Save Neural Network Accuracy v. Threshold Graphs',
+                       save_neural_network_accuracy_threshold_graph_multiple_layers,
+                       ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
+
+    experiments[15] = ('Save Neural Network patient predictions',
+                       save_neural_network_patient_predictions,
+                       ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
+
+    experiments[16] = ('Save Neural Network full CCLE dataset predictions',
+                       save_neural_network_full_CCLE_dataset_predictions,
+                       ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
+
     return experiments
 
 def default_parameters():
@@ -136,6 +148,7 @@ def default_parameters():
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
     parameters['num_permutations'] = 100
+    parameters['layers_to_test'] = 10
     return parameters
 
 def run_experiments(experiments, params):
@@ -233,6 +246,27 @@ def save_svm_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file
         writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
+
+def save_neural_network_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
+    raise NotImplementedError
+
+def save_neural_network_accuracy_threshold_graph_multiple_layers(result_dir):
+    raise NotImplementedError
+
+def save_neural_network_patient_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
+    raise NotImplementedError
+
+def save_neural_network_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
+    raise NotImplementedError
+
+def save_decision_tree_accuracy_threshold_graph():
+    raise NotImplementedError
+
+def save_decision_tree_patient_predictions():
+    raise NotImplementedError
+
+def save_decision_tree_full_CCLE_dataset_predictions():
+    raise NotImplementedError
 
 def log(log_file, message):
     writer = open(log_file,"a+")
