@@ -1,5 +1,6 @@
 import Src.Classification as classify
 import Src.DataFormatter as dfm
+import numpy as np
 
 expression_file = "Data/CCLE_Data/sample1000.res"
 ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
@@ -44,3 +45,16 @@ def test_get_patient_predictions():
 def test_get_svm_predictions_full_dataset():
 
     assert False
+
+def test_get_neural_network_model_accuracy():
+
+    assert False
+
+def test_activate_neural_network():
+    assert False
+
+def test_get_decision_tree_model_accuracy():
+    model = classify.construct_decision_tree_model()
+    accuracy = classify.get_decision_tree_model_accuracy(model,expression_file,ic50_file,.05,100)
+    print(np.array(accuracy).mean())
+    print(np.array(accuracy).std())

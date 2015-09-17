@@ -135,6 +135,25 @@ def define_experiments():
                        save_neural_network_full_CCLE_dataset_predictions,
                        ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
 
+    experiments[17] = ('Graph Decision Tree accuracy vs. threshold',
+                      save_decision_tree_accuracy_threshold_graph,
+                      ['results_dir','expression_file','ic50_file','thresholds','num_permutations'])
+
+    experiments[18] = ('Save Decision Tree patient predictions with undetermined cell lines',
+                      save_decision_tree_patient_predictions,
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
+                      {'trimmed' : False})
+
+    experiments[19] = ('Save Decision Tree patient predictions without undetermined cell lines',
+                      save_decision_tree_patient_predictions,
+                      ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
+                      {'trimmed' : True})
+
+    experiments[20] = ('Save Decision Tree full CCLE dataset predictions',
+                       save_decision_tree_full_CCLE_dataset_predictions,
+                       ['results_dir', 'expression_file', 'ic50_file', 'thresholds'])
+
+
     return experiments
 
 def default_parameters():
@@ -193,6 +212,7 @@ def make_results_dir_and_subdirectories(base_results_dir,results_dir):
     os.mkdir(results_dir)
     os.mkdir(results_dir + "Plots")
     os.mkdir(results_dir + "Plots/SVM_Accuracies")
+    os.mkdir(results_dir + "Plots/Decision_Tree_Accuracies")
     os.mkdir(results_dir + "Model_Coefficients")
     os.mkdir(results_dir + "Predictions")
 
@@ -248,9 +268,11 @@ def save_svm_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file
     writer.close()
 
 def save_neural_network_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
+
     raise NotImplementedError
 
-def save_neural_network_accuracy_threshold_graph_multiple_layers(result_dir):
+def save_neural_network_accuracy_threshold_graph_multiple_layers(results_dir,expression_file,ic50_file,thresholds,layers_to_test):
+
     raise NotImplementedError
 
 def save_neural_network_patient_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
@@ -259,14 +281,34 @@ def save_neural_network_patient_predictions(results_dir,expression_file,ic50_fil
 def save_neural_network_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
     raise NotImplementedError
 
-def save_decision_tree_accuracy_threshold_graph():
-    raise NotImplementedError
+def save_decision_tree_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
+    model = classify.construct_decision_tree_model(**kwargs)
+    accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
+    outfile = results_dir + "Plots/Decision_Tree_Accuracies/accuracy_threshold.png"
+    plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"Decision Tree")
+    return accuracies
 
-def save_decision_tree_patient_predictions():
-    raise NotImplementedError
+def save_decision_tree_patient_predictions(results_dir,expression_file, ic50_file,patient_dir, thresholds,**kwargs):
+    results_file = results_dir + "Predictions/Decision_Tree_patient_prediction_with%s_undetermined.txt" % ("out" if kwargs['trimmed'] else "")
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        model = classify.construct_decision_tree_model()
+        identifiers,predictions = classify.get_decision_tree_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
+        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
 
-def save_decision_tree_full_CCLE_dataset_predictions():
-    raise NotImplementedError
+def save_decision_tree_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds,**kwargs):
+    results_file = results_dir + "Predictions/Decision_Tree_full_CCLE_predictions.txt"
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        model = classify.construct_decision_tree_model(**kwargs)
+        cell_lines, predictions = classify.get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,threshold)
+        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
 
 def log(log_file, message):
     writer = open(log_file,"a+")

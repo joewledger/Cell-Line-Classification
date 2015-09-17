@@ -1,14 +1,10 @@
 import DataFormatter as dfm
 
-import numpy as np
 from sklearn import cross_validation
 from sklearn import svm
+from sknn.mlp import Classifier, Layer
 from sklearn import tree
-from pybrain.structure import LinearLayer
-from pybrain.structure import FeedForwardNetwork
-from pybrain.structure import FullConnection
-from pybrain.tools.validation import CrossValidator
-from pybrain.supervised.trainers import BackpropTrainer
+
 
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
@@ -19,49 +15,51 @@ The training input values are the gene expression measurements for each cell lin
 The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
 """
 
-def get_decision_tree_model_accuracy(model,expression_file, ic50_file,threshold):
-    raise NotImplementedError
+def construct_decision_tree_model(**kwargs):
+    return tree.DecisionTreeClassifier(**kwargs)
 
-def get_decision_tree_patient_predictions(model,expression_file, ic50_file,threshold):
-    raise NotImplementedError
+def get_decision_tree_model_accuracy(model,expression_file, ic50_file,threshold,num_permutations):
+    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold)
+    accuracy_scores = []
+    for i in range(0,num_permutations):
+        shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+        accuracy_scores.append(cross_validation.cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean())
+    return accuracy_scores
+
+def get_decision_tree_patient_predictions(model,expression_file, ic50_file,patient_directory,threshold,trimmed=False):
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
+    model.fit(expression_data,expression_target)
+
+    predictions = model.predict(patient_data)
+
+    return patient_identifiers,predictions
 
 def get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,threshold):
-    raise NotImplementedError
+    training_frame,training_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
+    training_data,training_target = dfm.generate_scikit_data_and_target(training_frame,training_series)
 
-def construct_neural_net_model(num_hidden_layers,num_inputs,num_hidden_nodes,num_outputs):
-    """
-    Constructs a recurrent neural network with num_hidden_layers hidden layers
-    Each hidden layer consists of num_hidden_nodes.
-    Each hidden layer is fully connected to the next layer.
-    """
+    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
 
-    network = FeedForwardNetwork()
+    model.fit(training_data,training_target)
+    predictions = model.predict(testing_data)
 
-    input_layer = LinearLayer(num_inputs)
-    hidden_layers = [LinearLayer(num_hidden_nodes)] * num_hidden_layers
-    output_layer = LinearLayer(num_outputs)
+    return cell_lines, predictions
 
-    network.addInputModule(input_layer)
-    for layer in hidden_layers:
-        network.addModule(layer)
-    network.addOutputModule(output_layer)
 
-    connections = FullConnection(input_layer,hidden_layers[0])
-    for i,layer in enumerate(hidden_layers[:-1]):
-        connections.append(FullConnection(layer, hidden_layers[i + 1]))
-    connections.append(FullConnection(hidden_layers[-1], output_layer))
+def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_permutations):
 
-    for connection in connections:
-        network.addConnection(connection)
+    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold)
+    nn = Classifier(layers=[Layer("Sigmoid", units=100),Layer("Softmax")],learning_rate=0.001,n_iter=25)
+    nn.fit(scikit_data,scikit_target)
+    return nn.predict(scikit_data)
 
-    return network
 
-def get_neural_network_model_accuracy(network, expression_file, ic50_file,threshold):
-
-    trainer = BackpropTrainer(network)
-    dataset = dfm.generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50_file,threshold)
-    validator = CrossValidator(trainer,dataset,n_folds=5)
-    return validator.validate()
+    #accuracy_scores = []
+    #for i in range(0,num_permutations):
+    #    shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+    #
+    #    accuracy_scores.append(cross_validation.cross_val_score(nn,shuffled_data,shuffled_target,cv=5))
+    #return accuracy_scores
 
 def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
     raise NotImplementedError

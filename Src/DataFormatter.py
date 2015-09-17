@@ -3,7 +3,7 @@ import os
 import scipy.stats as sp
 import numpy as np
 import random
-from pybrain.datasets import SupervisedDataSet
+from pybrain.datasets import ClassificationDataSet
 
 
 def generate_patients_expression_frame(patient_directory):
@@ -216,12 +216,3 @@ def generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50
 
     expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
     return generate_pybrain_dataset(expression_frame,ic50_series)
-
-def generate_pybrain_dataset(expression_frame,ic50_series):
-    """
-    Returns a Supervised PyBrain dataset composed of the samples from an expression frame and an ic50 series
-    """
-    dataset = SupervisedDataSet(len(expression_frame.index), 1)
-    for gene in expression_frame.columns:
-        dataset.addSample(list(expression_frame[gene]), ic50_series[gene])
-    return dataset
