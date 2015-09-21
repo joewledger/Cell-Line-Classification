@@ -53,14 +53,6 @@ def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_p
     nn.fit(scikit_data,scikit_target)
     return nn.predict(scikit_data)
 
-
-    #accuracy_scores = []
-    #for i in range(0,num_permutations):
-    #    shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-    #
-    #    accuracy_scores.append(cross_validation.cross_val_score(nn,shuffled_data,shuffled_target,cv=5))
-    #return accuracy_scores
-
 def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
     raise NotImplementedError
 
