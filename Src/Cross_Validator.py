@@ -8,7 +8,7 @@ from sklearn.metrics.scorer import _deprecate_loss_and_score_funcs
 from sklearn.cross_validation import check_cv
 from sklearn.cross_validation import _cross_val_score
 
-def cross_val_score_filter_feature_selcetion(estimator,threshold, X, y=None, scoring=None, cv=None, n_jobs=1,
+def cross_val_score_filter_feature_selection(estimator,threshold, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -97,11 +97,19 @@ def get_trimmed_X(X,y,train,threshold):
     Do calculations to trim X
     """
     all_samples = pd.DataFrame(X)
-    sensitive_training_samples = pd.DataFrame([sample for index,sample in enumerate(X.tolist()) if y.tolist()[index] == 0 and train.tolist()[index]])
-    resistant_training_samples = pd.DataFrame([sample for index,sample in enumerate(X.tolist()) if y.tolist()[index] == 2 and train.tolist()[index]])
-    t_test = lambda gene : stats.ttest_ind(list(sensitive_training_samples[gene]),list(resistant_training_samples[gene]))[1]
-    drop_genes = [gene for gene in all_samples.columns if t_test(gene) > threshold]
-    trimmed_dataframe = all_samples.drop(labels=drop_genes,axis=1)
+    all_labels = pd.Series(y)
 
-    X = np.array([list(trimmed_dataframe.ix[row]) for row in trimmed_dataframe.index])
-    return X
+    train_samples,train_labels = get_training_samples_labels(all_samples,all_labels,train)
+    sensitive_frame = all_samples.drop(labels=[x for x in train_samples.index if not train_labels.ix[x] == 0])
+    resistant_frame = all_samples.drop(labels=[x for x in train_samples.index if not train_labels.ix[x] == 2])
+    t_test = lambda gene : stats.ttest_ind(list(sensitive_frame[gene]),list(resistant_frame[gene]))[1]
+    trimmed_dataframe = all_samples.drop(labels=[gene for gene in all_samples.columns if t_test(gene) > threshold],axis=1)
+    return np.array([list(trimmed_dataframe.ix[row]) for row in trimmed_dataframe.index])
+
+def get_training_samples_labels(samples,labels,train):
+
+    training_list = train.tolist()
+    train_samples = samples.drop(labels=[x for x in samples.index if not training_list[x]])
+    train_labels = labels.drop(labels=[x for x in labels.index if not training_list[x]])
+
+    return train_samples,train_labels

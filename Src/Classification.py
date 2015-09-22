@@ -1,8 +1,8 @@
 import DataFormatter as dfm
+import Cross_Validator as cross_validation
 
-from sklearn import cross_validation
 from sklearn import svm
-from sknn.mlp import Classifier, Layer
+#from sknn.mlp import Classifier, Layer
 from sklearn import tree
 
 
@@ -67,11 +67,11 @@ def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold,num
 	Gets the cross-validation accuracy for an SVM model with given parameters.
     Returns a list containing num_permutations accuracy scores.
     """
-    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
+    scikit_data,scikit_target = dfm.generate_trimmed_normalized_scikit_data_and_target(expression_filename,ic50_filename)
     accuracy_scores = []
     for i in range(0,num_permutations):
         shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-        accuracy_scores.append(cross_validation.cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean())
+        accuracy_scores.append(cross_validation.cross_val_score_filter_feature_selection(model,threshold,shuffled_data,shuffled_target,cv=5).mean())
     return accuracy_scores
 
 def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,thresholds,num_permutations):

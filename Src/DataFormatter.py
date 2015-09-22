@@ -227,6 +227,6 @@ def generate_trimmed_normalized_expression_frame(expression_file,ic50_file):
     normalized_frame = normalize_expression_frame(trimmed_frame)
     return normalized_frame,ic50_series
 
-def generate_trimmed_normalized_scikit_data_target(expression_file,ic50_file):
+def generate_trimmed_normalized_scikit_data_and_target(expression_file,ic50_file):
     expression_frame,ic50_series = generate_trimmed_normalized_expression_frame(expression_file,ic50_file)
     return generate_scikit_data_and_target(expression_frame,ic50_series)
