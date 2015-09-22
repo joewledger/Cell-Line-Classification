@@ -3,8 +3,6 @@ import os
 import scipy.stats as sp
 import numpy as np
 import random
-from pybrain.datasets import ClassificationDataSet
-
 
 def generate_patients_expression_frame(patient_directory):
     """
@@ -216,3 +214,19 @@ def generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50
 
     expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
     return generate_pybrain_dataset(expression_frame,ic50_series)
+
+def generate_trimmed_normalized_expression_frame(expression_file,ic50_file):
+    """
+    Generates expression frame, trims undetermined cell lines, then normalizes.
+    Returns trimmed_normalized_expression_frame, ic50_series
+    """
+    expression_frame = generate_cell_line_expression_frame(expression_file)
+    ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
+    expression_frame,ic50_series = generate_cell_line_intersection(expression_frame,ic50_series)
+    trimmed_frame,ic50_series = trim_undetermined_cell_lines(expression_frame,ic50_series)
+    normalized_frame = normalize_expression_frame(trimmed_frame)
+    return normalized_frame,ic50_series
+
+def generate_trimmed_normalized_scikit_data_target(expression_file,ic50_file):
+    expression_frame,ic50_series = generate_trimmed_normalized_expression_frame(expression_file,ic50_file)
+    return generate_scikit_data_and_target(expression_frame,ic50_series)
