@@ -2,7 +2,7 @@ import DataFormatter as dfm
 import Cross_Validator as cross_validation
 
 from sklearn import svm
-#from sknn.mlp import Classifier, Layer
+from sknn.mlp import Classifier, Layer
 from sklearn import tree
 
 
@@ -19,55 +19,41 @@ def construct_decision_tree_model(**kwargs):
     return tree.DecisionTreeClassifier(**kwargs)
 
 def get_decision_tree_model_accuracy(model,expression_file, ic50_file,threshold,num_permutations):
-    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold)
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
     accuracy_scores = []
     for i in range(0,num_permutations):
         shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-        accuracy_scores.append(cross_validation.cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean())
+        accuracy_scores.append(cross_validation.cross_val_score_filter_feature_selection(model,shuffled_data,shuffled_target,cv=5).mean())
     return accuracy_scores
 
 def get_decision_tree_patient_predictions(model,expression_file, ic50_file,patient_directory,threshold,trimmed=False):
-    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
-    model.fit(expression_data,expression_target)
 
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.get_cell_line_and_patient_expression_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
+    model.fit(expression_data,expression_target)
     predictions = model.predict(patient_data)
 
     return patient_identifiers,predictions
 
 def get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,threshold):
-    training_frame,training_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
-    training_data,training_target = dfm.generate_scikit_data_and_target(training_frame,training_series)
+    training_frame,training_series = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
+    training_data,training_target = dfm.get_scikit_data_and_target(training_frame,training_series)
 
-    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
+    cell_lines, testing_data = dfm.get_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
 
     model.fit(training_data,training_target)
     predictions = model.predict(testing_data)
 
     return cell_lines, predictions
 
-
-def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_permutations):
-
-    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold)
-    nn = Classifier(layers=[Layer("Sigmoid", units=100),Layer("Softmax")],learning_rate=0.001,n_iter=25)
-    nn.fit(scikit_data,scikit_target)
-    return nn.predict(scikit_data)
-
-def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
-    raise NotImplementedError
-
-def get_neural_network_predictions_full_dataset(network,expression_file,ic50_file,threshold):
-    raise NotImplementedError
-
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
 
-def get_svm_model_accuracy(model,expression_filename,ic50_filename,threshold,num_permutations):
+def get_svm_model_accuracy(model,expression_file,ic50_file,threshold,num_permutations):
     """
 	Gets the cross-validation accuracy for an SVM model with given parameters.
     Returns a list containing num_permutations accuracy scores.
     """
-    scikit_data,scikit_target = dfm.generate_trimmed_normalized_scikit_data_and_target(expression_filename,ic50_filename)
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=None)
     accuracy_scores = []
     for i in range(0,num_permutations):
         shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
@@ -88,22 +74,22 @@ def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     Then uses the model to make predictons for all cell lines in the CCLE dataset.
     Returns a tuple containing the list of cell lines and their predicted sensitivity
     """
-    training_frame,training_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
-    training_data,training_target = dfm.generate_scikit_data_and_target(training_frame,training_series)
+    training_frame,training_series = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
+    training_data,training_target = dfm.get_scikit_data_and_target(training_frame,training_series)
 
-    cell_lines, testing_data = dfm.generate_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
+    cell_lines, testing_data = dfm.get_normalized_full_expression_identifiers_and_data(expression_file,training_frame.index)
 
     model.fit(training_data,training_target)
     predictions = model.predict(testing_data)
 
     return cell_lines, predictions
 
-def get_svm_model_coefficients(model,expression_filename,ic50_filename,threshold):
+def get_svm_model_coefficients(model,expression_file,ic50_file,threshold):
     """
     Returns the model coefficients for a SVM model
     """
 
-    scikit_data,scikit_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_filename,ic50_filename,threshold)
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
     model.fit(scikit_data,scikit_target)
     return model.coef_[0]
 
@@ -114,9 +100,18 @@ def get_svm_patient_predictions(model,expression_file,ic50_file,patient_director
 
     Returns a list of patient identifiers, and a list of predictions about the patients response to a given drug.
     """
-    expression_data,expression_target,patient_identifiers,patient_data = dfm.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
+    expression_data,expression_target,patient_identifiers,patient_data = dfm.get_cell_line_and_patient_expression_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=trimmed)
     model.fit(expression_data,expression_target)
 
     predictions = model.predict(patient_data)
 
     return patient_identifiers,predictions
+
+def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_permutations):
+    raise NotImplementedError
+
+def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
+    raise NotImplementedError
+
+def get_neural_network_predictions_full_dataset(network,expression_file,ic50_file,threshold):
+    raise NotImplementedError
