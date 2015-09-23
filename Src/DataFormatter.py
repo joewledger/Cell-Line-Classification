@@ -59,16 +59,18 @@ def bin_ic50_series(ic50_series):
     binning_function = lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
     return ic50_series.apply(binning_function,convert_dtype=True)
 
+"""
 def generate_binned_ic50_series(ic50_file):
     ic50_series = generate_ic50_series(ic50_file)
     return bin_ic50_series(ic50_series)
+"""
 
-def normalize_expression_frame(dataframe):
+def normalize_expression_frame(expression_frame):
     """
     Performs z-score normalization on a given gene-expression frame.
     Normalizes each gene expression value by (expression_value - mean_expression) / std_dev_expression
     """
-    return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in dataframe.T.iteritems()],axis=1).T
+    return pd.concat([((cell_vector - cell_vector.mean()) / cell_vector.std(ddof=0)) for cell_name,cell_vector in expression_frame.T.iteritems()],axis=1).T
 
 def generate_cell_line_intersection(expression_frame, ic50_series):
     """
@@ -115,6 +117,7 @@ def generate_scikit_data_and_target(expression_frame,binned_ic50_series):
     target = np.array([binned_ic50_series[cell_line] for cell_line in binned_ic50_series.index])
     return data,target
 
+"""
 def generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold):
     expression_frame = generate_cell_line_expression_frame(expression_file)
     expression_frame = normalize_expression_frame(expression_frame)
@@ -124,11 +127,13 @@ def generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic5
     trimmed_expression_frame,binned_ic50_series = trim_undetermined_cell_lines(expression_frame,binned_ic50_series)
     thresholded_expression_frame = apply_pval_threshold(trimmed_expression_frame,binned_ic50_series,threshold)
     return thresholded_expression_frame,binned_ic50_series
+"""
 
-
+"""
 def generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold):
     expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
     return generate_scikit_data_and_target(expression_frame,ic50_series)
+"""
 
 def shuffle_scikit_data_target(scikit_data,scikit_target):
     """
@@ -150,13 +155,14 @@ def generate_patient_expression_gene_intersection(patient_frame,expression_frame
     gene_intersection = patient_frame.index.intersection(expression_frame.index)
     return patient_frame.ix[gene_intersection], expression_frame.ix[gene_intersection]
 
+"""
 def generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,threshold,trimmed=False):
-    """
+    ""
     Does all steps needed to generate the training expression data and target along with the patient data for patient stratificiation.
     Returns scikit expression data and target, along with a list of patient identifiers and scikit patient data
     Expression data and patient data are normalized and have the same set of genes.
     Expression data has been trimmed by using a p_value filter.
-    """
+    ""
 
     #Generates a patient dataframe and an expression dataframe.
     patient_frame = generate_patients_expression_frame(patient_directory)
@@ -187,6 +193,7 @@ def generate_expression_patient_data_target(expression_file,ic50_file,patient_di
 
     #Returns a tuple containing the expression_data,expression_target,patient_identifiers, and patient_data
     return expression_data,expression_target,patient_identifiers,patient_data
+"""
 
 def generate_patient_identifiers_and_data(patient_frame):
     """
@@ -206,26 +213,29 @@ def generate_normalized_full_expression_identifiers_and_data(expression_file,gen
     cell_lines = expression_frame.columns
     return cell_lines, np.array([list(expression_frame[column]) for column in expression_frame.columns])
 
-def generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50_file,threshold):
-    """
-    Returns a trimmed, thresholded, and normalized pyBrain dataset.
-    """
 
-    expression_frame,ic50_series = generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
-    return generate_pybrain_dataset(expression_frame,ic50_series)
-
+"""
 def generate_trimmed_normalized_expression_frame(expression_file,ic50_file):
-    """
+    ""
     Generates expression frame, normalizes,then trims undetermined cell lines.
     Returns trimmed_normalized_expression_frame, ic50_series
-    """
+    ""
     expression_frame = generate_cell_line_expression_frame(expression_file)
     expression_frame = normalize_expression_frame(expression_frame)
     ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
     expression_frame,ic50_series = generate_cell_line_intersection(expression_frame,ic50_series)
     trimmed_frame,ic50_series = trim_undetermined_cell_lines(expression_frame,ic50_series)
     return trimmed_frame,ic50_series
+"""
 
+"""
 def generate_trimmed_normalized_scikit_data_and_target(expression_file,ic50_file):
     expression_frame,ic50_series = generate_trimmed_normalized_expression_frame(expression_file,ic50_file)
     return generate_scikit_data_and_target(expression_frame,ic50_series)
+"""
+
+def generate_expression_frame(expression_file, ic50_file=None,normalized=False,trimmed=False,threshold=None):
+    raise NotImplementedError
+
+def generate_expression_scikit_data_target(expression_file, ic50_file=None,normalized=False,trimmed=False,threshold=None):
+    raise NotImplementedError
