@@ -2,7 +2,7 @@ import DataFormatter as dfm
 import Cross_Validator as cross_validation
 
 from sklearn import svm
-from sknn.mlp import Classifier, Layer
+#from sknn.mlp import Classifier, Layer
 from sklearn import tree
 
 
@@ -13,6 +13,11 @@ We have IC50 values for a bunch of different cell lines for the drug we are test
 We are going to apply SVM to classify cell lines as either sensitive or resistant to this drug
 The training input values are the gene expression measurements for each cell line
 The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
+"""
+
+
+"""
+Decision Tree Code
 """
 
 def construct_decision_tree_model(**kwargs):
@@ -44,6 +49,12 @@ def get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,t
     predictions = model.predict(testing_data)
 
     return cell_lines, predictions
+
+
+
+"""
+SVM Code
+"""
 
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
@@ -106,6 +117,12 @@ def get_svm_patient_predictions(model,expression_file,ic50_file,patient_director
     predictions = model.predict(patient_data)
 
     return patient_identifiers,predictions
+
+
+
+"""
+Neural Network Code
+"""
 
 def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_permutations):
     raise NotImplementedError

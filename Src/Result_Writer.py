@@ -12,6 +12,7 @@ def main():
     These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.\n\n
     Depending on the parameters given, this module will run different experiments.\n\n""" + get_experiment_descriptions()
     description = description.replace("    ","")
+    description += "\n\nDefault Parameters:\n" + "\n".join(str(parameter) + " : " + str(default_parameters()[parameter]) for parameter in default_parameters().keys())
 
     parser = argparse.ArgumentParser(description=description,formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
