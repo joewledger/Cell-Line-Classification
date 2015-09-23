@@ -63,7 +63,6 @@ def generate_binned_ic50_series(ic50_file):
     ic50_series = generate_ic50_series(ic50_file)
     return bin_ic50_series(ic50_series)
 
-
 def normalize_expression_frame(dataframe):
     """
     Performs z-score normalization on a given gene-expression frame.
@@ -102,7 +101,7 @@ def apply_pval_threshold(expression_frame,binned_ic50_series,threshold):
     t_test = lambda gene : sp.ttest_ind(list(sensitive_frame.ix[gene]),list(resistant_frame.ix[gene]))[1]
     p_val_series = pd.Series({gene : t_test(gene) for gene in sensitive_frame.index})
     expression_frame['pval'] = p_val_series
-    expression_frame = expression_frame[expression_frame['pval'] < threshold]
+    expression_frame = expression_frame[expression_frame['pval'] <= threshold]
     del(expression_frame['pval'])
     return expression_frame
 
@@ -217,15 +216,15 @@ def generate_trimmed_thresholded_normalized_pybrain_dataset(expression_file,ic50
 
 def generate_trimmed_normalized_expression_frame(expression_file,ic50_file):
     """
-    Generates expression frame, trims undetermined cell lines, then normalizes.
+    Generates expression frame, normalizes,then trims undetermined cell lines.
     Returns trimmed_normalized_expression_frame, ic50_series
     """
     expression_frame = generate_cell_line_expression_frame(expression_file)
+    expression_frame = normalize_expression_frame(expression_frame)
     ic50_series = bin_ic50_series(generate_ic50_series(ic50_file))
     expression_frame,ic50_series = generate_cell_line_intersection(expression_frame,ic50_series)
     trimmed_frame,ic50_series = trim_undetermined_cell_lines(expression_frame,ic50_series)
-    normalized_frame = normalize_expression_frame(trimmed_frame)
-    return normalized_frame,ic50_series
+    return trimmed_frame,ic50_series
 
 def generate_trimmed_normalized_scikit_data_and_target(expression_file,ic50_file):
     expression_frame,ic50_series = generate_trimmed_normalized_expression_frame(expression_file,ic50_file)

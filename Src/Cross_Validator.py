@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 from sklearn.externals.joblib import Parallel, delayed
-from sklearn.utils import check_arrays,check_random_state, safe_mask
+from sklearn.utils import check_arrays
 from sklearn.base import clone, is_classifier
 from sklearn.metrics.scorer import _deprecate_loss_and_score_funcs
 from sklearn.cross_validation import check_cv
@@ -105,6 +105,7 @@ def get_trimmed_X(X,y,train,threshold):
     t_test = lambda gene : stats.ttest_ind(list(sensitive_frame[gene]),list(resistant_frame[gene]))[1]
     trimmed_dataframe = all_samples.drop(labels=[gene for gene in all_samples.columns if t_test(gene) > threshold],axis=1)
     return np.array([list(trimmed_dataframe.ix[row]) for row in trimmed_dataframe.index])
+
 
 def get_training_samples_labels(samples,labels,train):
 
