@@ -85,12 +85,14 @@ def cross_val_score_filter_feature_selection(estimator,threshold, X, y=None, sco
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
 
-    scores = parallel(
-        delayed(_cross_val_score)(clone(estimator), get_trimmed_X(X,y,train,threshold), y, scorer, train, test,
-                                  verbose, fit_params)
-        for train, test in cv)
-
-    return np.array(scores)
+    scores = []
+    features_selected = []
+    for train,test in cv:
+        trimmed_X = get_trimmed_X(X,y,train,threshold)
+        features_selected.append(len(trimmed_X.tolist()[0]))
+        scores.append(_cross_val_score(clone(estimator), trimmed_X , y, scorer, train, test,
+                                  verbose, fit_params))
+    return np.array(features_selected), np.array(scores)
 
 def get_trimmed_X(X,y,train,threshold):
     """

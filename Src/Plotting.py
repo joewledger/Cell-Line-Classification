@@ -43,3 +43,18 @@ def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name)
     plt.title("%s Accuracy vs. Threshold Curve" % model_name)
     plt.savefig(outfile)
     plt.close()
+
+def plot_accuracy_num_features_curve(outfile,accuracy_scores,model_name):
+    plt.figure()
+    all_tuples = accuracy_scores.values()
+    features_selected = [np.array(x[0]).mean() for x in all_tuples]
+    accuracy_means = [np.array(x[1]).mean() for x in all_tuples]
+    accuracy_std = [np.array(x[1]).std() for x in all_tuples]
+
+    plt.plot(features_selected, accuracy_means)
+    plt.errorbar(features_selected,accuracy_means,yerr=accuracy_std)
+    plt.xlabel("Number of features selected")
+    plt.ylabel("Accuracy")
+    plt.title("%s Accuracy vs. Threshold Curve" % model_name)
+    plt.savefig(outfile)
+    plt.close()

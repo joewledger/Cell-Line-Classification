@@ -179,17 +179,21 @@ def run_experiments(experiments, params):
         curr_exp = experiment_definitions[experiment]
         experiment_description = "%s (%s)" % (str(experiment),curr_exp[0])
         log(log_file, "Starting Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
-        method = curr_exp[1]
-        args = [params[x] for x in curr_exp[2]]
-        kwargs = curr_exp[3] if len(curr_exp) > 3 else {}
-        save_var = curr_exp[4] if len(curr_exp) > 4 else None
 
-        if save_var:
-            params[save_var] = experiment_wrapper(method,args,kwargs)
-        else:
-            experiment_wrapper(method,args,kwargs)
+        try:
+            method = curr_exp[1]
+            args = [params[x] for x in curr_exp[2]]
+            kwargs = curr_exp[3] if len(curr_exp) > 3 else {}
+            save_var = curr_exp[4] if len(curr_exp) > 4 else None
 
-        log(log_file, "Finished Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
+            if save_var:
+                params[save_var] = experiment_wrapper(method,args,kwargs)
+            else:
+                experiment_wrapper(method,args,kwargs)
+
+            log(log_file, "Finished Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
+        except:
+            log(log_file, "Experiment %s failed at %s\n" % (experiment_description, str(datetime.datetime.today())))
 
 def experiment_wrapper(func,args,kwargs):
     return func(*args,**kwargs)
@@ -222,6 +226,7 @@ def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thre
     accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
     outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
     plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % kwargs['kernel'])
+    plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
     return accuracies
 
 def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,poly):
@@ -239,7 +244,7 @@ def save_svm_model_coefficients(results_dir, expression_file,ic50_file,threshold
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
         model = classify.construct_svc_model(kernel="linear")
-        expression_frame,ic50_series = dfm.generate_trimmed_thresholded_normalized_expression_frame(expression_file,ic50_file,threshold)
+        expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
         genes = list(expression_frame.index)
         model_coefficients = classify.get_svm_model_coefficients(model,expression_file,ic50_file,threshold)
         writer.write("\t".join(str(gene) for gene in genes) + "\n")
