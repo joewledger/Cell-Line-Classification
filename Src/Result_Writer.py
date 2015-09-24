@@ -226,6 +226,7 @@ def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thre
     accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
     outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
     plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % kwargs['kernel'])
+    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_features_selected.png" % str(model.kernel)
     plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
     return accuracies
 
