@@ -119,6 +119,36 @@ def apply_pval_threshold(expression_frame,binned_ic50_series,threshold):
     del(expression_frame['pval'])
     return expression_frame
 
+def get_pval_top_n_features(expression_frame,binned_ic50_series,num_features):
+    """
+    Trims the expression_frame to only contain the top n features by p-value.
+    Genes are the rows, cell lines are the columns.
+    Returns a pandas index object
+    """
+    sensitive_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 0]]
+    resistant_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 2]]
+    t_test = lambda gene : sp.ttest_ind(list(sensitive_frame.ix[gene]),list(resistant_frame.ix[gene]))[1]
+    pval_series = pd.Series({gene : t_test(gene) for gene in sensitive_frame.index})
+    ordered_pval_series = pval_series.order(ascending=True)
+    top_features = ordered_pval_series.head(num_features)
+    index_intersection = expression_frame.index.intersection(top_features.index)
+    return index_intersection
+
+def get_features_below_pval_threshold(expression_frame,binned_ic50_series,threshold):
+    """
+    Provides a list of all features below a certain p-value threshold
+    Genes are the rows, cell lines are the columns.
+    Returns a pandas index object
+    """
+    sensitive_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 0]]
+    resistant_frame = expression_frame[[x for x in expression_frame.columns if binned_ic50_series[x] == 2]]
+    t_test = lambda gene : sp.ttest_ind(list(sensitive_frame.ix[gene]),list(resistant_frame.ix[gene]))[1]
+    pval_series = pd.Series({gene : t_test(gene) for gene in sensitive_frame.index})
+    trimmed_pval_series = pval_series[pval_series <= threshold]
+
+    return trimmed_pval_series.index
+
+
 def get_scikit_data_and_target(expression_frame,ic50_series):
     """
     Returns a data array and a target array for use in a scikit-learn cross-validation experiment.

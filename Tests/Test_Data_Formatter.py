@@ -6,7 +6,7 @@ import numpy as np
 patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 #expression_file = "Data/CCLE_Data/CCLE_Expression_2012-09-29.res"
 expression_file = "Data/CCLE_Data/sample1000.res"
-ic50_filename = "Data/IC_50_Data/CL_Sensitivity.txt"
+ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
 
 
 def test_generate_patients_frame():
@@ -24,7 +24,7 @@ def test_generate_expression_frame():
     pass
 
 def test_generate_ic50_series():
-    ic50_series = data.generate_ic50_series(ic50_filename)
+    ic50_series = data.generate_ic50_series(ic50_file)
     assert not ic50_series.isnull().values.any()
     assert len(ic50_series.index) == len(set(ic50_series.index))
     pass
@@ -40,13 +40,13 @@ def test_normalize_expression_frame():
 
 def test_generate_cell_line_intersection():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
-    ic50_series = data.generate_ic50_series(ic50_filename)
+    ic50_series = data.generate_ic50_series(ic50_file)
     trimmed_expression_frame, trimmed_ic50_series = data.generate_cell_line_intersection(expression_frame,ic50_series)
     assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series.index)
     pass
 
 def test_bin_ic50_series():
-    ic50_series = data.generate_ic50_series(ic50_filename)
+    ic50_series = data.generate_ic50_series(ic50_file)
     binned_ic50 = data.bin_ic50_series(ic50_series)
     assert len(ic50_series) == len(binned_ic50)
     assert all(x in [0,1,2] for x in binned_ic50)
@@ -55,7 +55,7 @@ def test_bin_ic50_series():
 
 def test_trim_undetermined_cell_lines():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
-    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_filename))
+    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_file))
     expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
     trimmed_expression_frame,trimmed_ic50_series = data.trim_undetermined_cell_lines(expression_frame,binned_ic50)
     assert len(trimmed_expression_frame.columns) == len(trimmed_ic50_series)
@@ -63,7 +63,7 @@ def test_trim_undetermined_cell_lines():
 
 def test_apply_pval_threshold():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
-    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_filename))
+    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_file))
     expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
     thresholded_expression_frame = data.apply_pval_threshold(expression_frame,binned_ic50,.05)
     assert len(thresholded_expression_frame.index) < len(expression_frame.index)
@@ -71,7 +71,7 @@ def test_apply_pval_threshold():
 
 def test_generate_scikit_data_and_target():
     expression_frame = data.generate_cell_line_expression_frame(expression_file)
-    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_filename))
+    binned_ic50 = data.bin_ic50_series(data.generate_ic50_series(ic50_file))
     expression_frame,binned_ic50 = data.generate_cell_line_intersection(expression_frame,binned_ic50)
     dat,target = data.generate_scikit_data_and_target(expression_frame,binned_ic50)
     assert len(dat) == len(target)
@@ -79,7 +79,7 @@ def test_generate_scikit_data_and_target():
     pass
 
 def test_shuffle_scikit_data_target():
-    sdata,starget = data.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_filename,.05)
+    sdata,starget = data.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,.05)
     shuffled_data,shuffled_target = data.shuffle_scikit_data_target(sdata,starget)
     assert len(shuffled_data) == len(shuffled_target)
     row_sums = {sum(row) : starget[i] for i,row in enumerate(sdata)}
@@ -96,7 +96,7 @@ def test_generate_patient_expression_gene_intersection():
     pass
 
 def test_generate_expression_patient_data_target():
-    expression_data,expression_target,patient_identifiers,patient_data = data.generate_expression_patient_data_target(expression_file,ic50_filename,patient_directory,.05)
+    expression_data,expression_target,patient_identifiers,patient_data = data.generate_expression_patient_data_target(expression_file,ic50_file,patient_directory,.05)
     #Check to make sure the number of samples is consistent in expression data and patient data
     assert len(expression_data) == len(expression_target)
     assert len(patient_identifiers) == len(patient_data)
@@ -112,4 +112,11 @@ def test_generate_patient_identifiers_and_data():
     patient_identifiers, patient_data = data.generate_patient_identifiers_and_data(patient_frame)
     assert len(patient_identifiers) == len(patient_data)
     assert not any(np.isnan(x).any() for x in patient_data.tolist())
+    pass
+
+def test_get_pval_top_features():
+    num_features = 10
+    expression_frame,ic50_series = data.get_expression_frame_and_ic50_series(expression_file,ic50_file, normalized=True,trimmed=True)
+    trimmed_expr_frame = data.get_pval_top_features(expression_frame,ic50_series,num_features)
+    assert len(trimmed_expr_frame.index) == num_features
     pass

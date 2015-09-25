@@ -1,18 +1,44 @@
 import Src.DataFormatter as dfm
 import Src.Classification as classify
 import Src.Cross_Validator as cv
+import math
 
 from sklearn.cross_validation import cross_val_score
 
 expression_file = "Data/CCLE_Data/sample1000.res"
 ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
 
-def test_cross_val_score_filter_feature_selcetion():
+def test_cross_val_score_filter_feature_selection_threshold():
+
     threshold = 1.0
-    scikit_data,scikit_target = dfm.generate_trimmed_normalized_scikit_data_and_target(expression_file,ic50_file)
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file, ic50_file,normalized=True,trimmed=True,threshold=None)
     model = classify.construct_svc_model(kernel='linear')
-    print(cv.cross_val_score_filter_feature_selection(model,threshold,scikit_data,scikit_target,cv=5))
+    non_thresholded_test_1 = cv.cross_val_score_filter_feature_selection_threshold(model,threshold,scikit_data,scikit_target,cv=5)
 
     m = classify.construct_svc_model(kernel='linear')
-    s_data,s_target = dfm.generate_trimmed_thresholded_normalized_scikit_data_and_target(expression_file,ic50_file,threshold)
-    print(cross_val_score(m,s_data,s_target,cv=5))
+    s_data,s_target = dfm.get_expression_scikit_data_target(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
+    non_thresholded_test_2 = cross_val_score(m,s_data,s_target,cv=5)
+
+    #The non-thresholded tests should be the same because if we are not thresholding, it doesn't matter where we perform thresholding
+    assert(math.fabs(non_thresholded_test_1.mean() - non_thresholded_test_2.mean()) < .001)
+
+    threshold = .05
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file, ic50_file,normalized=True,trimmed=True,threshold=None)
+    model = classify.construct_svc_model(kernel='linear')
+    thresholded_test_1 = cv.cross_val_score_filter_feature_selection_threshold(model,threshold,scikit_data,scikit_target,cv=5)
+
+    m = classify.construct_svc_model(kernel='linear')
+    s_data,s_target = dfm.get_expression_scikit_data_target(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
+    thresholded_test_2 = cross_val_score(m,s_data,s_target,cv=5)
+
+    #The first non_thresholded test should have lower accuracy because we are doing thresholding within the cross-validation,
+    #which will reduce cross-validation overfitting and as a consequence reported cross-validation accuracy.
+
+    assert(thresholded_test_1.mean() - thresholded_test_2.mean() < 0)
+
+
+def test_cross_val_score_filter_feature_selection_feature_ranks():
+    num_features = 10
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file, ic50_file,normalized=True,trimmed=True,threshold=None)
+    model = classify.construct_svc_model(kernel='linear')
+    print(cv.cross_val_score_filter_feature_selection_feature_rank(model,num_features,scikit_data,scikit_target,cv=5))
