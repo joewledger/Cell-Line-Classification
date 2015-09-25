@@ -75,82 +75,104 @@ def define_experiments():
                       save_svm_accuracy_threshold_graph_multiple_kernels,
                       ['results_dir','linear_acc','rbf_acc','poly_acc'])
 
-    experiments[4] = ('Save SVM Linear kernel model coefficients',
+    experiments[4] = ('Graph SVM Linear kernel accuracy vs. features selected',
+                      save_svm_accuracy_num_features_graph,
+                      ['results_dir','expression_file','ic50_file','feature_sizes','num_permutations'],
+                      {'kernel' : 'linear'},
+                      'feature_linear_acc')
+
+    experiments[5] = ('Graph SVM RBF kernel accuracy vs. features selected',
+                      save_svm_accuracy_num_features_graph,
+                      ['results_dir','expression_file','ic50_file','feature_sizes','num_permutations'],
+                      {'kernel' : 'rbf'},
+                      'feature_rbf_acc')
+
+    experiments[6] = ('Graph SVM Poly kernel accuracy vs. features selected',
+                      save_svm_accuracy_num_features_graph,
+                      ['results_dir','expression_file','ic50_file','feature_sizes','num_permutations'],
+                      {'kernel' : 'poly'},
+                      'feature_poly_acc')
+
+    experiments[7] = ('Graph all SVM kernel accuracies vs. num_features on same graph',
+                      save_svm_accuracy_num_features_graph_multiple_kernels,
+                      ['results_dir','feature_linear_acc','feature_rbf_acc','feature_poly_acc'])
+
+    experiments[8] = ('Save SVM Linear kernel model coefficients',
                       save_svm_model_coefficients,
                       ['results_dir','expression_file','ic50_file','thresholds'])
 
-    experiments[5] = ('Save SVM Linear kernel patient predictions with undetermined cell lines',
+    experiments[9] = ('Save SVM Linear kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : False})
 
-    experiments[6] = ('Save SVM RBF kernel patient predictions with undetermined cell lines',
+    experiments[10] = ('Save SVM RBF kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : False})
 
-    experiments[7] = ('Save SVM Poly kernel patient predictions with undetermined cell lines',
+    experiments[11] = ('Save SVM Poly kernel patient predictions with undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : False})
 
-    experiments[8] = ('Save SVM Linear kernel patient predictions without undetermined cell lines',
+    experiments[12] = ('Save SVM Linear kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'linear', 'trimmed' : True})
 
-    experiments[9] = ('Save SVM RBF kernel patient predictions without undetermined cell lines',
+    experiments[13] = ('Save SVM RBF kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'rbf', 'trimmed' : True})
 
-    experiments[10] = ('Save SVM Poly kernel patient predictions without undetermined cell lines',
+    experiments[14] = ('Save SVM Poly kernel patient predictions without undetermined cell lines',
                       save_svm_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'kernel' : 'poly', 'trimmed' : True})
 
-    experiments[11] = ('Save SVM Linear kernel full CCLE dataset predictions',
+    experiments[15] = ('Save SVM Linear kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'linear'})
 
-    experiments[12] = ('Save SVM RBF kernel full CCLE dataset predictions',
+    experiments[16] = ('Save SVM RBF kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'rbf'})
 
-    experiments[13] = ('Save SVM Poly kernel full CCLE dataset predictions',
+    experiments[17] = ('Save SVM Poly kernel full CCLE dataset predictions',
                        save_svm_full_CCLE_dataset_predictions,
                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds'],
                        {'kernel' : 'polynomial'})
 
-    experiments[14] = ('Save Neural Network Accuracy v. Threshold Graphs',
+    experiments[18] = ('Save Neural Network Accuracy v. Threshold Graphs',
                        save_neural_network_accuracy_threshold_graph_multiple_layers,
                        ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
 
-    experiments[15] = ('Save Neural Network patient predictions',
+    experiments[19] = ('Save Neural Network patient predictions',
                        save_neural_network_patient_predictions,
                        ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
 
-    experiments[16] = ('Save Neural Network full CCLE dataset predictions',
+    experiments[20] = ('Save Neural Network full CCLE dataset predictions',
                        save_neural_network_full_CCLE_dataset_predictions,
                        ['results_dir','expression_file','ic50_file','thresholds', 'layers_to_test'])
 
-    experiments[17] = ('Graph Decision Tree accuracy vs. threshold',
+    experiments[21] = ('Graph Decision Tree accuracy vs. threshold',
                       save_decision_tree_accuracy_threshold_graph,
                       ['results_dir','expression_file','ic50_file','thresholds','num_permutations'])
 
-    experiments[18] = ('Save Decision Tree patient predictions with undetermined cell lines',
+    experiments[22] = ('Save Decision Tree patient predictions with undetermined cell lines',
                       save_decision_tree_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'trimmed' : False})
 
-    experiments[19] = ('Save Decision Tree patient predictions without undetermined cell lines',
+    experiments[23] = ('Save Decision Tree patient predictions without undetermined cell lines',
                       save_decision_tree_patient_predictions,
                       ['results_dir', 'expression_file', 'ic50_file','patient_dir', 'thresholds'],
                       {'trimmed' : True})
 
-    experiments[20] = ('Save Decision Tree full CCLE dataset predictions',
+    experiments[24] = ('Save Decision Tree full CCLE dataset predictions',
                        save_decision_tree_full_CCLE_dataset_predictions,
                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds'])
 
@@ -226,8 +248,6 @@ def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thre
     accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
     outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
     plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % kwargs['kernel'])
-    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_features_selected.png" % str(model.kernel)
-    plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
     return accuracies
 
 def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,poly):
@@ -238,6 +258,12 @@ def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,p
     outfile = results_dir + "Plots/SVM_Accuracies/multiple_kernel_accuracy_threshold.png"
     kernels = [linear,rbf,poly]
     plt.plot_accuracy_threshold_multiple_kernels(outfile,kernels)
+
+def save_svm_accuracy_num_features_graph(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
+    raise NotImplementedError
+
+def save_svm_accuracy_num_features_graph_multiple_kernels(results_dir, linear,rbf,poly):
+    raise NotImplementedError
 
 def save_svm_model_coefficients(results_dir, expression_file,ic50_file,thresholds):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"

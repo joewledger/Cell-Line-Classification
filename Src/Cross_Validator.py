@@ -10,10 +10,11 @@ from sklearn.cross_validation import _cross_val_score
 import DataFormatter as dfm
 
 
-
-#Example calls:
-#   cross_val_score_filter_feature_selection(model,trim_X_threshold,threshold,scikit_data,scikit_target,cv=5)
-#   cross_val_score_filter_feature_selection(model,trim_X_num_features,num_features,scikit_data,scikit_target,cv=5)
+"""
+Example calls:
+   cross_val_score_filter_feature_selection(model,trim_X_threshold,threshold,scikit_data,scikit_target,cv=5)
+   cross_val_score_filter_feature_selection(model,trim_X_num_features,num_features,scikit_data,scikit_target,cv=5)
+"""
 
 def cross_val_score_filter_feature_selection(model,filter_function,filter_criteria, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None,
@@ -125,7 +126,6 @@ def trim_X_num_features(X,y,train,num_features):
     trimmed_all_samples = all_samples[features]
 
     return np.array([list(trimmed_all_samples.ix[row]) for row in trimmed_all_samples.index])
-
 
 def get_training_samples_labels(samples,labels,train):
 

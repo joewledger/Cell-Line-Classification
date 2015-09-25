@@ -148,7 +148,6 @@ def get_features_below_pval_threshold(expression_frame,binned_ic50_series,thresh
 
     return trimmed_pval_series.index
 
-
 def get_scikit_data_and_target(expression_frame,ic50_series):
     """
     Returns a data array and a target array for use in a scikit-learn cross-validation experiment.

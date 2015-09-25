@@ -59,30 +59,31 @@ SVM Code
 def construct_svc_model(**kwargs):
     return svm.SVC(**kwargs)
 
-def get_svm_model_num_features_selected_and_accuracy(model,expression_file,ic50_file,threshold,num_permutations):
+def get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations):
     """
-    Gets the cross-validation accuracy for an SVM model with given parameters.
-    Returns a tuple containing
-        a list of num_permutations x (mean number of features selected across CV folds)
-        and a list of num_permutations x (mean accuracy score across CV folds
+    Gets a list of the permuted cross-validation accuracies for an SVM model for a given threshold
     """
     scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=None)
-    features_selected = []
     accuracy_scores = []
     for i in range(0,num_permutations):
         shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-        features, accuracy = cross_validation.cross_val_score_filter_feature_selection(model,threshold,shuffled_data,shuffled_target,cv=5)
-        features_selected.append(features.mean())
+        accuracy = cross_validation.cross_val_score_filter_feature_selection(model,cross_validation.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5)
         accuracy_scores.append(accuracy.mean())
-    return features_selected, accuracy_scores
+    return accuracy_scores
 
 def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,thresholds,num_permutations):
     """
     Gets the cross-validation accuracy for an SVM model given multiple thresholds.
     Returns a dictionary mapping threshold -> a list of accuracy scores for each permutation at that threshold
     """
-    features_and_accuracy = lambda threshold : get_svm_model_num_features_selected_and_accuracy(model,expression_file,ic50_file,threshold,num_permutations)
-    return {threshold : features_and_accuracy(threshold) for threshold in thresholds}
+    accuracy = lambda threshold : get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations)
+    return {threshold : accuracy(threshold) for threshold in thresholds}
+
+def get_svm_model_accuracy_for_num_features(model,expression_file,ic50_file,threshold,num_permutations):
+    raise NotImplementedError
+
+def get_svm_model_accuracy_multiple_num_features(model,expression_file,ic50_file,feature_sizes,num_permutations):
+    raise NotImplementedError
 
 def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     """
