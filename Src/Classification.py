@@ -79,11 +79,18 @@ def get_svm_model_accuracy_multiple_thresholds(model,expression_file,ic50_file,t
     accuracy = lambda threshold : get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations)
     return {threshold : accuracy(threshold) for threshold in thresholds}
 
-def get_svm_model_accuracy_for_num_features(model,expression_file,ic50_file,threshold,num_permutations):
-    raise NotImplementedError
+def get_svm_model_accuracy_for_feature_size(model,expression_file,ic50_file,feature_size,num_permutations):
+    scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=None)
+    accuracy_scores = []
+    for i in range(0,num_permutations):
+        shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+        accuracy = cross_validation.cross_val_score_filter_feature_selection(model,cross_validation.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
+        accuracy_scores.append(accuracy.mean())
+    return accuracy_scores
 
-def get_svm_model_accuracy_multiple_num_features(model,expression_file,ic50_file,feature_sizes,num_permutations):
-    raise NotImplementedError
+def get_svm_model_accuracy_multiple_feature_sizes(model,expression_file,ic50_file,feature_sizes,num_permutations):
+    accuracy = lambda num_features : get_svm_model_accuracy_for_feature_size(model,expression_file,ic50_file,num_features,num_permutations)
+    return {feature_size : accuracy(feature_size) for feature_size in feature_sizes}
 
 def get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold):
     """

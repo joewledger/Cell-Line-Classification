@@ -260,10 +260,20 @@ def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,p
     plt.plot_accuracy_threshold_multiple_kernels(outfile,kernels)
 
 def save_svm_accuracy_num_features_graph(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
-    raise NotImplementedError
+    model = classify.construct_svc_model(**kwargs)
+    accuracies = classify.get_svm_model_accuracy_multiple_feature_sizes(model, expression_file, ic50_file, feature_sizes,num_permutations)
+    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
+    plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
+    return accuracies
 
 def save_svm_accuracy_num_features_graph_multiple_kernels(results_dir, linear,rbf,poly):
-    raise NotImplementedError
+    """
+    Saves accuracy threshold graphs for multiple SVM kernels on the same set of axes.
+    The parameters linear, rbf, and poly are dictionaries mapping threshold to a list of accuracy values for that particular kernels
+    """
+    outfile = results_dir + "Plots/SVM_Accuracies/multiple_kernel_accuracy_features.png"
+    kernels = [linear,rbf,poly]
+    plt.plot_accuracy_num_features_multiple_kernels(outfile,kernels)
 
 def save_svm_model_coefficients(results_dir, expression_file,ic50_file,thresholds):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"

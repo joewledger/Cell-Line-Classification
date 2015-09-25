@@ -24,6 +24,25 @@ def plot_accuracy_threshold_multiple_kernels(outfile, kernels):
     plt.savefig(outfile)
     plt.close()
 
+def plot_accuracy_num_features_multiple_kernels(outfile, kernels):
+    thresholds = sorted(kernels[0].keys())
+    kernel_labels={0:'linear',1:'rbf',2:'poly'}
+    kernel_colors={0:'red',1:'blue',2:'green'}
+    plt.figure()
+    lines = [0] * 3
+    for i,kernel in enumerate(kernels):
+        accuracy_means = [np.array(kernel[threshold]).mean() for threshold in thresholds]
+        accuracy_std = [np.array(kernel[threshold]).std() for threshold in thresholds]
+        lines[i], = plt.plot(thresholds,accuracy_means,label=kernel_labels[i],color=kernel_colors[i])
+        plt.errorbar(thresholds,accuracy_means,yerr=accuracy_std)
+
+    plt.legend([line for line in lines],['poly','linear','rbf'])
+    plt.xlabel("Number of Features Selected")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy vs. Threshold Curve")
+    plt.savefig(outfile)
+    plt.close()
+
 
 def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name):
     """
@@ -46,15 +65,14 @@ def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name)
 
 def plot_accuracy_num_features_curve(outfile,accuracy_scores,model_name):
     plt.figure()
-    all_tuples = accuracy_scores.values()
-    features_selected = [np.array(x[0]).mean() for x in all_tuples]
-    accuracy_means = [np.array(x[1]).mean() for x in all_tuples]
-    accuracy_std = [np.array(x[1]).std() for x in all_tuples]
+    features_selected = accuracy_scores.keys()
+    accuracy_means = [np.array(accuracy_scores[num_features]).mean() for num_features in features_selected]
+    accuracy_std = [np.array(accuracy_scores[num_features]).std() for num_features in features_selected]
 
     plt.plot(features_selected, accuracy_means)
     plt.errorbar(features_selected,accuracy_means,yerr=accuracy_std)
-    plt.xlabel("Number of features selected")
+    plt.xlabel("Number of Features Selected")
     plt.ylabel("Accuracy")
-    plt.title("%s Accuracy vs. Threshold Curve" % model_name)
+    plt.title("%s Accuracy vs. Num Features Curve" % model_name)
     plt.savefig(outfile)
     plt.close()
