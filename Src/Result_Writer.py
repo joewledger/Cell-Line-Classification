@@ -22,6 +22,8 @@ def main():
     parser.add_argument('--patient_dir',type=str,help='The directory containing the patient information')
     parser.add_argument('--threshold_increment',type=float,help='The increment to test thresholds at.')
     parser.add_argument('--num_thresholds',type=int,help='The number of thresholds to test.')
+    parser.add_argument('--num_features_increment',type=float,help='The increment to test num_features at.')
+    parser.add_argument('--num_feature_sizes_to_test',type=int,help='The number of feature sizes to test.')
     parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
     parser.set_defaults(**default_parameters())
     args = parser.parse_args()
@@ -35,6 +37,7 @@ def main():
         params['expression_file'] = params['full_expression_file']
 
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
+    params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
 
     experiment_definitions = define_experiments()
     experiments = [key for key in experiment_definitions.keys() if key in params['experiments']]
@@ -190,7 +193,8 @@ def default_parameters():
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
     parameters['num_permutations'] = 100
-    parameters['layers_to_test'] = 10
+    parameters['num_features_increment'] = 5
+    parameters['num_feature_sizes_to_test'] = 10
     return parameters
 
 def run_experiments(experiments, params):
@@ -262,7 +266,7 @@ def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,p
 def save_svm_accuracy_num_features_graph(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
     model = classify.construct_svc_model(**kwargs)
     accuracies = classify.get_svm_model_accuracy_multiple_feature_sizes(model, expression_file, ic50_file, feature_sizes,num_permutations)
-    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
+    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_num_features.png" % str(model.kernel)
     plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
     return accuracies
 

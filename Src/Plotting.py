@@ -65,7 +65,7 @@ def plot_accuracy_threshold_curve(outfile,thresholds,accuracy_scores,model_name)
 
 def plot_accuracy_num_features_curve(outfile,accuracy_scores,model_name):
     plt.figure()
-    features_selected = accuracy_scores.keys()
+    features_selected = sorted(accuracy_scores.keys())
     accuracy_means = [np.array(accuracy_scores[num_features]).mean() for num_features in features_selected]
     accuracy_std = [np.array(accuracy_scores[num_features]).std() for num_features in features_selected]
 
