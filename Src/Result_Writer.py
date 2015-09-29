@@ -292,7 +292,6 @@ def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_fi
                     iter.repeat(num_permutations),
                     iter.repeat(kwargs)))
 
-
 def _write_svm_accuracy_features(results_dir,expression_file,ic50_file,feature_size,num_permutations,**kwargs):
     model = classify.construct_svc_model(**kwargs)
 

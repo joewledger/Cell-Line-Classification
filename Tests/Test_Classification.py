@@ -54,7 +54,6 @@ def test_activate_neural_network():
     assert False
 
 def test_get_decision_tree_model_accuracy():
-    model = classify.construct_decision_tree_model()
-    accuracy = classify.get_decision_tree_model_accuracy(model,expression_file,ic50_file,.05,100)
-    print(np.array(accuracy).mean())
-    print(np.array(accuracy).std())
+    model = classify.Decision_Tree_Model()
+    accuracy = model.get_model_accuracy_filter_threshold(expression_file, ic50_file,.4,2)
+    print(accuracy)

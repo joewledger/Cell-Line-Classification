@@ -1,10 +1,10 @@
 import DataFormatter as dfm
-import Cross_Validator as cross_validation
+import Cross_Validator as cv
 
 from sklearn import svm
 #from sknn.mlp import Classifier, Layer
 from sklearn import tree
-
+from abc import ABCMeta, abstractmethod
 
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
@@ -14,6 +14,85 @@ We are going to apply SVM to classify cell lines as either sensitive or resistan
 The training input values are the gene expression measurements for each cell line
 The training output values are the IC50 values discretized into several bins: "sensitive", "undetermined" , and "resistant"
 """
+
+class Generic_Scikit_Model(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def construct_model(self,**kwargs):
+        return None
+
+    @abstractmethod
+    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
+        model = self.construct_model(**kwargs)
+        scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
+        accuracy_scores = []
+        for i in range(0,num_permutations):
+            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+            accuracy_scores.append(cv.cross_val_score_filter_feature_selection(model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean())
+        return accuracy_scores
+
+    @abstractmethod
+    def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,feature_size,num_permutations,**kwargs):
+        model = self.construct_model(**kwargs)
+        scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=None)
+        accuracy_scores = []
+        for i in range(0,num_permutations):
+            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+            accuracy = cross_validation.cross_val_score_filter_feature_selection(model,cross_validation.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
+            accuracy_scores.append(accuracy.mean())
+        return accuracy_scores
+
+    @abstractmethod
+    def get_predictions_full_CCLE_dataset(self):
+        return None
+
+    @abstractmethod
+    def get_model_coefficients(self):
+        return None
+
+    @abstractmethod
+    def get_patient_predictions(self):
+        return None
+
+
+class Decision_Tree_Model(Generic_Scikit_Model):
+
+    def __init__(self):
+        self.description = "A decision tree classification model."
+
+    def construct_model(self,**kwargs):
+        return tree.DecisionTreeClassifier(**kwargs)
+
+    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
+        return super(Decision_Tree_Model, self).get_model_accuracy_filter_threshold(expression_file, ic50_file,threshold,num_permutations,**kwargs)
+
+    def get_model_accuracy_filter_feature_size(self):
+        return None
+
+    def get_predictions_full_CCLE_dataset(self):
+        return None
+
+    def get_model_coefficients(self):
+        return None
+
+    def get_patient_predictions(self):
+        return None
+
+
+
+class SVM_Model(Generic_Scikit_Model):
+
+    def __init__(self):
+        self.description = "A SVM classification model."
+
+class Neural_Network_Model(Generic_Scikit_Model):
+
+    def __init__(self):
+        self.description = "A Neural Network classification model."
+
+
+
 
 
 """
@@ -129,18 +208,3 @@ def get_svm_patient_predictions(model,expression_file,ic50_file,patient_director
     predictions = model.predict(patient_data)
 
     return patient_identifiers,predictions
-
-
-
-"""
-Neural Network Code
-"""
-
-def get_neural_network_model_accuracy(expression_file, ic50_file,threshold,num_permutations):
-    raise NotImplementedError
-
-def get_neural_network_patient_predictions(network,expression_file,ic50_file,patient_directory,threshold):
-    raise NotImplementedError
-
-def get_neural_network_predictions_full_dataset(network,expression_file,ic50_file,threshold):
-    raise NotImplementedError
