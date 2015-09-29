@@ -271,93 +271,79 @@ def map_wrapper(all_args):
     kwargs = all_args[-1]
     func(*args,**kwargs)
 
-def _write_svm_accuracy_threshold(results_dir,expression_file,ic50_file,threshold,num_permutations,**kwargs):
-    model = classify.construct_svc_model(**kwargs)
-
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-    accuracy_scores = classify.get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations)
-    writer = open(savefile,"wb")
-    for value in accuracy_scores:
-        writer.write(str(value) + "\n")
-    writer.close()
-
-def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_file,thresholds,num_permutations,num_threads,**kwargs):
+def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,num_permutations,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
-             iter.izip(iter.repeat(_write_svm_accuracy_threshold),
+             iter.izip(iter.repeat(_write_accuracy_threshold),
                     iter.repeat(results_dir),
+                    iter.repeat(model_object),
                     iter.repeat(expression_file),
                     iter.repeat(ic50_file),
                     thresholds,
                     iter.repeat(num_permutations),
                     iter.repeat(kwargs)))
 
-def _write_svm_accuracy_features(results_dir,expression_file,ic50_file,feature_size,num_permutations,**kwargs):
-    model = classify.construct_svc_model(**kwargs)
+def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
-    accuracy_scores = classify.get_svm_model_accuracy_for_feature_size(model,expression_file,ic50_file,int(feature_size),num_permutations)
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
+    accuracy_scores = model_object.get_svm_model_accuracy_for_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
     writer.close()
 
-def write_all_svm_accuracy_features_to_file(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
-    print(feature_sizes)
+def write_accuracy_features_scores_to_file(results_dir,model_object,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
-             iter.izip(iter.repeat(_write_svm_accuracy_features),
+             iter.izip(iter.repeat(_write_accuracy_features),
                     iter.repeat(results_dir),
+                    iter.repeat(model_object),
                     iter.repeat(expression_file),
                     iter.repeat(ic50_file),
                     feature_sizes,
                     iter.repeat(num_permutations),
                     iter.repeat(kwargs)))
 
-def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
-    model = classify.construct_svc_model(**kwargs)
-    accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
-    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_threshold.png" % str(model.kernel)
-    plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"SVM %s Kernel" % kwargs['kernel'])
-    return accuracies
+def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
 
-def save_svm_accuracy_threshold_graph_multiple_kernels(results_dir, linear,rbf,poly):
-    """
-    Saves accuracy threshold graphs for multiple SVM kernels on the same set of axes.
-    The parameters linear, rbf, and poly are dictionaries mapping threshold to a list of accuracy values for that particular kernels
-    """
-    outfile = results_dir + "Plots/SVM_Accuracies/multiple_kernel_accuracy_threshold.png"
-    kernels = [linear,rbf,poly]
-    plt.plot_accuracy_threshold_multiple_kernels(outfile,kernels)
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
+    accuracy_scores = model_object.get_svm_model_accuracy_for_threshold(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    writer = open(savefile,"wb")
+    for value in accuracy_scores:
+        writer.write(str(value) + "\n")
+    writer.close()
 
-def save_svm_accuracy_num_features_graph(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
-    model = classify.construct_svc_model(**kwargs)
-    accuracies = classify.get_svm_model_accuracy_multiple_feature_sizes(model, expression_file, ic50_file, feature_sizes,num_permutations)
-    outfile = results_dir + "Plots/SVM_Accuracies/%s_accuracy_num_features.png" % str(model.kernel)
-    plt.plot_accuracy_num_features_curve(outfile,accuracies,"SVM %s Kernel" % kwargs['kernel'])
-    return accuracies
+def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,threshold,**kwargs):
+    raise NotImplementedError
 
-def save_svm_accuracy_num_features_graph_multiple_kernels(results_dir, linear,rbf,poly):
-    """
-    Saves accuracy threshold graphs for multiple SVM kernels on the same set of axes.
-    The parameters linear, rbf, and poly are dictionaries mapping threshold to a list of accuracy values for that particular kernels
-    """
-    outfile = results_dir + "Plots/SVM_Accuracies/multiple_kernel_accuracy_features.png"
-    kernels = [linear,rbf,poly]
-    plt.plot_accuracy_num_features_multiple_kernels(outfile,kernels)
-
-def save_svm_model_coefficients(results_dir, expression_file,ic50_file,thresholds):
+def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,thresholds,**kwargs):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_svc_model(kernel="linear")
+        model = classify.SVM_Model()
         expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
         genes = list(expression_frame.index)
-        model_coefficients = classify.get_svm_model_coefficients(model,expression_file,ic50_file,threshold)
+        model_coefficients = model.get_model_coefficients(expression_file,ic50_file,threshold,**kwargs)
         writer.write("\t".join(str(gene) for gene in genes) + "\n")
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
+
+
+def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_directory,threshold,**kwargs):
+
+    """
+    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        model = classify.construct_svc_model(kernel="linear")
+        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
+        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
+    """
+
 
 def save_svm_patient_predictions(results_dir,expression_file, ic50_file,patient_dir, thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
@@ -380,20 +366,6 @@ def save_svm_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file
         writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
-
-def save_neural_network_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
-
-    raise NotImplementedError
-
-def save_neural_network_accuracy_threshold_graph_multiple_layers(results_dir,expression_file,ic50_file,thresholds,layers_to_test):
-
-    raise NotImplementedError
-
-def save_neural_network_patient_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
-    raise NotImplementedError
-
-def save_neural_network_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds, layers_to_test,**kwargs):
-    raise NotImplementedError
 
 def save_decision_tree_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
     model = classify.construct_decision_tree_model(**kwargs)
