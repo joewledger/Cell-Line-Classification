@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--num_features_increment',type=float,help='The increment to test num_features at.')
     parser.add_argument('--num_feature_sizes_to_test',type=int,help='The number of feature sizes to test.')
     parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
+    parser.add_argument('--num_threads', type=int,help='The number of threads to use for multiproccesing (if supported by experiment')
     parser.set_defaults(**default_parameters())
     args = parser.parse_args()
 
@@ -188,6 +189,11 @@ def define_experiments():
                         ['results_dir', 'expression_file', 'ic50_file', 'thresholds', 'num_permutations','num_threads'],
                         {'kernel' : 'linear'})
 
+    experiments[26] = ('Write all SVM Linear accuracy feature scores to file.',
+                        write_all_svm_accuracy_features_to_file,
+                        ['results_dir', 'expression_file', 'ic50_file', 'feature_sizes', 'num_permutations','num_threads'],
+                        {'kernel' : 'linear'})
+
 
     return experiments
 
@@ -276,7 +282,6 @@ def _write_svm_accuracy_threshold(results_dir,expression_file,ic50_file,threshol
     writer.close()
 
 def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_file,thresholds,num_permutations,num_threads,**kwargs):
-
     pool = Pool(num_threads)
     pool.map(map_wrapper,
              iter.izip(iter.repeat(_write_svm_accuracy_threshold),
@@ -287,8 +292,28 @@ def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_fi
                     iter.repeat(num_permutations),
                     iter.repeat(kwargs)))
 
-def write_svm_accuracy_features_to_file(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
-    raise NotImplementedError
+
+def _write_svm_accuracy_features(results_dir,expression_file,ic50_file,feature_size,num_permutations,**kwargs):
+    model = classify.construct_svc_model(**kwargs)
+
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
+    accuracy_scores = classify.get_svm_model_accuracy_for_feature_size(model,expression_file,ic50_file,int(feature_size),num_permutations)
+    writer = open(savefile,"wb")
+    for value in accuracy_scores:
+        writer.write(str(value) + "\n")
+    writer.close()
+
+def write_all_svm_accuracy_features_to_file(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
+    print(feature_sizes)
+    pool = Pool(num_threads)
+    pool.map(map_wrapper,
+             iter.izip(iter.repeat(_write_svm_accuracy_features),
+                    iter.repeat(results_dir),
+                    iter.repeat(expression_file),
+                    iter.repeat(ic50_file),
+                    feature_sizes,
+                    iter.repeat(num_permutations),
+                    iter.repeat(kwargs)))
 
 def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
     model = classify.construct_svc_model(**kwargs)
