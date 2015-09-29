@@ -7,6 +7,8 @@ import Classification as classify
 import Plotting as plt
 from multiprocessing import Pool
 import itertools as iter
+import traceback
+
 
 def main():
     description = """
@@ -183,8 +185,8 @@ def define_experiments():
 
     experiments[25] = ('Write all SVM Linear accuracy threshold scores to file.',
                         write_all_svm_accuracy_threshold_to_file,
-                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds', 'num_permutations'],
-                        {'kernel' : 'poly'})
+                        ['results_dir', 'expression_file', 'ic50_file', 'thresholds', 'num_permutations','num_threads'],
+                        {'kernel' : 'linear'})
 
 
     return experiments
@@ -202,6 +204,7 @@ def default_parameters():
     parameters['num_permutations'] = 100
     parameters['num_features_increment'] = 5
     parameters['num_feature_sizes_to_test'] = 10
+    parameters['num_threads'] = 5
     return parameters
 
 def run_experiments(experiments, params):
@@ -225,8 +228,9 @@ def run_experiments(experiments, params):
                 experiment_wrapper(method,args,kwargs)
 
             log(log_file, "Finished Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
-        except:
+        except Exception, e:
             log(log_file, "Experiment %s failed at %s\n" % (experiment_description, str(datetime.datetime.today())))
+            log(log_file, "\t%s" % str(traceback.format_exc()))
 
 def experiment_wrapper(func,args,kwargs):
     return func(*args,**kwargs)
@@ -253,28 +257,38 @@ def make_results_dir_and_subdirectories(base_results_dir,results_dir):
     os.mkdir(results_dir + "Plots/Decision_Tree_Accuracies")
     os.mkdir(results_dir + "Model_Coefficients")
     os.mkdir(results_dir + "Predictions")
+    os.mkdir(results_dir + "Accuracy_Scores")
 
-def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
+def map_wrapper(all_args):
+    func = all_args[0]
+    args = all_args[1:-1]
+    kwargs = all_args[-1]
+    func(*args,**kwargs)
 
-    pool = Pool(2)
-    pool.map(_write_svm_accuracy_threshold,
-             iter.izip(iter.repeat(results_dir),iter.repeat(expression_file),iter.repeat(ic50_file),thresholds,iter.repeat(num_permutations),iter.repeat(**kwargs)))
-
-
-def _write_svm_accuracy_threshold(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
+def _write_svm_accuracy_threshold(results_dir,expression_file,ic50_file,threshold,num_permutations,**kwargs):
     model = classify.construct_svc_model(**kwargs)
-    for threshold in thresholds:
-        savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-        accuracy_scores = classify.get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations)
-        writer = open(savefile,"wb")
-        for value in accuracy_scores:
-            writer.write(str(value))
-        writer.close()
+
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
+    accuracy_scores = classify.get_svm_model_accuracy_for_threshold(model,expression_file,ic50_file,threshold,num_permutations)
+    writer = open(savefile,"wb")
+    for value in accuracy_scores:
+        writer.write(str(value) + "\n")
+    writer.close()
+
+def write_all_svm_accuracy_threshold_to_file(results_dir,expression_file,ic50_file,thresholds,num_permutations,num_threads,**kwargs):
+
+    pool = Pool(num_threads)
+    pool.map(map_wrapper,
+             iter.izip(iter.repeat(_write_svm_accuracy_threshold),
+                    iter.repeat(results_dir),
+                    iter.repeat(expression_file),
+                    iter.repeat(ic50_file),
+                    thresholds,
+                    iter.repeat(num_permutations),
+                    iter.repeat(kwargs)))
 
 def write_svm_accuracy_features_to_file(results_dir,expression_file,ic50_file,feature_sizes,num_permutations,**kwargs):
     raise NotImplementedError
-
-
 
 def save_svm_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
     model = classify.construct_svc_model(**kwargs)
