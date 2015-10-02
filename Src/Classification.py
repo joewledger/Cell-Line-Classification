@@ -1,7 +1,9 @@
 import DataFormatter as dfm
 import Cross_Validator as cv
+import Feature_Selection as fs
 
 from sklearn import svm
+from sklearn.cross_validation import cross_val_score
 #from sknn.mlp import Classifier, Layer
 from sklearn import tree
 from abc import ABCMeta, abstractmethod
@@ -81,6 +83,22 @@ class Generic_Scikit_Model(object):
 
         return p_identifiers,predictions
 
+    @abstractmethod
+    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        accuracy_scores = []
+
+        for i in xrange(0,num_permutations):
+            model = self.construct_model(**kwargs)
+            expression_frame, ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True)
+            expression_frame = fs.bidirectional_feature_search(model,expression_frame,ic50_series,target_features)
+            scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
+            model = self.construct_model(**kwargs)
+            score = cross_val_score(model,scikit_data,scikit_target,cv=5)
+            accuracy_scores.append(score)
+
+        return accuracy_scores
+
+
 class Decision_Tree_Model(Generic_Scikit_Model):
 
     def __init__(self):
@@ -134,6 +152,12 @@ class SVM_Model(Generic_Scikit_Model):
 
     def get_patient_predictions(self,expression_file,ic50_file,patient_directory,threshold,**kwargs):
         return super(SVM_Model,self).get_patient_predictions(expression_file,ic50_file,threshold,**kwargs)
+
+    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,**kwargs):
+        if(kwargs['kernel'] == 'linear'):
+            return super(SVM_Model,self).get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,**kwargs)
+        else:
+            raise NotImplementedError
 
 class Neural_Network_Model(Generic_Scikit_Model):
 

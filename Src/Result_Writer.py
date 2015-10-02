@@ -4,7 +4,6 @@ import datetime
 import os
 import DataFormatter as dfm
 import Classification as classify
-import Plotting as plt
 from multiprocessing import Pool
 import itertools as iter
 import traceback
@@ -286,7 +285,7 @@ def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_
 def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-    accuracy_scores = model_object.get_svm_model_accuracy_for_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_for_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
@@ -307,14 +306,21 @@ def write_accuracy_features_scores_to_file(results_dir,model_object,expression_f
 def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
-    accuracy_scores = model_object.get_svm_model_accuracy_for_threshold(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_for_threshold(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
     writer.close()
 
-def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,threshold,**kwargs):
-    raise NotImplementedError
+def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,**kwargs):
+    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        writer.write("Threshold: %s\n" % str(threshold))
+        cell_lines, predictions = model_object.get_predictions_full_CCLE_dataset(expression_file,ic50_file,threshold,**kwargs)
+        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
 
 def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,thresholds,**kwargs):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"
@@ -329,70 +335,13 @@ def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,t
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
-
-def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_directory,threshold,**kwargs):
-
-    """
+def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_directory,thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_svc_model(kernel="linear")
-        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
+        identifiers,predictions = model_object.get_patient_predictions(expression_file,ic50_file,patient_directory,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
-        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
-    writer.close()
-    """
-
-
-def save_svm_patient_predictions(results_dir,expression_file, ic50_file,patient_dir, thresholds,**kwargs):
-    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_svc_model(kernel="linear")
-        identifiers,predictions = classify.get_svm_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
-        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
-        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
-    writer.close()
-
-def save_svm_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds,**kwargs):
-    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_svc_model(kernel="linear")
-        cell_lines, predictions = classify.get_svm_predictions_full_dataset(model,expression_file,ic50_file,threshold)
-        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
-        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
-    writer.close()
-
-def save_decision_tree_accuracy_threshold_graph(results_dir,expression_file,ic50_file,thresholds,num_permutations,**kwargs):
-    model = classify.construct_decision_tree_model(**kwargs)
-    accuracies = classify.get_svm_model_accuracy_multiple_thresholds(model, expression_file, ic50_file, thresholds,num_permutations)
-    outfile = results_dir + "Plots/Decision_Tree_Accuracies/accuracy_threshold.png"
-    plt.plot_accuracy_threshold_curve(outfile,thresholds,accuracies,"Decision Tree")
-    return accuracies
-
-def save_decision_tree_patient_predictions(results_dir,expression_file, ic50_file,patient_dir, thresholds,**kwargs):
-    results_file = results_dir + "Predictions/Decision_Tree_patient_prediction_with%s_undetermined.txt" % ("out" if kwargs['trimmed'] else "")
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_decision_tree_model()
-        identifiers,predictions = classify.get_decision_tree_patient_predictions(model,expression_file,ic50_file,patient_dir,threshold)
-        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
-        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
-    writer.close()
-
-def save_decision_tree_full_CCLE_dataset_predictions(results_dir,expression_file,ic50_file,thresholds,**kwargs):
-    results_file = results_dir + "Predictions/Decision_Tree_full_CCLE_predictions.txt"
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.construct_decision_tree_model(**kwargs)
-        cell_lines, predictions = classify.get_decision_tree_predictions_full_dataset(model,expression_file,ic50_file,threshold)
-        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 

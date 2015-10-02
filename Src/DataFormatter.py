@@ -178,6 +178,9 @@ def get_patient_identifiers_and_data(patient_frame):
     patient_data = np.array([list(patient_frame[column]) for column in patient_identifiers])
     return patient_identifiers,patient_data
 
+def get_expression_frame_with_features(expression_frame,features):
+    return expression_frame.ix[list(features)]
+
 """
 Methods that perform multiple single step operations at once.
 """
