@@ -2,7 +2,7 @@ import Src.Classification as classify
 import Src.DataFormatter as dfm
 import numpy as np
 
-expression_file = "Data/CCLE_Data/sample1000.res"
+expression_file = "Data/CCLE_Data/sample100.res"
 ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
 patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
 
@@ -56,4 +56,9 @@ def test_activate_neural_network():
 def test_get_decision_tree_model_accuracy():
     model = classify.Decision_Tree_Model()
     accuracy = model.get_model_accuracy_filter_threshold(expression_file, ic50_file,.4,2)
+    print(accuracy)
+
+def test_get_model_accuracy_bidirectional_feature_search():
+    model = classify.SVM_Model()
+    accuracy = model.get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,10,2,kernel='linear')
     print(accuracy)

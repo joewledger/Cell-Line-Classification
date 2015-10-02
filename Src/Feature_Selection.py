@@ -7,7 +7,6 @@ A python module for doing more advanced feature selection techniques such as bid
 """
 
 def bidirectional_feature_search(model,expression_frame,ic50_series,target_features):
-    #Determine forward and backward step sizes based on how large the steps will need to be to
     num_features = len(expression_frame.index)
     forward_step_size,backward_step_size = calculate_forward_backward_step_sizes(num_features,target_features)
     forward_features_selected, backward_features_removed = [],[]

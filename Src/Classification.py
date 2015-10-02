@@ -86,14 +86,16 @@ class Generic_Scikit_Model(object):
     @abstractmethod
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         accuracy_scores = []
+        expression_frame, ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True)
 
         for i in xrange(0,num_permutations):
             model = self.construct_model(**kwargs)
-            expression_frame, ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True)
-            expression_frame = fs.bidirectional_feature_search(model,expression_frame,ic50_series,target_features)
-            scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
+
+            features_selected = fs.bidirectional_feature_search(model,expression_frame,ic50_series,target_features)
+            scikit_data,scikit_target = dfm.get_scikit_data_and_target(dfm.get_expression_frame_with_features(expression_frame,features_selected),ic50_series)
+            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             model = self.construct_model(**kwargs)
-            score = cross_val_score(model,scikit_data,scikit_target,cv=5)
+            score = cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean()
             accuracy_scores.append(score)
 
         return accuracy_scores
@@ -153,9 +155,9 @@ class SVM_Model(Generic_Scikit_Model):
     def get_patient_predictions(self,expression_file,ic50_file,patient_directory,threshold,**kwargs):
         return super(SVM_Model,self).get_patient_predictions(expression_file,ic50_file,threshold,**kwargs)
 
-    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,**kwargs):
+    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         if(kwargs['kernel'] == 'linear'):
-            return super(SVM_Model,self).get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,**kwargs)
+            return super(SVM_Model,self).get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,num_permutations,**kwargs)
         else:
             raise NotImplementedError
 
