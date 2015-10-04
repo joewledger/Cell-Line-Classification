@@ -85,7 +85,9 @@ class Generic_Scikit_Model(object):
 
     @abstractmethod
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
-        accuracy_scores = []
+        """
+        Returns a generator which yields accuracy scores for bidirectional feature searches
+        """
         expression_frame, ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True)
 
         for i in xrange(0,num_permutations):
@@ -96,9 +98,7 @@ class Generic_Scikit_Model(object):
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             model = self.construct_model(**kwargs)
             score = cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean()
-            accuracy_scores.append(score)
-
-        return accuracy_scores
+            yield score
 
 
 class Decision_Tree_Model(Generic_Scikit_Model):

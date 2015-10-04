@@ -223,9 +223,13 @@ def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression
     accuracy_scores = model.get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,num_permutations,kernel='linear')
     results_file = results_dir + "Accuracy_Scores/SVM_bidirectional_%s_features.txt" % str(target_features)
     writer = open(results_file,"wb")
-    for score in accuracy_scores:
-        writer.write(str(score) + "\n")
+    writer.write("Target Features: %s" % str(target_features))
     writer.close()
+
+    for score in accuracy_scores:
+        writer = open(results_file,"a")
+        writer.write(str(score) + "\n")
+        writer.close()
 
 
 def log(log_file, message):
