@@ -15,7 +15,7 @@ def main():
     These include Support Vector Machines, Artificial Neural Networks, and the NEAT algorithm.\n\n
     Depending on the parameters given, this module will run different experiments.\n\n""" + get_experiment_descriptions()
     description = description.replace("    ","")
-    description += "\n\nDefault Parameters:\n" + "\n".join(str(parameter) + " : " + str(default_parameters()[parameter]) for parameter in default_parameters().keys())
+    description += get_default_parameter_descriptions()
 
     parser = argparse.ArgumentParser(description=description,formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('--experiments',nargs='+',type=int,help='The experiments to run.')
@@ -29,31 +29,17 @@ def main():
     parser.add_argument('--num_feature_sizes_to_test',type=int,help='The number of feature sizes to test.')
     parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
     parser.add_argument('--num_threads', type=int,help='The number of threads to use for multiproccesing (if supported by experiment')
-    parser.add_argument('--num_features', type=int)
+    parser.add_argument('--target_features', type=int,help='The number of features to target in bidirectional feature search')
+    parser.add_argument('--model',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
+    parser.add_argument('--kernel',type=str,help='The SVM kernel type to use. Options are \'linear\', \'rbf\', or \'poly\'')
     parser.set_defaults(**default_parameters())
+
     args = parser.parse_args()
-
-    params = dict(vars(args))
-
-    params['results_dir'] = get_results_filepath(params['results_dir'])
-    make_results_dir_and_subdirectories(args.results_dir,params['results_dir'])
-
-    if params['expression_file'] == "full":
-        params['expression_file'] = params['full_expression_file']
-
-    params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
-    params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
-
-    write_svm_model_accuracy_bidirectional_feature_search(params['results_dir'],params['expression_file'],params['ic50_file'],params['num_features'],params['num_permutations'])
-
-    """
-
+    params = configure_parameters(args)
 
     experiment_definitions = define_experiments()
     experiments = [key for key in experiment_definitions.keys() if key in params['experiments']]
-
     run_experiments(experiments,params)
-    """
 
 def define_experiments():
     """
@@ -66,6 +52,37 @@ def define_experiments():
     """
 
     experiments = {}
+
+    experiments[0] = ('Write accuracy v. threshold scores to text file',
+                      write_accuracy_threshold_scores_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','thresholds','num_permutations','num_threads'],
+                      ['kernel'])
+
+    experiments[1] = ('Write accuracy v. #features scores to text file',
+                      write_accuracy_features_scores_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
+                      ['kernel'])
+
+    experiments[2] = ('Write full CCLE predictions to file',
+                      write_full_CCLE_predictions_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','thresholds'],
+                      ['kernel'])
+
+    experiments[3] = ('Write SVM model coefficients to file',
+                      write_svm_model_coefficients_to_file,
+                      ['results_dir','expression_file','ic50_file','thresholds'],
+                      ['kernel'])
+
+    experiments[4] = ('Write Patient Predictions to file',
+                      write_patient_predictions_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','patient_directory','thresholds'],
+                      ['kernel'])
+
+    experiments[5] = ('Write SVM Model Accuracy bidirectional feature search accuracy scores to file',
+                      write_svm_model_accuracy_bidirectional_feature_search,
+                      ['results_dir','expression_file','ic50_file','target_features','num_permutations'],
+                      ['kernel'])
+
     return experiments
 
 def default_parameters():
@@ -82,8 +99,31 @@ def default_parameters():
     parameters['num_features_increment'] = 5
     parameters['num_feature_sizes_to_test'] = 10
     parameters['num_threads'] = 5
-    parameters['num_features'] = 5
+    parameters['target_features'] = 5
+    parameters['model'] = 'svm'
+    parameters['kernel'] = 'linear'
     return parameters
+
+def get_default_parameter_descriptions():
+    return "\n\nDefault Parameters:\n" + "\n".join(str(parameter)
+           + " : " + str(default_parameters()[parameter]) for parameter in default_parameters().keys())
+
+def configure_parameters(args):
+    params = dict(vars(args))
+
+    params['results_dir'] = get_results_filepath(params['results_dir'])
+    make_results_dir_and_subdirectories(args.results_dir,params['results_dir'])
+
+    if params['expression_file'] == "full":
+        params['expression_file'] = params['full_expression_file']
+
+    params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
+    params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
+
+    models = {'svm' : classify.SVM_Model, 'nn' : classify.Neural_Network_Model, 'dt' : classify.Decision_Tree_Model}
+
+    params['model_object'] = models[params['model_object']]
+    return params
 
 def run_experiments(experiments, params):
     experiment_definitions = define_experiments()
@@ -97,7 +137,9 @@ def run_experiments(experiments, params):
         try:
             method = curr_exp[1]
             args = [params[x] for x in curr_exp[2]]
-            kwargs = curr_exp[3] if len(curr_exp) > 3 else {}
+            kwargs = {x : params[x] for x in curr_exp[3]} if len(curr_exp) > 3 else {}
+            if(not type(params['model_object']) == classify.SVM_Model):
+                kwargs.pop('kernel')
             save_var = curr_exp[4] if len(curr_exp) > 4 else None
 
             if save_var:
@@ -230,7 +272,6 @@ def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression
         writer = open(results_file,"a")
         writer.write(str(score) + "\n")
         writer.close()
-
 
 def log(log_file, message):
     writer = open(log_file,"a+")
