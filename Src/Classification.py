@@ -128,6 +128,9 @@ class Decision_Tree_Model(Generic_Scikit_Model):
     def get_patient_predictions(self,expression_file,ic50_file,patient_directory,threshold,**kwargs):
         return super(Decision_Tree_Model,self).get_patient_predictions(expression_file,ic50_file,patient_directory,threshold,**kwargs)
 
+    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        raise NotImplementedError
+
 class SVM_Model(Generic_Scikit_Model):
 
     def __init__(self):
@@ -153,7 +156,7 @@ class SVM_Model(Generic_Scikit_Model):
             raise NotImplementedError
 
     def get_patient_predictions(self,expression_file,ic50_file,patient_directory,threshold,**kwargs):
-        return super(SVM_Model,self).get_patient_predictions(expression_file,ic50_file,threshold,**kwargs)
+        return super(SVM_Model,self).get_patient_predictions(expression_file,ic50_file,patient_directory,threshold,**kwargs)
 
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         if(kwargs['kernel'] == 'linear'):
@@ -182,4 +185,7 @@ class Neural_Network_Model(Generic_Scikit_Model):
         raise NotImplementedError
 
     def get_patient_predictions(self):
+        raise NotImplementedError
+
+    def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         raise NotImplementedError

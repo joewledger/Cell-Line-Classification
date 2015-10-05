@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--target_features', type=int,help='The number of features to target in bidirectional feature search')
     parser.add_argument('--model',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
     parser.add_argument('--kernel',type=str,help='The SVM kernel type to use. Options are \'linear\', \'rbf\', or \'poly\'')
+    parser.add_argument('--trimmed',type=bool,help='Whether or not to exclude undetermined cell lines when training model for patient predictions.')
     parser.set_defaults(**default_parameters())
 
     args = parser.parse_args()
@@ -75,8 +76,8 @@ def define_experiments():
 
     experiments[4] = ('Write Patient Predictions to file',
                       write_patient_predictions_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','patient_directory','thresholds'],
-                      ['kernel'])
+                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','thresholds'],
+                      ['kernel','trimmed'])
 
     experiments[5] = ('Write SVM Model Accuracy bidirectional feature search accuracy scores to file',
                       write_svm_model_accuracy_bidirectional_feature_search,
@@ -102,6 +103,7 @@ def default_parameters():
     parameters['target_features'] = 5
     parameters['model'] = 'svm'
     parameters['kernel'] = 'linear'
+    parameters['trimmed'] = True
     return parameters
 
 def get_default_parameter_descriptions():
@@ -120,9 +122,9 @@ def configure_parameters(args):
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
 
-    models = {'svm' : classify.SVM_Model, 'nn' : classify.Neural_Network_Model, 'dt' : classify.Decision_Tree_Model}
+    models = {'svm' : classify.SVM_Model(), 'nn' : classify.Neural_Network_Model(), 'dt' : classify.Decision_Tree_Model()}
 
-    params['model_object'] = models[params['model_object']]
+    params['model_object'] = models[params['model']]
     return params
 
 def run_experiments(experiments, params):
@@ -138,7 +140,7 @@ def run_experiments(experiments, params):
             method = curr_exp[1]
             args = [params[x] for x in curr_exp[2]]
             kwargs = {x : params[x] for x in curr_exp[3]} if len(curr_exp) > 3 else {}
-            if(not type(params['model_object']) == classify.SVM_Model):
+            if(not params['model'] == 'svm'):
                 kwargs.pop('kernel')
             save_var = curr_exp[4] if len(curr_exp) > 4 else None
 
@@ -200,7 +202,7 @@ def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_
 def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-    accuracy_scores = model_object.get_model_accuracy_for_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
@@ -221,7 +223,8 @@ def write_accuracy_features_scores_to_file(results_dir,model_object,expression_f
 def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
-    accuracy_scores = model_object.get_model_accuracy_for_threshold(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    print(model_object)
+    accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
@@ -250,22 +253,22 @@ def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,t
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
-def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_directory,thresholds,**kwargs):
+def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_dir,thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
     writer = open(results_file,"wb")
     for threshold in thresholds:
         writer.write("Threshold: %s\n" % str(threshold))
-        identifiers,predictions = model_object.get_patient_predictions(expression_file,ic50_file,patient_directory,threshold)
+        identifiers,predictions = model_object.get_patient_predictions(expression_file,ic50_file,patient_dir,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
-def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression_file,ic50_file,target_features,num_permutations):
+def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression_file,ic50_file,target_features,num_permutations,**kwargs):
     model = classify.SVM_Model()
-    accuracy_scores = model.get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,num_permutations,kernel='linear')
+    accuracy_scores = model.get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,num_permutations,kernel=kwargs['kernel'])
     results_file = results_dir + "Accuracy_Scores/SVM_bidirectional_%s_features.txt" % str(target_features)
     writer = open(results_file,"wb")
-    writer.write("Target Features: %s" % str(target_features))
+    writer.write("Target Features: %s\n" % str(target_features))
     writer.close()
 
     for score in accuracy_scores:
