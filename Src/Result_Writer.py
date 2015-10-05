@@ -222,8 +222,7 @@ def write_accuracy_features_scores_to_file(results_dir,model_object,expression_f
 
 def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(feature_size))
-    print(model_object)
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
     accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:

@@ -28,22 +28,18 @@ class Generic_Scikit_Model(object):
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
         model = self.construct_model(**kwargs)
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
-        accuracy_scores = []
         for i in range(0,num_permutations):
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            accuracy_scores.append(cv.cross_val_score_filter_feature_selection(model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean())
-        return accuracy_scores
+            yield cv.cross_val_score_filter_feature_selection(model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean()
 
     @abstractmethod
     def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,feature_size,num_permutations,**kwargs):
         model = self.construct_model(**kwargs)
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=None)
-        accuracy_scores = []
         for i in range(0,num_permutations):
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             accuracy = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
-            accuracy_scores.append(accuracy.mean())
-        return accuracy_scores
+            yield accuracy.mean()
 
     @abstractmethod
     def get_predictions_full_CCLE_dataset(self,expression_file,ic50_file,threshold,**kwargs):
@@ -100,6 +96,9 @@ class Generic_Scikit_Model(object):
             score = cross_val_score(model,shuffled_data,shuffled_target,cv=5).mean()
             yield score
 
+    @abstractmethod
+    def get_model_accuracy_stepwise_regression_feature_selection(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        raise NotImplementedError
 
 class Decision_Tree_Model(Generic_Scikit_Model):
 
@@ -129,6 +128,9 @@ class Decision_Tree_Model(Generic_Scikit_Model):
         return super(Decision_Tree_Model,self).get_patient_predictions(expression_file,ic50_file,patient_directory,threshold,**kwargs)
 
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        raise NotImplementedError
+
+    def get_model_accuracy_stepwise_regression_feature_selection(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         raise NotImplementedError
 
 class SVM_Model(Generic_Scikit_Model):
@@ -164,6 +166,9 @@ class SVM_Model(Generic_Scikit_Model):
         else:
             raise NotImplementedError
 
+    def get_model_accuracy_stepwise_regression_feature_selection(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        return super(SVM_Model,self).get_model_accuracy_stepwise_regression_feature_selection(expression_file,ic50_file,target_features,num_permutations,**kwargs)
+
 class Neural_Network_Model(Generic_Scikit_Model):
 
     def __init__(self):
@@ -188,4 +193,7 @@ class Neural_Network_Model(Generic_Scikit_Model):
         raise NotImplementedError
 
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
+        raise NotImplementedError
+
+    def get_model_accuracy_stepwise_regression_feature_selection(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         raise NotImplementedError
