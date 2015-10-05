@@ -228,7 +228,7 @@ def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file
     writer.write("Number of Features: %s\n" % str(feature_size))
     writer.close()
     for value in accuracy_scores:
-        writer.open(savefile,"a")
+        writer = open(savefile,"a")
         writer.write(str(value) + "\n")
         writer.close()
 
