@@ -225,9 +225,12 @@ def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
     accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
     writer = open(savefile,"wb")
-    for value in accuracy_scores:
-        writer.write(str(value) + "\n")
+    writer.write("Number of Features: %s\n" % str(feature_size))
     writer.close()
+    for value in accuracy_scores:
+        writer.open(savefile,"a")
+        writer.write(str(value) + "\n")
+        writer.close()
 
 def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
