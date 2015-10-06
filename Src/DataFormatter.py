@@ -238,3 +238,17 @@ def get_cell_line_and_patient_expression_data_target(expression_file,ic50_file,p
     patient_identifiers,patient_data = get_patient_identifiers_and_data(patient_frame)
 
     return expression_data,expression_target,patient_identifiers,patient_data
+
+def get_cell_line_and_patient_expression_data_target_top_features(expression_file,ic50_file,patient_directory,num_features,trimmed=False):
+    expression_frame, ic50_series = get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=trimmed)
+    top_features = get_pval_top_n_features(expression_frame,ic50_series,num_features)
+    expression_frame = expression_frame.ix[top_features]
+
+    patient_frame = get_patients_expression_frame(patient_directory)
+    patient_frame = normalize_expression_frame(patient_frame)
+
+    expression_frame,patient_frame = get_cell_line_and_patient_expression_gene_intersection(expression_frame,patient_frame)
+    expression_data,expression_target = get_scikit_data_and_target(expression_frame,ic50_series)
+    patient_identifiers,patient_data = get_patient_identifiers_and_data(patient_frame)
+
+    return expression_data,expression_target,patient_identifiers,patient_data,list(top_features)

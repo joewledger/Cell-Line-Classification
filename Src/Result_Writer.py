@@ -89,6 +89,16 @@ def define_experiments():
                       ['results_dir','model_object','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
                       ['kernel'])
 
+    experiments[7] = ('Write full CCLE predictions top features to file',
+                      write_full_CCLE_predictions_top_features_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','target_features'],
+                      ['kernel'])
+
+    experiments[8] = ('Write patient predictions top features to file',
+                      write_patient_predictions_to_file_top_features,
+                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','target_features'],
+                      ['kernel','trimmed'])
+
     return experiments
 
 def default_parameters():
@@ -271,6 +281,15 @@ def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
+def write_full_CCLE_predictions_top_features_to_file(results_dir,model_object,expression_file,ic50_file,target_features,**kwargs):
+    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
+    writer = open(results_file,"wb")
+    cell_lines, predictions,top_features = model_object.get_predictions_full_CCLE_dataset_from_top_features(expression_file,ic50_file,target_features,**kwargs)
+    writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
+    writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
+    writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
+
 def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,thresholds,**kwargs):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"
     writer = open(results_file,"wb")
@@ -292,6 +311,15 @@ def write_patient_predictions_to_file(results_dir,model_object,expression_file,i
         identifiers,predictions = model_object.get_patient_predictions(expression_file,ic50_file,patient_dir,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    writer.close()
+
+def write_patient_predictions_to_file_top_features(results_dir,model_object,expression_file,ic50_file,patient_dir,target_features,**kwargs):
+    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
+    writer = open(results_file,"wb")
+    identifiers,predictions,top_features = model_object.get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,target_features,trimmed=kwargs['trimmed'])
+    writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
+    writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+    writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
 def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression_file,ic50_file,target_features,num_permutations,**kwargs):
