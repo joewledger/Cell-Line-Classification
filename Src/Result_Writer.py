@@ -84,6 +84,11 @@ def define_experiments():
                       ['results_dir','expression_file','ic50_file','target_features','num_permutations'],
                       ['kernel'])
 
+    experiments[6] = ('Write SVM Model Accuracy RFE accuracy scores to file',
+                      write_RFE_accuracy_features_scores_to_file,
+                      ['results_dir','model_object','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
+                      ['kernel'])
+
     return experiments
 
 def default_parameters():
@@ -232,6 +237,30 @@ def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file
         writer.write(str(value) + "\n")
         writer.close()
 
+def write_RFE_accuracy_features_scores_to_file(results_dir,model_object,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
+    pool = Pool(num_threads)
+    pool.map(map_wrapper,
+             iter.izip(iter.repeat(_write_RFE_accuracy_features),
+                    iter.repeat(results_dir),
+                    iter.repeat(model_object),
+                    iter.repeat(expression_file),
+                    iter.repeat(ic50_file),
+                    feature_sizes,
+                    iter.repeat(num_permutations),
+                    iter.repeat(kwargs)))
+
+def _write_RFE_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
+
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_RFE_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
+    accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    writer = open(savefile,"wb")
+    writer.write("Number of Features: %s\n" % str(feature_size))
+    writer.close()
+    for value in accuracy_scores:
+        writer = open(savefile,"a")
+        writer.write(str(value) + "\n")
+        writer.close()
+
 def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,**kwargs):
     results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
     writer = open(results_file,"wb")
@@ -251,7 +280,7 @@ def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,t
         expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
         genes = list(expression_frame.index)
         model_coefficients = model.get_model_coefficients(expression_file,ic50_file,threshold,**kwargs)
-        writer.write("\t".join(str(gene) for gene in genes) + "\n")
+        writer.wr_fite("\t".join(str(gene) for gene in genes) + "\n")
         writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
     writer.close()
 
@@ -277,6 +306,7 @@ def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression
         writer = open(results_file,"a")
         writer.write(str(score) + "\n")
         writer.close()
+
 
 def log(log_file, message):
     writer = open(log_file,"a+")
