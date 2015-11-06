@@ -4,6 +4,31 @@ import scipy.stats as sp
 import numpy as np
 import random
 
+
+def get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=False,trimmed=False,threshold=None):
+    expression_frame = get_cell_line_expression_frame(expression_file)
+    ic50_series = get_ic50_series_for_drug(ic50_file,drug)
+    ic50_series = bin_ic50_series(ic50_series)
+    expression_frame,ic50_series = get_cell_line_intersection(expression_frame,ic50_series)
+
+    if(normalized):
+        expression_frame = normalize_expression_frame(expression_frame)
+
+    if(trimmed):
+        expression_frame,ic50_series = trim_undetermined_cell_lines(expression_frame,ic50_series)
+
+    if(threshold):
+        expression_frame = apply_pval_threshold(expression_frame,ic50_series,threshold)
+
+    return expression_frame,ic50_series
+
+
+
+def get_ic50_series_for_drug(ic50_file,drug):
+    df = pd.DataFrame.from_csv(ic50_file,index_col=2,sep=",")[['Compound','IC50..uM.']]
+    df = df[(df['Compound'] == drug)]
+    return df["IC50..uM."]
+
 """
 Methods to read data from files into pandas data structures.
 """
