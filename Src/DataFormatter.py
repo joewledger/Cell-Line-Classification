@@ -8,7 +8,7 @@ import random
 def get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=False,trimmed=False,threshold=None):
     expression_frame = get_cell_line_expression_frame(expression_file)
     ic50_series = get_ic50_series_for_drug(ic50_file,drug)
-    ic50_series = bin_ic50_series(ic50_series)
+    ic50_series = robust_bin_ic50_series(ic50_series)
     expression_frame,ic50_series = get_cell_line_intersection(expression_frame,ic50_series)
 
     if(normalized):
@@ -22,12 +22,29 @@ def get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,dru
 
     return expression_frame,ic50_series
 
-
-
 def get_ic50_series_for_drug(ic50_file,drug):
     df = pd.DataFrame.from_csv(ic50_file,index_col=2,sep=",")[['Compound','IC50..uM.']]
     df = df[(df['Compound'] == drug)]
     return df["IC50..uM."]
+
+def robust_bin_ic50_series(ic50_series):
+    """
+    Similar to the regular binning method, but instead checks if there is a hard maximum IC50 value and how many samples have this exact measurement.
+    If the percentage is above 20%, we include all samples with the maximum value as resistant, and all others as sensitive.
+    If the percentage is below 20%, we include the top 20% of samples as "resistant" and the bottom 20% as sensitive
+    """
+    maximum_score = max(ic50_series)
+    percentage = float(len(ic50_series[ic50_series == "8"])) / float(len(ic50_series))
+
+    binning_function = None
+    if(percentage > .8):
+        binning_function = lambda score: 0 if score < maximum_score else 2
+    else:
+        ic50_values = sorted(list(ic50_series))
+        lower_bound = ic50_values[int(float(len(ic50_values)) * .20)]
+        upper_bound = ic50_values[int(float(len(ic50_values)) * .80)]
+        binning_function = lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
+    return ic50_series.apply(binning_function,convert_dtype=True)
 
 """
 Methods to read data from files into pandas data structures.
@@ -46,7 +63,16 @@ def get_cell_line_expression_frame(expression_file):
     df = df.groupby(axis=0,level=0).first()
     df.index.name = "Genes"
     df.columns.name = "Cell_Lines"
+
     return df
+
+def write_simplified_file(expression_file,outfile):
+    df = get_cell_line_expression_frame(expression_file)
+    df.to_csv(outfile,sep="\t")
+
+
+
+
 
 def get_patients_expression_frame(patient_directory):
     """

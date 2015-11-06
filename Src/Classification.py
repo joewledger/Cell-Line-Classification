@@ -105,9 +105,6 @@ class Generic_Scikit_Model(object):
 
         return p_identifiers,predictions,top_features
 
-
-
-
     @abstractmethod
     def get_model_accuracy_bidirectional_feature_search(self,expression_file,ic50_file,target_features,num_permutations,**kwargs):
         """

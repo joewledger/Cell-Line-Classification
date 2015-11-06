@@ -8,6 +8,16 @@ patient_directory = "Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Express
 expression_file = "Data/CCLE_Data/sample1000.res"
 ic50_file = "Data/IC_50_Data/CL_Sensitivity.txt"
 
+#def test_write():
+#    data.write_simplified_file("Data/CCLE_Data/CCLE_Expression_2012-09-29.res","test.csv")
+
+
+
+def test_robust_bin_ic50_series():
+    ic50_series = data.get_ic50_series_for_drug("Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv","Erlotinib")
+    print(data.robust_bin_ic50_series(ic50_series))
+
+
 def test_get_ic50_series_for_drug():
     print(data.get_ic50_series_for_drug("Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv","Erlotinib"))
 
