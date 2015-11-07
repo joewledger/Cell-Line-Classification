@@ -4,6 +4,9 @@ import scipy.stats as sp
 import numpy as np
 import random
 
+def get_expression_scikit_data_target_for_drug(expression_file, ic50_file,drug,normalized=False,trimmed=False,threshold=None):
+    expression_frame,ic50_series = get_expression_frame_and_ic50_series_for_drug(expression_file,ic50_file,drug,normalized,trimmed,threshold)
+    return get_scikit_data_and_target(expression_frame,ic50_series)
 
 def get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=False,trimmed=False,threshold=None):
     expression_frame = get_cell_line_expression_frame(expression_file)

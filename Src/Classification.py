@@ -25,9 +25,9 @@ class Generic_Scikit_Model(object):
         return None
 
     @abstractmethod
-    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
+    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug,**kwargs):
         model = self.construct_model(**kwargs)
-        scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,normalized=True,trimmed=True,threshold=threshold)
+        scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
         for i in range(0,num_permutations):
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             yield cv.cross_val_score_filter_feature_selection(model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean()
@@ -178,8 +178,8 @@ class SVM_Model(Generic_Scikit_Model):
     def construct_model(self,**kwargs):
         return svm.SVC(**kwargs)
 
-    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
-        return super(SVM_Model, self).get_model_accuracy_filter_threshold(expression_file, ic50_file,threshold,num_permutations,**kwargs)
+    def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug,**kwargs):
+        return super(SVM_Model, self).get_model_accuracy_filter_threshold(expression_file, ic50_file,threshold,num_permutations,drug,**kwargs)
 
     def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,threshold,num_permutations,**kwargs):
         return super(SVM_Model,self).get_model_accuracy_filter_feature_size(expression_file, ic50_file,threshold,num_permutations,**kwargs)

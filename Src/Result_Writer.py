@@ -33,6 +33,7 @@ def main():
     parser.add_argument('--model',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
     parser.add_argument('--kernel',type=str,help='The SVM kernel type to use. Options are \'linear\', \'rbf\', or \'poly\'')
     parser.add_argument('--trimmed',type=bool,help='Whether or not to exclude undetermined cell lines when training model for patient predictions.')
+    parser.add_argument('--drug',type=str,help="The drug to use IC50 measurements for")
     parser.set_defaults(**default_parameters())
 
     args = parser.parse_args()
@@ -56,7 +57,7 @@ def define_experiments():
 
     experiments[0] = ('Write accuracy v. threshold scores to text file',
                       write_accuracy_threshold_scores_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','thresholds','num_permutations','num_threads'],
+                      ['results_dir','model_object','expression_file','ic50_file','thresholds','num_permutations','drug','num_threads'],
                       ['kernel'])
 
     experiments[1] = ('Write accuracy v. #features scores to text file',
@@ -107,7 +108,7 @@ def default_parameters():
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
     parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample100.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
-    parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity.txt'
+    parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
     parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
@@ -119,6 +120,7 @@ def default_parameters():
     parameters['model'] = 'svm'
     parameters['kernel'] = 'linear'
     parameters['trimmed'] = True
+    parameters['drug'] = "SMAP"
     return parameters
 
 def get_default_parameter_descriptions():
@@ -202,7 +204,7 @@ def map_wrapper(all_args):
     kwargs = all_args[-1]
     func(*args,**kwargs)
 
-def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,num_permutations,num_threads,**kwargs):
+def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
              iter.izip(iter.repeat(_write_accuracy_threshold),
@@ -212,12 +214,13 @@ def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_
                     iter.repeat(ic50_file),
                     thresholds,
                     iter.repeat(num_permutations),
+                    iter.repeat(drug),
                     iter.repeat(kwargs)))
 
-def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,**kwargs):
+def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,drug,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-    accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug,**kwargs)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
