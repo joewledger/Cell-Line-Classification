@@ -147,6 +147,9 @@ def configure_parameters(args):
 def run_experiments(experiments, params):
     experiment_definitions = define_experiments()
     log_file = params['results_dir'] + "log.txt"
+    exp_des = "Experiment parameters\n" + "\n".join("%s: %s" % (p[0],p[1]) for p in params.items()) + "\n\n"
+    log(log_file,exp_des)
+
 
     for experiment in experiments:
         curr_exp = experiment_definitions[experiment]
