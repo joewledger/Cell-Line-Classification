@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
     parser.add_argument('--num_threads', type=int,help='The number of threads to use for multiproccesing (if supported by experiment')
     parser.add_argument('--target_features', type=int,help='The number of features to target in bidirectional feature search')
-    parser.add_argument('--model',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
+    parser.add_argument('--model_type',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
     parser.add_argument('--kernel',type=str,help='The SVM kernel type to use. Options are \'linear\', \'rbf\', or \'poly\'')
     parser.add_argument('--trimmed',type=bool,help='Whether or not to exclude undetermined cell lines when training model for patient predictions.')
     parser.add_argument('--drug',type=str,help="The drug to use IC50 measurements for")
@@ -57,12 +57,12 @@ def define_experiments():
 
     experiments[0] = ('Write accuracy v. threshold scores to text file',
                       write_accuracy_threshold_scores_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','thresholds','num_permutations','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','num_permutations','drug','num_threads'],
                       ['kernel'])
 
     experiments[1] = ('Write accuracy v. #features scores to text file',
                       write_accuracy_features_scores_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
                       ['kernel'])
 
     experiments[2] = ('Write full CCLE predictions to file',
@@ -117,7 +117,7 @@ def default_parameters():
     parameters['num_feature_sizes_to_test'] = 10
     parameters['num_threads'] = 5
     parameters['target_features'] = 5
-    parameters['model'] = 'svm'
+    parameters['model_type'] = 'svm'
     parameters['kernel'] = 'linear'
     parameters['trimmed'] = True
     parameters['drug'] = "SMAP"
@@ -131,6 +131,8 @@ def configure_parameters(args):
     params = dict(vars(args))
 
     params['results_dir'] = get_results_filepath(params['results_dir'])
+    if os.path.isdir(params['results_dir']):
+        params['results_dir'] = params['results_dir'][:-1] + str(int(params['results_dir'][-1]) + 1)
     make_results_dir_and_subdirectories(args.results_dir,params['results_dir'])
 
     if params['expression_file'] == "full":
@@ -139,9 +141,9 @@ def configure_parameters(args):
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
 
-    models = {'svm' : classify.SVM_Model(), 'nn' : classify.Neural_Network_Model(), 'dt' : classify.Decision_Tree_Model()}
+    #models = {'svm' : classify.SVM_Model(), 'nn' : classify.Neural_Network_Model(), 'dt' : classify.Decision_Tree_Model()}
 
-    params['model_object'] = models[params['model']]
+    #params['model_object'] = models[params['model']]
     return params
 
 def run_experiments(experiments, params):
@@ -160,7 +162,7 @@ def run_experiments(experiments, params):
             method = curr_exp[1]
             args = [params[x] for x in curr_exp[2]]
             kwargs = {x : params[x] for x in curr_exp[3]} if len(curr_exp) > 3 else {}
-            if(not params['model'] == 'svm'):
+            if(not params['model_type'] == 'svm'):
                 kwargs.pop('kernel')
             save_var = curr_exp[4] if len(curr_exp) > 4 else None
 
@@ -170,7 +172,7 @@ def run_experiments(experiments, params):
                 experiment_wrapper(method,args,kwargs)
 
             log(log_file, "Finished Experiment %s at %s\n" % (experiment_description, str(datetime.datetime.today())))
-        except Exception, e:
+        except Exception:
             log(log_file, "Experiment %s failed at %s\n" % (experiment_description, str(datetime.datetime.today())))
             log(log_file, "\t%s" % str(traceback.format_exc()))
 
@@ -190,7 +192,6 @@ def get_results_filepath(base_results_dir):
     return base_results_dir + curr_time + "/"
 
 def make_results_dir_and_subdirectories(base_results_dir,results_dir):
-
     if not os.path.isdir(base_results_dir):
         os.mkdir(base_results_dir)
     os.mkdir(results_dir)
@@ -207,12 +208,12 @@ def map_wrapper(all_args):
     kwargs = all_args[-1]
     func(*args,**kwargs)
 
-def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,num_permutations,drug,num_threads,**kwargs):
+def write_accuracy_threshold_scores_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
              iter.izip(iter.repeat(_write_accuracy_threshold),
                     iter.repeat(results_dir),
-                    iter.repeat(model_object),
+                    iter.repeat(model_type),
                     iter.repeat(expression_file),
                     iter.repeat(ic50_file),
                     thresholds,
@@ -220,31 +221,34 @@ def write_accuracy_threshold_scores_to_file(results_dir,model_object,expression_
                     iter.repeat(drug),
                     iter.repeat(kwargs)))
 
-def _write_accuracy_threshold(results_dir,model_object, expression_file,ic50_file,threshold,num_permutations,drug,**kwargs):
+def _write_accuracy_threshold(results_dir,model_type, expression_file,ic50_file,threshold,num_permutations,drug,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
-    accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug,**kwargs)
+    model_object = classify.Scikit_Model(model_type,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug)
     writer = open(savefile,"wb")
     for value in accuracy_scores:
         writer.write(str(value) + "\n")
     writer.close()
 
-def write_accuracy_features_scores_to_file(results_dir,model_object,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
+def write_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
              iter.izip(iter.repeat(_write_accuracy_features),
                     iter.repeat(results_dir),
-                    iter.repeat(model_object),
+                    iter.repeat(model_type),
                     iter.repeat(expression_file),
                     iter.repeat(ic50_file),
                     feature_sizes,
                     iter.repeat(num_permutations),
+                    iter.repeat(drug),
                     iter.repeat(kwargs)))
 
-def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
+def _write_accuracy_features(results_dir,model_type, expression_file,ic50_file,feature_size,num_permutations,drug,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
-    accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'],str(int(feature_size)))
+    model_object = classify.Scikit_Model(model_type,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     writer = open(savefile,"wb")
     writer.write("Number of Features: %s\n" % str(feature_size))
     writer.close()
@@ -253,22 +257,24 @@ def _write_accuracy_features(results_dir,model_object, expression_file,ic50_file
         writer.write(str(value) + "\n")
         writer.close()
 
-def write_RFE_accuracy_features_scores_to_file(results_dir,model_object,expression_file,ic50_file,feature_sizes,num_permutations,num_threads,**kwargs):
+def write_RFE_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
              iter.izip(iter.repeat(_write_RFE_accuracy_features),
                     iter.repeat(results_dir),
-                    iter.repeat(model_object),
+                    iter.repeat(model_type),
                     iter.repeat(expression_file),
                     iter.repeat(ic50_file),
                     feature_sizes,
                     iter.repeat(num_permutations),
+                    iter.repeat(drug),
                     iter.repeat(kwargs)))
 
-def _write_RFE_accuracy_features(results_dir,model_object, expression_file,ic50_file,feature_size,num_permutations,**kwargs):
+def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_file,feature_size,num_permutations,drug,**kwargs):
 
     savefile = results_dir + "Accuracy_Scores/SVM_%s_RFE_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
-    accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,**kwargs)
+    model_object = classify.Scikit_Model(model_type,**kwargs)
+    accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     writer = open(savefile,"wb")
     writer.write("Number of Features: %s\n" % str(feature_size))
     writer.close()

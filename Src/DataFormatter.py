@@ -40,7 +40,7 @@ def robust_bin_ic50_series(ic50_series):
     percentage = float(len(ic50_series[ic50_series == "8"])) / float(len(ic50_series))
 
     binning_function = None
-    if(percentage > .8):
+    if(percentage > .2):
         binning_function = lambda score: 0 if score < maximum_score else 2
     else:
         ic50_values = sorted(list(ic50_series))
@@ -48,6 +48,39 @@ def robust_bin_ic50_series(ic50_series):
         upper_bound = ic50_values[int(float(len(ic50_values)) * .80)]
         binning_function = lambda score: 0 if score < lower_bound else (2 if score > upper_bound else 1)
     return ic50_series.apply(binning_function,convert_dtype=True)
+
+def get_cell_line_and_patient_expression_data_target_for_drug(expression_file,ic50_file,patient_directory,threshold,drug):
+
+    """
+    Returns expression data and target to train a learning model with, patient data to test with along with a list of patient identifiers.
+    """
+
+    expression_frame, ic50_series = get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
+    patient_frame = get_patients_expression_frame(patient_directory)
+    patient_frame = normalize_expression_frame(patient_frame)
+
+    expression_frame,patient_frame = get_cell_line_and_patient_expression_gene_intersection(expression_frame,patient_frame)
+
+    expression_data,expression_target = get_scikit_data_and_target(expression_frame,ic50_series)
+
+    patient_identifiers,patient_data = get_patient_identifiers_and_data(patient_frame)
+
+    return expression_data,expression_target,patient_identifiers,patient_data
+
+def get_cell_line_and_patient_expression_data_target_top_features_for_drug(expression_file,ic50_file,patient_directory,num_features,drug):
+    expression_frame, ic50_series = get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=True,trimmed=True)
+    top_features = get_pval_top_n_features(expression_frame,ic50_series,num_features)
+    expression_frame = expression_frame.ix[top_features]
+
+    patient_frame = get_patients_expression_frame(patient_directory)
+    patient_frame = normalize_expression_frame(patient_frame)
+
+    expression_frame,patient_frame = get_cell_line_and_patient_expression_gene_intersection(expression_frame,patient_frame)
+    expression_data,expression_target = get_scikit_data_and_target(expression_frame,ic50_series)
+    patient_identifiers,patient_data = get_patient_identifiers_and_data(patient_frame)
+
+    return expression_data,expression_target,patient_identifiers,patient_data,list(top_features)
+
 
 """
 Methods to read data from files into pandas data structures.
@@ -72,10 +105,6 @@ def get_cell_line_expression_frame(expression_file):
 def write_simplified_file(expression_file,outfile):
     df = get_cell_line_expression_frame(expression_file)
     df.to_csv(outfile,sep="\t")
-
-
-
-
 
 def get_patients_expression_frame(patient_directory):
     """
