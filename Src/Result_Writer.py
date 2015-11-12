@@ -29,7 +29,6 @@ def main():
     parser.add_argument('--num_feature_sizes_to_test',type=int,help='The number of feature sizes to test.')
     parser.add_argument('--num_permutations',type=int,help='The number of permutations to use for cross-fold validation.')
     parser.add_argument('--num_threads', type=int,help='The number of threads to use for multiproccesing (if supported by experiment')
-    parser.add_argument('--target_features', type=int,help='The number of features to target in bidirectional feature search')
     parser.add_argument('--model_type',type=str,help='The type of model to use. Options are \'svm\', \'nn\', and \'dt\'')
     parser.add_argument('--kernel',type=str,help='The SVM kernel type to use. Options are \'linear\', \'rbf\', or \'poly\'')
     parser.add_argument('--trimmed',type=bool,help='Whether or not to exclude undetermined cell lines when training model for patient predictions.')
@@ -65,40 +64,40 @@ def define_experiments():
                       ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
                       ['kernel'])
 
-    experiments[2] = ('Write full CCLE predictions to file',
-                      write_full_CCLE_predictions_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','thresholds'],
+    experiments[2] = ('Write RFE accuracy v. #features scores to file',
+                      write_RFE_accuracy_features_scores_to_file,
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','drug','num_threads'],
                       ['kernel'])
 
     experiments[3] = ('Write SVM model coefficients to file',
-                      write_svm_model_coefficients_to_file,
+                      write_model_coefficients_to_file,
                       ['results_dir','expression_file','ic50_file','thresholds'],
                       ['kernel'])
 
-    experiments[4] = ('Write Patient Predictions to file',
-                      write_patient_predictions_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','thresholds'],
-                      ['kernel','trimmed'])
-
-    experiments[5] = ('Write SVM Model Accuracy bidirectional feature search accuracy scores to file',
-                      write_svm_model_accuracy_bidirectional_feature_search,
-                      ['results_dir','expression_file','ic50_file','target_features','num_permutations'],
+    experiments[4] = ('Write RFE top features to file',
+                      write_RFE_top_features,
+                      ['results_dir','model_type','expression_file', 'ic50_file', 'feature_sizes', 'drug'],
                       ['kernel'])
 
-    experiments[6] = ('Write SVM Model Accuracy RFE accuracy scores to file',
-                      write_RFE_accuracy_features_scores_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
+    experiments[5] = ('Write full CCLE predictions from p-value thresholded expression data to file',
+                      write_full_CCLE_predictions_threshold,
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
                       ['kernel'])
 
-    experiments[7] = ('Write full CCLE predictions top features to file',
-                      write_full_CCLE_predictions_top_features_to_file,
-                      ['results_dir','model_object','expression_file','ic50_file','target_features'],
+    experiments[6] = ('Write full CCLE predictions from top x p-value ranked features to file',
+                      write_full_CCLE_predictions_top_features,
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug'],
                       ['kernel'])
 
-    experiments[8] = ('Write patient predictions top features to file',
-                      write_patient_predictions_to_file_top_features,
-                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','target_features'],
-                      ['kernel','trimmed'])
+    experiments[7] = ('Write patient predictions from p-value thresholded expression data to file',
+                      write_patient_predictions_threshold,
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug'],
+                      ['kernel'])
+
+    experiments[8] = ('Write patient predictions from top x p-value ranked features to file',
+                      write_patient_predictions_threshold,
+                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
+                      ['kernel'])
 
     return experiments
 
@@ -116,7 +115,6 @@ def default_parameters():
     parameters['num_features_increment'] = 5
     parameters['num_feature_sizes_to_test'] = 10
     parameters['num_threads'] = 5
-    parameters['target_features'] = 5
     parameters['model_type'] = 'svm'
     parameters['kernel'] = 'linear'
     parameters['trimmed'] = True
@@ -283,70 +281,71 @@ def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_fi
         writer.write(str(value) + "\n")
         writer.close()
 
-def write_full_CCLE_predictions_to_file(results_dir,model_object,expression_file,ic50_file,thresholds,**kwargs):
-    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
+def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
+    results_file = results_dir + "Model_Coefficients/svm_linear.txt"
     writer = open(results_file,"wb")
     for threshold in thresholds:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        genes, coefficients = model.get_model_coefficients_threshold(expression_file,ic50_file,threshold,drug)
         writer.write("Threshold: %s\n" % str(threshold))
-        cell_lines, predictions = model_object.get_predictions_full_CCLE_dataset(expression_file,ic50_file,threshold,**kwargs)
+        writer.write("\t".join(str(gene) for gene in genes) + "\n")
+        writer.write("\t".join(str(coef) for coef in coefficients)  + "\n\n")
+    writer.close()
+
+def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, feature_sizes, drug,**kwargs):
+    results_file = results_dir + "Model_Coefficients/rfe_top_features.txt"
+    writer = open(results_file,"wb")
+    for feature_size in feature_sizes:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        genes, rankings = model.get_model_RFE_top_features(expression_file,ic50_file,feature_size,drug)
+        writer.write("Number of genes selected: %s" % str(feature_size))
+        writer.write("\t".join(str(gene) for gene in genes) + "\n")
+        writer.write("\t".join(str(rank) for rank in rankings)  + "\n\n")
+    writer.close()
+
+def write_full_CCLE_predictions_threshold(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
+    results_file = results_dir + "Predictions/full_CCLE_predictions_threshold.txt"
+    writer = open(results_file,"wb")
+    for threshold in thresholds:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        cell_lines, predictions = model.get_predictions_full_CCLE_dataset_threshold(expression_file,ic50_file,threshold,drug)
+        writer.write("Threshold: %s\n" % str(threshold))
         writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
-def write_full_CCLE_predictions_top_features_to_file(results_dir,model_object,expression_file,ic50_file,target_features,**kwargs):
-    results_file = results_dir + "Predictions/SVM_full_CCLE_predictions_%s_kernel.txt" % kwargs['kernel']
+def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_file,ic50_file,feature_sizes,drug,**kwargs):
+    results_file = results_dir + "Predictions/full_CCLE_predictions_top_features.txt"
     writer = open(results_file,"wb")
-    cell_lines, predictions,top_features = model_object.get_predictions_full_CCLE_dataset_from_top_features(expression_file,ic50_file,target_features,**kwargs)
-    writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
-    writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
-    writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    for feature_size in feature_sizes:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        cell_lines, predictions,top_features = model.get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,feature_size,drug)
+        writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
+        writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
-def write_svm_model_coefficients_to_file(results_dir,expression_file,ic50_file,thresholds,**kwargs):
-    results_file = results_dir + "Model_Coefficients/svm_linear.txt"
+def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,**kwargs):
+    results_file = results_dir + "Predictions/patient_predictions_threshold.txt"
     writer = open(results_file,"wb")
     for threshold in thresholds:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        identifiers,predictions = model.get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug)
         writer.write("Threshold: %s\n" % str(threshold))
-        model = classify.SVM_Model()
-        expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series(expression_file, ic50_file,normalized=True,trimmed=True,threshold=threshold)
-        genes = list(expression_frame.index)
-        model_coefficients = model.get_model_coefficients(expression_file,ic50_file,threshold,**kwargs)
-        writer.wr_fite("\t".join(str(gene) for gene in genes) + "\n")
-        writer.write("\t".join(str(coef) for coef in model_coefficients)  + "\n\n")
-    writer.close()
-
-def write_patient_predictions_to_file(results_dir,model_object,expression_file,ic50_file,patient_dir,thresholds,**kwargs):
-    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        writer.write("Threshold: %s\n" % str(threshold))
-        identifiers,predictions = model_object.get_patient_predictions(expression_file,ic50_file,patient_dir,threshold)
         writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
 
-def write_patient_predictions_to_file_top_features(results_dir,model_object,expression_file,ic50_file,patient_dir,target_features,**kwargs):
-    results_file = results_dir + "Predictions/SVM_patient_prediction_%s_kernel_with%s_undetermined.txt" % (kwargs['kernel'],"out" if kwargs['trimmed'] else "")
+def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
+    results_file = results_dir + "Predictions/patient_prediction_top_features.txt"
     writer = open(results_file,"wb")
-    identifiers,predictions,top_features = model_object.get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,target_features,trimmed=kwargs['trimmed'])
-    writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
-    writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
-    writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    for feature_size in feature_sizes:
+        model = classify.Scikit_Model(model_type,**kwargs)
+        identifiers,predictions,top_features = model.get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,feature_size,drug)
+        writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
+        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
     writer.close()
-
-def write_svm_model_accuracy_bidirectional_feature_search(results_dir,expression_file,ic50_file,target_features,num_permutations,**kwargs):
-    model = classify.SVM_Model()
-    accuracy_scores = model.get_model_accuracy_bidirectional_feature_search(expression_file,ic50_file,target_features,num_permutations,kernel=kwargs['kernel'])
-    results_file = results_dir + "Accuracy_Scores/SVM_bidirectional_%s_features.txt" % str(target_features)
-    writer = open(results_file,"wb")
-    writer.write("Target Features: %s\n" % str(target_features))
-    writer.close()
-
-    for score in accuracy_scores:
-        writer = open(results_file,"a")
-        writer.write(str(score) + "\n")
-        writer.close()
-
 
 def log(log_file, message):
     writer = open(log_file,"a+")

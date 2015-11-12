@@ -1,6 +1,5 @@
 import DataFormatter as dfm
 import Cross_Validator as cv
-import Feature_Selection as fs
 from sklearn.feature_selection import RFE
 
 from sklearn import svm
@@ -33,14 +32,12 @@ class Scikit_Model():
         elif(model_type == 'neat'):
             raise NotImplementedError("NEAT not yet implemented")
 
-    #Updated for mulitple drug possibility
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
         for i in range(0,num_permutations):
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             yield cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean()
 
-    #Updated for multiple drug possiblity
     def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,feature_size,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         for i in range(0,num_permutations):
@@ -48,8 +45,8 @@ class Scikit_Model():
             accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
             yield accuracy.mean()
 
-    #Updated for multiple drug possiblity
     def get_model_accuracy_RFE(self,expression_file,ic50_file,target_features,num_permutations,drug):
+
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
         for i in xrange(0,num_permutations):
@@ -59,17 +56,19 @@ class Scikit_Model():
 
     def get_model_coefficients_threshold(self,expression_file,ic50_file,threshold,drug):
         if(self.model_type == 'svm' and self.kernel == 'linear'):
-            scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
+            expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
+            scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
             self.model.fit(scikit_data,scikit_target)
-            return self.model.coef_[0]
+            return expression_frame.index, self.model.coef_[0]
         else:
             raise Exception("Method only defined for the SVM linear model")
 
     def get_model_RFE_top_features(self,expression_file,ic50_file,target_features,drug):
-        scikit_data,scikit_target = dfm.get_expression_scikit_data_target(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
+        expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=True,trimmed=True,threshold=None)
+        scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
         step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
         selector = RFE(self.model,target_features,step=step_length)
-        return selector.support_
+        return expression_frame.index, selector.support_
 
     def get_predictions_full_CCLE_dataset_threshold(self,expression_file,ic50_file,threshold,drug):
         training_frame,training_series = dfm.get_expression_frame_and_ic50_series_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
