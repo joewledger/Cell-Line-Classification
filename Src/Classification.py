@@ -26,7 +26,7 @@ class Scikit_Model():
         if(model_type == 'svm'):
             self.model = svm.SVC(**kwargs)
         elif(model_type == 'dt'):
-            self.model = tree.DecisionTreeClassifier()
+            self.model = tree.DecisionTreeClassifier(**kwargs)
         elif(model_type == 'nn'):
             raise NotImplementedError("Neural networks not yet implemented")
         elif(model_type == 'neat'):
@@ -68,6 +68,7 @@ class Scikit_Model():
         scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
         step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
         selector = RFE(self.model,target_features,step=step_length)
+        selector.fit(scikit_data,scikit_target)
         return expression_frame.index, selector.support_
 
     def get_predictions_full_CCLE_dataset_threshold(self,expression_file,ic50_file,threshold,drug):

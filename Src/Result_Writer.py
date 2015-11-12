@@ -71,7 +71,7 @@ def define_experiments():
 
     experiments[3] = ('Write SVM model coefficients to file',
                       write_model_coefficients_to_file,
-                      ['results_dir','expression_file','ic50_file','thresholds','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
                       ['kernel'])
 
     experiments[4] = ('Write RFE top features to file',
@@ -96,7 +96,7 @@ def define_experiments():
 
     experiments[8] = ('Write patient predictions from top x p-value ranked features to file',
                       write_patient_predictions_threshold,
-                      ['results_dir','model_object','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
                       ['kernel'])
 
     return experiments
@@ -220,7 +220,7 @@ def write_accuracy_threshold_scores_to_file(results_dir,model_type,expression_fi
 
 def _write_accuracy_threshold(results_dir,model_type, expression_file,ic50_file,threshold,num_permutations,drug,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_threshold.txt" % (kwargs['kernel'] , str(threshold))
+    savefile = results_dir + "Accuracy_Scores/accuracy_%s_threshold.txt" % str(threshold)
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug)
     writer = open(savefile,"wb")
@@ -243,7 +243,7 @@ def write_accuracy_features_scores_to_file(results_dir,model_type,expression_fil
 
 def _write_accuracy_features(results_dir,model_type, expression_file,ic50_file,feature_size,num_permutations,drug,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_accuracy_%s_features.txt" % (kwargs['kernel'],str(int(feature_size)))
+    savefile = results_dir + "Accuracy_Scores/accuracy_%s_features.txt" % int(feature_size)
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     writer = open(savefile,"wb")
@@ -269,7 +269,7 @@ def write_RFE_accuracy_features_scores_to_file(results_dir,model_type,expression
 
 def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_file,feature_size,num_permutations,drug,**kwargs):
 
-    savefile = results_dir + "Accuracy_Scores/SVM_%s_RFE_accuracy_%s_features.txt" % (kwargs['kernel'] , str(int(feature_size)))
+    savefile = results_dir + "Accuracy_Scores/RFE_accuracy_%s_features.txt" % str(int(feature_size))
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     writer = open(savefile,"wb")
@@ -297,7 +297,7 @@ def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, fe
     for feature_size in feature_sizes:
         model = classify.Scikit_Model(model_type,**kwargs)
         genes, rankings = model.get_model_RFE_top_features(expression_file,ic50_file,feature_size,drug)
-        writer.write("Number of genes selected: %s" % str(feature_size))
+        writer.write("Number of genes selected: %s" % str(feature_size) + "\n")
         writer.write("\t".join(str(gene) for gene in genes) + "\n")
         writer.write("\t".join(str(rank) for rank in rankings)  + "\n\n")
     writer.close()
@@ -318,7 +318,7 @@ def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_f
     writer = open(results_file,"wb")
     for feature_size in feature_sizes:
         model = classify.Scikit_Model(model_type,**kwargs)
-        cell_lines, predictions,top_features = model.get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,feature_size,drug)
+        cell_lines, predictions,top_features = model.get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,int(feature_size),drug)
         writer.write("Top Features: %s\n" % "\t".join(str(x) for x in top_features))
         writer.write("\t".join(str(cell) for cell in cell_lines) + "\n")
         writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
