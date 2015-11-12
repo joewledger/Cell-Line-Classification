@@ -61,7 +61,7 @@ def define_experiments():
 
     experiments[1] = ('Write accuracy v. #features scores to text file',
                       write_accuracy_features_scores_to_file,
-                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','drug','num_threads'],
                       ['kernel'])
 
     experiments[2] = ('Write RFE accuracy v. #features scores to file',
@@ -71,7 +71,7 @@ def define_experiments():
 
     experiments[3] = ('Write SVM model coefficients to file',
                       write_model_coefficients_to_file,
-                      ['results_dir','expression_file','ic50_file','thresholds'],
+                      ['results_dir','expression_file','ic50_file','thresholds','drug'],
                       ['kernel'])
 
     experiments[4] = ('Write RFE top features to file',
@@ -129,8 +129,11 @@ def configure_parameters(args):
     params = dict(vars(args))
 
     params['results_dir'] = get_results_filepath(params['results_dir'])
-    if os.path.isdir(params['results_dir']):
-        params['results_dir'] = params['results_dir'][:-1] + str(int(params['results_dir'][-1]) + 1)
+    while os.path.isdir(params['results_dir']):
+        if(params['results_dir'][-2] == ")"):
+            params['results_dir'] = params['results_dir'][:-3] + str(int(params['results_dir'][-3]) + 1) + ")/"
+        else:
+            params['results_dir'] = params['results_dir'][:-1] + "(1)/"
     make_results_dir_and_subdirectories(args.results_dir,params['results_dir'])
 
     if params['expression_file'] == "full":
@@ -138,10 +141,6 @@ def configure_parameters(args):
 
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
-
-    #models = {'svm' : classify.SVM_Model(), 'nn' : classify.Neural_Network_Model(), 'dt' : classify.Decision_Tree_Model()}
-
-    #params['model_object'] = models[params['model']]
     return params
 
 def run_experiments(experiments, params):

@@ -26,7 +26,7 @@ class Scikit_Model():
         if(model_type == 'svm'):
             self.model = svm.SVC(**kwargs)
         elif(model_type == 'dt'):
-            self.model = tree.DecisionTreeClassifier(**kwargs)
+            self.model = tree.DecisionTreeClassifier()
         elif(model_type == 'nn'):
             raise NotImplementedError("Neural networks not yet implemented")
         elif(model_type == 'neat'):
