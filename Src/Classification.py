@@ -6,6 +6,8 @@ from sklearn import svm
 from sklearn.cross_validation import cross_val_score
 from sklearn import tree
 
+import traceback
+
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
 Working with Elena Svenson under the direction of Dr. Mehmet Koyuturk
@@ -35,24 +37,34 @@ class Scikit_Model():
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
         for i in range(0,num_permutations):
-            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            yield cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5).mean()
+            try:
+                shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+                accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5)
+                yield accuracy.mean()
+            except:
+                yield 0.0
 
     def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,feature_size,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         for i in range(0,num_permutations):
-            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
-            yield accuracy.mean()
+            try:
+                shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+                accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
+                yield accuracy.mean()
+            except:
+                yield 0.0
 
     def get_model_accuracy_RFE(self,expression_file,ic50_file,target_features,num_permutations,drug):
 
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
         for i in xrange(0,num_permutations):
-            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            selector = RFE(self.model,target_features,step=step_length)
-            yield cross_val_score(selector,shuffled_data,shuffled_target,cv=5).mean()
+            try:
+                shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+                selector = RFE(self.model,target_features,step=step_length)
+                yield cross_val_score(selector,shuffled_data,shuffled_target,cv=5).mean()
+            except:
+                yield 0.0
 
     def get_model_coefficients_threshold(self,expression_file,ic50_file,threshold,drug):
         if(self.model_type == 'svm' and self.kernel == 'linear'):

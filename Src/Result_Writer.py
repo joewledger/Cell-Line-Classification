@@ -105,7 +105,7 @@ def default_parameters():
     parameters = {}
     parameters['experiments'] = [x for x in xrange(0,len(define_experiments()))]
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
-    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample100.res'
+    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
     parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
     parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
@@ -224,8 +224,12 @@ def _write_accuracy_threshold(results_dir,model_type, expression_file,ic50_file,
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug)
     writer = open(savefile,"wb")
+    writer.write("Threshold: %s\n" % str(threshold))
+    writer.close()
     for value in accuracy_scores:
+        writer = open(savefile,"a")
         writer.write(str(value) + "\n")
+        writer.close()
     writer.close()
 
 def write_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
