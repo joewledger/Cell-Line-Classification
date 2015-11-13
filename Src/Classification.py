@@ -5,6 +5,7 @@ from sklearn.feature_selection import RFE
 from sklearn import svm
 from sklearn.cross_validation import cross_val_score
 from sklearn import tree
+from sklearn import linear_model
 
 import traceback
 
@@ -20,7 +21,7 @@ The training output values are the IC50 values discretized into several bins: "s
 class Scikit_Model():
 
     def __init__(self,model_type,**kwargs):
-        self.allowed_model_types = ['svm','dt','nn', 'neat']
+        self.allowed_model_types = ['svm','dt','nn', 'neat','linr','logr']
         self.model_type = model_type
         self.kernel = (kwargs['kernel'] if 'kernel' in kwargs else None)
         if(not model_type in self.allowed_model_types):
@@ -33,6 +34,11 @@ class Scikit_Model():
             raise NotImplementedError("Neural networks not yet implemented")
         elif(model_type == 'neat'):
             raise NotImplementedError("NEAT not yet implemented")
+        elif(model_type == 'linr'):
+            self.model = linear_model.LinearRegression(**kwargs)
+        elif(model_type == 'logr'):
+            self.model_type = linear_model.LogisticRegression(**kwargs)
+
 
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)

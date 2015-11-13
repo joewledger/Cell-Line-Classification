@@ -223,14 +223,7 @@ def _write_accuracy_threshold(results_dir,model_type, expression_file,ic50_file,
     savefile = results_dir + "Accuracy_Scores/accuracy_%s_threshold.txt" % str(threshold)
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_filter_threshold(expression_file,ic50_file,threshold,num_permutations,drug)
-    writer = open(savefile,"wb")
-    writer.write("Threshold: %s\n" % str(threshold))
-    writer.close()
-    for value in accuracy_scores:
-        writer = open(savefile,"a")
-        writer.write(str(value) + "\n")
-        writer.close()
-    writer.close()
+    generic_write_accuracy(savefile,accuracy_scores)
 
 def write_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
@@ -250,13 +243,7 @@ def _write_accuracy_features(results_dir,model_type, expression_file,ic50_file,f
     savefile = results_dir + "Accuracy_Scores/accuracy_%s_features.txt" % int(feature_size)
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,drug)
-    writer = open(savefile,"wb")
-    writer.write("Number of Features: %s\n" % str(feature_size))
-    writer.close()
-    for value in accuracy_scores:
-        writer = open(savefile,"a")
-        writer.write(str(value) + "\n")
-        writer.close()
+    generic_write_accuracy(savefile,accuracy_scores)
 
 def write_RFE_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
@@ -276,13 +263,7 @@ def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_fi
     savefile = results_dir + "Accuracy_Scores/RFE_accuracy_%s_features.txt" % str(int(feature_size))
     model_object = classify.Scikit_Model(model_type,**kwargs)
     accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,drug)
-    writer = open(savefile,"wb")
-    writer.write("Number of Features: %s\n" % str(feature_size))
-    writer.close()
-    for value in accuracy_scores:
-        writer = open(savefile,"a")
-        writer.write(str(value) + "\n")
-        writer.close()
+    generic_write_accuracy(savefile,accuracy_scores)
 
 def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
     results_file = results_dir + "Model_Coefficients/svm_linear.txt"
@@ -354,6 +335,16 @@ def log(log_file, message):
     writer = open(log_file,"a+")
     writer.write(message)
     writer.close()
+
+def generic_write_accuracy(savefile, accuracy_scores):
+    writer = open(savefile,"wb")
+    writer.close()
+    for value in accuracy_scores:
+        writer = open(savefile,"a")
+        writer.write(str(value) + "\n")
+        writer.close()
+
+
 
 if __name__ == '__main__':
     main()
