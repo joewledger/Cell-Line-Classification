@@ -37,7 +37,7 @@ class Scikit_Model():
         elif(model_type == 'linr'):
             self.model = linear_model.LinearRegression(**kwargs)
         elif(model_type == 'logr'):
-            self.model_type = linear_model.LogisticRegression(**kwargs)
+            self.model = linear_model.LogisticRegression(**kwargs)
 
 
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):

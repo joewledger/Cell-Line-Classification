@@ -108,7 +108,9 @@ def default_parameters():
     parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
     parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
     parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
-    parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/9f2c84a7-c887-4cb5-b6e5-d38b00d678b1/Expression-Genes/UNC__AgilentG4502A_07_3/Level_3"
+    parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
+    parameters['luad_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
+    parameters['brca_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/BRCA/Level_3"
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
     parameters['num_permutations'] = 100
@@ -138,6 +140,12 @@ def configure_parameters(args):
 
     if params['expression_file'] == "full":
         params['expression_file'] = params['full_expression_file']
+
+    if params['patient_dir'] == "luad":
+        params['patient_dir'] = params['luad_dir']
+
+    if params['patient_dir'] == "brca":
+        params['patient_dir'] = params['brca_dir']
 
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
