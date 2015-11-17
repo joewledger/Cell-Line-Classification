@@ -348,14 +348,14 @@ def log(logfile, message):
     writer.close()
 
 def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
-    log(logfile,"Started calculating score for parameter: %s" % str(parameter))
+    log(logfile,"Started calculating score for parameter: %s\n" % str(parameter))
     writer = open(savefile,"wb")
     writer.close()
     for value in accuracy_scores:
         writer = open(savefile,"a")
         writer.write(str(value) + "\n")
         writer.close()
-    log(logfile, "Finished calculating score for parameter: %s" % str(parameter))
+    log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
 
 
 
