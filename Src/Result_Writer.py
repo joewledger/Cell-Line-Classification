@@ -105,8 +105,8 @@ def default_parameters():
     parameters = {}
     parameters['experiments'] = [x for x in xrange(0,len(define_experiments()))]
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
-    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.res'
-    parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/CCLE_Expression_2012-09-29.res'
+    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.csv'
+    parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/full_expression.csv'
     parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
     parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
     parameters['luad_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
