@@ -70,32 +70,32 @@ def define_experiments():
 
     experiments[3] = ('Write SVM model coefficients to file',
                       write_model_coefficients_to_file,
-                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
                       ['kernel'])
 
     experiments[4] = ('Write RFE top features to file',
                       write_RFE_top_features,
-                      ['results_dir','model_type','expression_file', 'ic50_file', 'feature_sizes', 'drug','num_threads'],
+                      ['results_dir','model_type','expression_file', 'ic50_file', 'feature_sizes', 'drug'],
                       ['kernel'])
 
     experiments[5] = ('Write full CCLE predictions from p-value thresholded expression data to file',
                       write_full_CCLE_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
                       ['kernel'])
 
     experiments[6] = ('Write full CCLE predictions from top x p-value ranked features to file',
                       write_full_CCLE_predictions_top_features,
-                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug'],
                       ['kernel'])
 
     experiments[7] = ('Write patient predictions from p-value thresholded expression data to file',
                       write_patient_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug'],
                       ['kernel'])
 
     experiments[8] = ('Write patient predictions from top x p-value ranked features to file',
                       write_patient_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug','num_threads'],
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
                       ['kernel'])
 
     return experiments
