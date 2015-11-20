@@ -147,6 +147,9 @@ def configure_parameters(args):
     if params['patient_dir'] == "brca":
         params['patient_dir'] = params['brca_dir']
 
+    if params['patient_dir'] == "brca_partial":
+        params['patient_dir'] = params['brca_dir'] + "_Partial"
+
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
     return params
@@ -322,14 +325,21 @@ def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_f
 
 def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,**kwargs):
     results_file = results_dir + "Predictions/patient_predictions_threshold.txt"
-    writer = open(results_file,"wb")
-    for threshold in thresholds:
-        model = classify.Scikit_Model(model_type,**kwargs)
-        identifiers,predictions = model.get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug)
-        writer.write("Threshold: %s\n" % str(threshold))
-        writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
-        writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
-    writer.close()
+    logfile = results_dir + "log.txt"
+    results_func = (lambda thresh :  classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,thresh,drug))
+    generic_write_predictions_or_coefficients(results_file,logfile,thresholds,"Threshold",results_func)
+
+    #writer = open(results_file,"wb")
+    #writer.close()
+    #for threshold in thresholds:
+    #    model =
+    #    identifiers,predictions = model.get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug)
+    #
+    #    writer = open(results_file,"a")
+    #    writer.write("Threshold: %s\n" % str(threshold))
+    #    writer.write("\t".join(str(iden) for iden in identifiers) + "\n")
+    #    writer.write("\t".join(str(pred) for pred in predictions)  + "\n\n")
+    #    writer.close()
 
 def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
     results_file = results_dir + "Predictions/patient_prediction_top_features.txt"
@@ -357,7 +367,19 @@ def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
         writer.close()
     log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
 
-
+def generic_write_predictions_or_coefficients(savefile,logfile,parameter_range,parameter_name, results_func):
+    writer = open(savefile,"wb")
+    writer.close()
+    for parameter in parameter_range:
+        log(logfile,"Started doing calculations for parameter: %s\n" % str(parameter))
+        results = results_func(parameter)
+        writer = open(savefile,"a")
+        writer.write("%s: %s\n" % (parameter_name, str(parameter)))
+        for res in results:
+            writer.write("\t".join(str(r) for r in res) + "\n")
+        writer.write("\n")
+        writer.close()
+        log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter))
 
 if __name__ == '__main__':
     main()
