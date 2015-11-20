@@ -317,17 +317,20 @@ def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
         writer.close()
     log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
 
-def generic_write_predictions(savefile,logfile,parameter_value,parameter_name, results_func):
+def generic_write_predictions(savefile,logfile,parameter_range,parameter_name, results_func):
 
-    log(logfile,"Started doing calculations for parameter: %s\n" % str(parameter_value))
-    results = results_func(parameter_value)
-    writer = open(savefile,"a")
-    writer.write("%s: %s\n" % (parameter_name, str(parameter_value)))
-    for res in results:
-        writer.write("\t".join(str(r) for r in res) + "\n")
-    writer.write("\n")
+    writer = open(savefile,"wb")
     writer.close()
-    log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter_value))
+    for parameter in parameter_range:
+        log(logfile,"Started doing calculations for parameter: %s\n" % str(parameter))
+        results = results_func(parameter)
+        writer = open(savefile,"a")
+        writer.write("%s: %s\n" % (parameter_name, str(parameter)))
+        for res in results:
+            writer.write("\t".join(str(r) for r in res) + "\n")
+        writer.write("\n")
+        writer.close()
+        log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter))
 
 if __name__ == '__main__':
     main()
