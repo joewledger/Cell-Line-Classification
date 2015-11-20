@@ -317,6 +317,13 @@ def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
         writer.close()
     log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
 
+class func_wrapper:
+    def __init__(self,result_function):
+        self.result_function = result_function
+    def __call__(self):
+        return self.result_func
+
+
 def generic_write_predictions_multithreaded(savefile,logfile,parameter_range,parameter_name,results_func,num_threads):
     writer = open(savefile,"wb")
     writer.close()
@@ -327,7 +334,7 @@ def generic_write_predictions_multithreaded(savefile,logfile,parameter_range,par
                     iter.repeat(logfile),
                     parameter_range,
                     iter.repeat(parameter_name),
-                    [results_func for x in xrange(0,len(parameter_range))]))
+                    func_wrapper(results_func)))
 
 def generic_write_predictions(savefile,logfile,parameter_value,parameter_name, results_func):
 
