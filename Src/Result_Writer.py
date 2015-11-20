@@ -334,7 +334,7 @@ def generic_write_predictions_multithreaded(savefile,logfile,parameter_range,par
                     iter.repeat(logfile),
                     parameter_range,
                     iter.repeat(parameter_name),
-                    func_wrapper(results_func)))
+                    iter.repeat(func_wrapper(results_func))))
 
 def generic_write_predictions(savefile,logfile,parameter_value,parameter_name, results_func):
 
