@@ -2,7 +2,6 @@ import argparse
 from argparse import RawDescriptionHelpFormatter
 import datetime
 import os
-import DataFormatter as dfm
 import Classification as classify
 from multiprocessing import Pool
 import itertools as iter
@@ -71,32 +70,32 @@ def define_experiments():
 
     experiments[3] = ('Write SVM model coefficients to file',
                       write_model_coefficients_to_file,
-                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug','num_threads'],
                       ['kernel'])
 
     experiments[4] = ('Write RFE top features to file',
                       write_RFE_top_features,
-                      ['results_dir','model_type','expression_file', 'ic50_file', 'feature_sizes', 'drug'],
+                      ['results_dir','model_type','expression_file', 'ic50_file', 'feature_sizes', 'drug','num_threads'],
                       ['kernel'])
 
     experiments[5] = ('Write full CCLE predictions from p-value thresholded expression data to file',
                       write_full_CCLE_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','thresholds','drug','num_threads'],
                       ['kernel'])
 
     experiments[6] = ('Write full CCLE predictions from top x p-value ranked features to file',
                       write_full_CCLE_predictions_top_features,
-                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug','num_threads'],
                       ['kernel'])
 
     experiments[7] = ('Write patient predictions from p-value thresholded expression data to file',
                       write_patient_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug','num_threads'],
                       ['kernel'])
 
     experiments[8] = ('Write patient predictions from top x p-value ranked features to file',
                       write_patient_predictions_threshold,
-                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug','num_threads'],
                       ['kernel'])
 
     return experiments
@@ -279,29 +278,29 @@ def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_fi
     accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     generic_write_accuracy(savefile,logfile,feature_size,accuracy_scores)
 
-def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
+def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,num_threads,**kwargs):
     results_func = (lambda threshold :  classify.Scikit_Model(model_type,**kwargs).get_model_coefficients_threshold(expression_file,ic50_file,threshold,drug))
-    generic_write_predictions(results_dir + "Model_Coefficients/svm_linear.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
+    generic_write_predictions(results_dir + "Model_Coefficients/svm_linear.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
 
-def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, feature_sizes, drug,**kwargs):
+def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, feature_sizes, drug,num_threads,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_model_RFE_top_features(expression_file,ic50_file,feature_size,drug))
-    generic_write_predictions(results_dir + "Model_Coefficients/rfe_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
+    generic_write_predictions(results_dir + "Model_Coefficients/rfe_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
 
-def write_full_CCLE_predictions_threshold(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
+def write_full_CCLE_predictions_threshold(results_dir,model_type,expression_file,ic50_file,thresholds,drug,num_threads,**kwargs):
     results_func = (lambda threshold: classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_threshold(expression_file,ic50_file,threshold,drug))
-    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
+    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
 
-def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_file,ic50_file,feature_sizes,drug,**kwargs):
+def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_file,ic50_file,feature_sizes,drug,num_threads,**kwargs):
     results_func = (lambda feature_size : classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,int(feature_size),drug))
-    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
+    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
 
-def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,**kwargs):
+def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,num_threads,**kwargs):
     results_func = (lambda threshold :  classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug))
-    generic_write_predictions(results_dir + "Predictions/patient_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
+    generic_write_predictions(results_dir + "Predictions/patient_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
 
-def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
+def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,num_threads,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,feature_size,drug))
-    generic_write_predictions(results_dir + "Predictions/patient_prediction_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
+    generic_write_predictions_multithreaded(results_dir + "Predictions/patient_prediction_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
 
 def log(logfile, message):
     writer = open(logfile,"a+")
@@ -318,19 +317,29 @@ def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
         writer.close()
     log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
 
-def generic_write_predictions(savefile,logfile,parameter_range,parameter_name, results_func):
+def generic_write_predictions_multithreaded(savefile,logfile,parameter_range,parameter_name,results_func,num_threads):
     writer = open(savefile,"wb")
     writer.close()
-    for parameter in parameter_range:
-        log(logfile,"Started doing calculations for parameter: %s\n" % str(parameter))
-        results = results_func(parameter)
-        writer = open(savefile,"a")
-        writer.write("%s: %s\n" % (parameter_name, str(parameter)))
-        for res in results:
-            writer.write("\t".join(str(r) for r in res) + "\n")
-        writer.write("\n")
-        writer.close()
-        log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter))
+    pool = Pool(num_threads)
+    pool.map(map_wrapper,
+             iter.izip(iter.repeat(generic_write_predictions),
+                    iter.repeat(savefile),
+                    iter.repeat(logfile),
+                    parameter_range,
+                    iter.repeat(parameter_name),
+                    iter.repeat(results_func)))
+
+def generic_write_predictions(savefile,logfile,parameter_value,parameter_name, results_func):
+
+    log(logfile,"Started doing calculations for parameter: %s\n" % str(parameter_value))
+    results = results_func(parameter_value)
+    writer = open(savefile,"a")
+    writer.write("%s: %s\n" % (parameter_name, str(parameter_value)))
+    for res in results:
+        writer.write("\t".join(str(r) for r in res) + "\n")
+    writer.write("\n")
+    writer.close()
+    log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter_value))
 
 if __name__ == '__main__':
     main()
