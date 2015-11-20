@@ -278,29 +278,29 @@ def _write_RFE_accuracy_features(results_dir,model_type, expression_file,ic50_fi
     accuracy_scores = model_object.get_model_accuracy_RFE(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     generic_write_accuracy(savefile,logfile,feature_size,accuracy_scores)
 
-def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,num_threads,**kwargs):
+def write_model_coefficients_to_file(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
     results_func = (lambda threshold :  classify.Scikit_Model(model_type,**kwargs).get_model_coefficients_threshold(expression_file,ic50_file,threshold,drug))
-    generic_write_predictions_multithreaded(results_dir + "Model_Coefficients/svm_linear.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
+    generic_write_predictions(results_dir + "Model_Coefficients/svm_linear.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
 
-def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, feature_sizes, drug,num_threads,**kwargs):
+def write_RFE_top_features(results_dir,model_type,expression_file, ic50_file, feature_sizes, drug,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_model_RFE_top_features(expression_file,ic50_file,feature_size,drug))
-    generic_write_predictions_multithreaded(results_dir + "Model_Coefficients/rfe_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
+    generic_write_predictions(results_dir + "Model_Coefficients/rfe_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
 
-def write_full_CCLE_predictions_threshold(results_dir,model_type,expression_file,ic50_file,thresholds,drug,num_threads,**kwargs):
+def write_full_CCLE_predictions_threshold(results_dir,model_type,expression_file,ic50_file,thresholds,drug,**kwargs):
     results_func = (lambda threshold: classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_threshold(expression_file,ic50_file,threshold,drug))
-    generic_write_predictions_multithreaded(results_dir + "Predictions/full_CCLE_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
+    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
 
-def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_file,ic50_file,feature_sizes,drug,num_threads,**kwargs):
+def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_file,ic50_file,feature_sizes,drug,**kwargs):
     results_func = (lambda feature_size : classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,int(feature_size),drug))
-    generic_write_predictions_multithreaded(results_dir + "Predictions/full_CCLE_predictions_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
+    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
 
-def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,num_threads,**kwargs):
+def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,**kwargs):
     results_func = (lambda threshold :  classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug))
-    generic_write_predictions_multithreaded(results_dir + "Predictions/patient_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func,num_threads)
+    generic_write_predictions(results_dir + "Predictions/patient_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
 
-def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,num_threads,**kwargs):
+def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,feature_size,drug))
-    generic_write_predictions_multithreaded(results_dir + "Predictions/patient_prediction_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func,num_threads)
+    generic_write_predictions(results_dir + "Predictions/patient_prediction_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
 
 def log(logfile, message):
     writer = open(logfile,"a+")
@@ -316,25 +316,6 @@ def generic_write_accuracy(savefile,logfile, parameter,accuracy_scores):
         writer.write(str(value) + "\n")
         writer.close()
     log(logfile, "Finished calculating score for parameter: %s\n" % str(parameter))
-
-class func_wrapper:
-    def __init__(self,result_function):
-        self.result_function = result_function
-    def __call__(self):
-        return self.result_func
-
-
-def generic_write_predictions_multithreaded(savefile,logfile,parameter_range,parameter_name,results_func,num_threads):
-    writer = open(savefile,"wb")
-    writer.close()
-    pool = Pool(num_threads)
-    pool.map(map_wrapper,
-             iter.izip(iter.repeat(generic_write_predictions),
-                    iter.repeat(savefile),
-                    iter.repeat(logfile),
-                    parameter_range,
-                    iter.repeat(parameter_name),
-                    iter.repeat(func_wrapper(results_func))))
 
 def generic_write_predictions(savefile,logfile,parameter_value,parameter_name, results_func):
 
