@@ -85,9 +85,9 @@ class Scikit_Model():
         expression_frame,ic50_series = dfm.get_expression_frame_and_ic50_series_for_drug(expression_file, ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         scikit_data,scikit_target = dfm.get_scikit_data_and_target(expression_frame,ic50_series)
         step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
-        selector = RFE(self.model,target_features,step=step_length)
+        selector = RFE(self.model,int(target_features),step=step_length)
         selector.fit(scikit_data,scikit_target)
-        return expression_frame.index, selector.support_
+        return [expression_frame.index[i] for i in xrange(0,len(expression_frame.index)) if selector.support_[i]]
 
     def get_predictions_full_CCLE_dataset_threshold(self,expression_file,ic50_file,threshold,drug):
         training_frame,training_series = dfm.get_expression_frame_and_ic50_series_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)

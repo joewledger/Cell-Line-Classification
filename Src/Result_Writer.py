@@ -326,9 +326,11 @@ def generic_write_predictions(savefile,logfile,parameter_range,parameter_name, r
         results = results_func(parameter)
         writer = open(savefile,"a")
         writer.write("%s: %s\n" % (parameter_name, str(parameter)))
-        for res in results:
-            writer.write("\t".join(str(r) for r in res) + "\n")
-        writer.write("\n")
+        if(type(results[0]) == str):
+            writer.write("\t".join(res for res in results) + "\n\n")
+        else:
+            for res in results:
+                writer.write("\t".join(str(r) for r in res) + "\n")
         writer.close()
         log(logfile,"Finished doing calculations for parameter: %s\n" % str(parameter))
 
