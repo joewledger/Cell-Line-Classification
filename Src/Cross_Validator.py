@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.externals.joblib import Parallel,delayed
-from sklearn.utils import check_arrays
 from sklearn.base import clone, is_classifier
 from sklearn.metrics.scorer import _deprecate_loss_and_score_funcs
 from sklearn.cross_validation import check_cv
@@ -75,7 +74,7 @@ def cross_val_score_filter_feature_selection(model,filter_function,filter_criter
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    #X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(model))
     scorer = _deprecate_loss_and_score_funcs(
         loss_func=None,
