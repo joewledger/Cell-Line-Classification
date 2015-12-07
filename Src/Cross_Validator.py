@@ -17,7 +17,7 @@ Example calls:
    cross_val_score_filter_feature_selection(model,trim_X_num_features,num_features,scikit_data,scikit_target,cv=5)
 """
 
-def cross_val_score_filter_feature_selection(model,filter_function,filter_criteria, X, y=None, scoring=None, cv=None, n_jobs=1,
+def cross_val_score_filter_feature_selection(model,filter_function,filter_criteria, X, y, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
 
@@ -29,10 +29,13 @@ def cross_val_score_filter_feature_selection(model,filter_function,filter_criter
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
+
+    #
     scores = parallel(delayed(_fit_and_score)(clone(model), filter_function(X,y,train,filter_criteria), y, scorer,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv)
+
     return np.array(scores)[:, 0]
 
 def trim_X_threshold(X,y,train,threshold):
@@ -66,7 +69,8 @@ def trim_X_num_features(X,y,train,num_features):
 def get_training_samples_labels(samples,labels,train):
 
     training_list = train.tolist()
-    train_samples = samples.drop(labels=[x for x in samples.index if not training_list[x]])
-    train_labels = labels.drop(labels=[x for x in labels.index if not training_list[x]])
+
+    train_samples = samples.drop(labels=[x for x in samples.index if not x in training_list])
+    train_labels = labels.drop(labels=[x for x in labels.index if not x in training_list])
 
     return train_samples,train_labels

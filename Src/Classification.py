@@ -43,6 +43,7 @@ class Scikit_Model():
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=threshold)
         for i in range(0,num_permutations):
+
             try:
                 shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
                 accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5)

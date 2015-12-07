@@ -7,3 +7,4 @@ todo.txt
 Current_Results/
 plot_txt_results.py
 run.txt
+Src/neat/*.pyc
