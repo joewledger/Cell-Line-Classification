@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.externals.joblib import Parallel,delayed
 from sklearn.base import clone, is_classifier
-from sklearn.metrics.scorer import _deprecate_loss_and_score_funcs
 from sklearn.cross_validation import check_cv
-from sklearn.cross_validation import _cross_val_score
 from sklearn.utils import indexable
 from sklearn.metrics.scorer import check_scoring
 from sklearn.cross_validation import _fit_and_score

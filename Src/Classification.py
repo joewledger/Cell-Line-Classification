@@ -6,8 +6,8 @@ from sklearn import svm
 from sklearn.cross_validation import cross_val_score
 from sklearn import tree
 from sklearn import linear_model
+import neat
 
-import traceback
 
 """
 Cell Line Classification Project using SVMs (Support Vector Machines) and Neural Networks
@@ -33,7 +33,7 @@ class Scikit_Model():
         elif(model_type == 'nn'):
             raise NotImplementedError("Neural networks not yet implemented")
         elif(model_type == 'neat'):
-            raise NotImplementedError("NEAT not yet implemented")
+            self.model = neat.NeatClassifier(**kwargs)
         elif(model_type == 'linr'):
             self.model = linear_model.LinearRegression(**kwargs)
         elif(model_type == 'logr'):
