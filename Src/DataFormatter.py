@@ -250,6 +250,10 @@ def get_patient_identifiers_and_data(patient_frame):
 def get_expression_frame_with_features(expression_frame,features):
     return expression_frame.ix[list(features)]
 
+def get_scikit_data(expression_frame):
+    return np.array([list(expression_frame[cell_line]) for cell_line in expression_frame.columns])
+
+
 """
 Methods that perform multiple single step operations at once.
 """

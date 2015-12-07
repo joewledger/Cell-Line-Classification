@@ -113,6 +113,24 @@ class Scikit_Model():
 
         return cell_lines,predictions,list(top_features)
 
+    def get_predictions_full_CCLE_dataset_rfe(self,expression_file,ic50_file,target_features,drug):
+
+        scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
+        step_length = int(len(scikit_data.tolist()[0]) / 100) + 1
+
+        model = RFE(self.model,target_features,step=step_length)
+        model.fit(scikit_data,scikit_target)
+
+        expression_frame = dfm.get_cell_line_expression_frame(expression_file)
+        cell_lines = expression_frame.columns
+        testing_data = dfm.get_scikit_data(expression_frame)
+
+        predictions = model.predict(testing_data)
+        top_features = [expression_frame.index[i] for i in xrange(0,len(expression_frame.index)) if model.support_[i]]
+
+
+        return cell_lines,predictions,top_features
+
     def get_patient_predictions_threshold(self,expression_file,ic50_file,patient_directory,threshold,drug):
         """
         Returns the predictions for which patients are likely to be sensitive to SMAPs and which are likely to be resistant.
@@ -135,3 +153,17 @@ class Scikit_Model():
         predictions = self.model.predict(p_data)
 
         return p_identifiers,predictions,top_features
+
+    def get_patient_predictions_rfe_top_features(self,expression_file,ic50_file,patient_directory,target_features,drug):
+
+        e_data,e_target,p_identifiers,p_data = dfm.get_cell_line_and_patient_expression_data_target_for_drug(expression_file,ic50_file,patient_directory,1.0,drug)
+        step_length = int(len(e_data.tolist()[0]) / 100) + 1
+
+        model = RFE(self.model,target_features,step=step_length)
+
+        model.fit(e_data,e_target)
+        predictions = model.predict(p_data)
+
+        all_features = dfm.get_cell_line_and_patient_expression_gene_intersection(dfm.get_cell_line_expression_frame(expression_file),dfm.get_patients_expression_frame(patient_directory))[0]
+        top_features = [all_features[i] for i in xrange(0,len(all_features)) if model.support_[i]]
+        return p_identifiers, predictions, top_features
