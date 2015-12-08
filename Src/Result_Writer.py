@@ -88,13 +88,23 @@ def define_experiments():
                       ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug'],
                       ['kernel'])
 
-    experiments[7] = ('Write patient predictions from p-value thresholded expression data to file',
+    experiments[7] = ('Write full CCLE predictions with RFE to file',
+                      write_full_CCLE_predictions_rfe,
+                      ['results_dir','model_type','expression_file','ic50_file','feature_sizes','drug'],
+                      ['kernel'])
+
+    experiments[8] = ('Write patient predictions from p-value thresholded expression data to file',
                       write_patient_predictions_threshold,
                       ['results_dir','model_type','expression_file','ic50_file','patient_dir','thresholds','drug'],
                       ['kernel'])
 
-    experiments[8] = ('Write patient predictions from top x p-value ranked features to file',
+    experiments[9] = ('Write patient predictions from top x p-value ranked features to file',
                       write_patient_predictions_threshold,
+                      ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
+                      ['kernel'])
+
+    experiments[10] = ('Write patient predictions with RFE to file',
+                      write_patient_predictions_rfe,
                       ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
                       ['kernel'])
 
@@ -294,6 +304,10 @@ def write_full_CCLE_predictions_top_features(results_dir,model_type,expression_f
     results_func = (lambda feature_size : classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_top_features(expression_file,ic50_file,int(feature_size),drug))
     generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
 
+def write_full_CCLE_predictions_rfe(results_dir,model_type,expression_file,ic50_file, feature_sizes, drug, **kwargs):
+    results_func = (lambda feature_size : classify.Scikit_Model(model_type,**kwargs).get_predictions_full_CCLE_dataset_rfe(expression_file,ic50_file,int(feature_size),drug))
+    generic_write_predictions(results_dir + "Predictions/full_CCLE_predictions_rfe.txt", results_dir + "log.txt", feature_sizes, "Number of Features",results_func)
+
 def write_patient_predictions_threshold(results_dir,model_type,expression_file,ic50_file,patient_dir,thresholds,drug,**kwargs):
     results_func = (lambda threshold :  classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_threshold(expression_file,ic50_file,patient_dir,threshold,drug))
     generic_write_predictions(results_dir + "Predictions/patient_predictions_threshold.txt",results_dir + "log.txt",thresholds,"Threshold",results_func)
@@ -301,6 +315,10 @@ def write_patient_predictions_threshold(results_dir,model_type,expression_file,i
 def write_patient_predictions_top_features(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_top_features(expression_file,ic50_file,patient_dir,feature_size,drug))
     generic_write_predictions(results_dir + "Predictions/patient_prediction_top_features.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
+
+def write_patient_predictions_rfe(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
+    results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_rfe(expression_file,ic50_file,patient_dir,feature_size,drug))
+    generic_write_predictions(results_dir + "Predictions/patient_prediction_rfe.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
 
 def log(logfile, message):
     writer = open(logfile,"a+")

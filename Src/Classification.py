@@ -154,7 +154,7 @@ class Scikit_Model():
 
         return p_identifiers,predictions,top_features
 
-    def get_patient_predictions_rfe_top_features(self,expression_file,ic50_file,patient_directory,target_features,drug):
+    def get_patient_predictions_rfe(self,expression_file,ic50_file,patient_directory,target_features,drug):
 
         e_data,e_target,p_identifiers,p_data = dfm.get_cell_line_and_patient_expression_data_target_for_drug(expression_file,ic50_file,patient_directory,1.0,drug)
         step_length = int(len(e_data.tolist()[0]) / 100) + 1
