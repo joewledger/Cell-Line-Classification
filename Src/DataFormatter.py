@@ -3,6 +3,7 @@ import os
 import scipy.stats as sp
 import numpy as np
 import random
+import csv
 
 def get_expression_scikit_data_target_for_drug(expression_file, ic50_file,drug,normalized=False,trimmed=False,threshold=None):
     expression_frame,ic50_series = get_expression_frame_and_ic50_series_for_drug(expression_file,ic50_file,drug,normalized,trimmed,threshold)
@@ -90,7 +91,18 @@ def get_cell_line_expression_frame(expression_file):
     """
     Generates a gene x cell_line frame
     """
-    return pd.DataFrame.from_csv(expression_file, index_col=0, sep='\t')
+    if(expression_file[-4:] == ".csv"):
+        sniffer = csv.Sniffer()
+
+        reader = open(expression_file,"rb")
+        first_line = reader.readline()
+        reader.close()
+
+        df = pd.read_csv(expression_file, index_col=0, sep=sniffer.sniff(first_line).delimiter)
+    else:
+        raise Exception("Only .csv files are excepted")
+
+    return df.dropna(axis=1,how="any")
 
 def get_patients_expression_frame(patient_directory):
     """

@@ -126,6 +126,7 @@ class Scikit_Model():
         testing_data = dfm.get_scikit_data(expression_frame)
 
         predictions = model.predict(testing_data)
+
         top_features = [expression_frame.index[i] for i in xrange(0,len(expression_frame.index)) if model.support_[i]]
 
 
