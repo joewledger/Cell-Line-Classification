@@ -121,7 +121,7 @@ class Scikit_Model():
         model = RFE(self.model,target_features,step=step_length)
         model.fit(scikit_data,scikit_target)
 
-        expression_frame = dfm.get_cell_line_expression_frame(expression_file)
+        expression_frame = dfm.normalize_expression_frame(dfm.get_cell_line_expression_frame(expression_file))
         cell_lines = expression_frame.columns
         testing_data = dfm.get_scikit_data(expression_frame)
 
