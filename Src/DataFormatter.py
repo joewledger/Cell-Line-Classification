@@ -102,7 +102,7 @@ def get_cell_line_expression_frame(expression_file):
     else:
         raise Exception("Only .csv files are excepted")
 
-    return df.dropna(axis=1,how="any")
+    return df.fillna(0)
 
 def get_patients_expression_frame(patient_directory):
     """
