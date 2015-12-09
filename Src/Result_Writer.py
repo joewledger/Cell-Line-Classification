@@ -114,12 +114,10 @@ def default_parameters():
     parameters = {}
     parameters['experiments'] = [x for x in xrange(0,len(define_experiments()))]
     parameters['results_dir'] = os.path.dirname(__file__) + '/../Results/'
-    parameters['expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/sample1000.csv'
-    parameters['full_expression_file'] = os.path.dirname(__file__) + '/../Data/CCLE_Data/full_expression.csv'
-    parameters['ic50_file'] = os.path.dirname(__file__) + '/../Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
-    parameters['patient_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
-    parameters['luad_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/LUAD/Level_3"
-    parameters['brca_dir'] = os.path.dirname(__file__) + "/../Data/TCGA_Data/BRCA/Level_3"
+    parameters['expression_file'] = 'Data/CCLE_Data/sample1000.csv'
+    parameters['full_expression_file'] = 'Data/CCLE_Data/full_expression.csv'
+    parameters['ic50_file'] = 'Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
+    parameters['patient_dir'] = 'Data/TCGA_Data/LUAD/Level_3'
     parameters['threshold_increment'] = .01
     parameters['num_thresholds'] = 100
     parameters['num_permutations'] = 100
@@ -129,7 +127,7 @@ def default_parameters():
     parameters['model_type'] = 'svm'
     parameters['kernel'] = 'linear'
     parameters['trimmed'] = True
-    parameters['drug'] = "SMAP"
+    parameters['drug'] = 'SMAP'
     return parameters
 
 def get_default_parameter_descriptions():
@@ -150,17 +148,12 @@ def configure_parameters(args):
     if params['expression_file'] == "full":
         params['expression_file'] = params['full_expression_file']
 
-    if params['patient_dir'] == "luad":
-        params['patient_dir'] = params['luad_dir']
-
-    if params['patient_dir'] == "brca":
-        params['patient_dir'] = params['brca_dir']
-
-    if params['patient_dir'] == "brca_partial":
-        params['patient_dir'] = params['brca_dir'] + "_Partial"
-
     params['thresholds'] = [params['threshold_increment'] * x for x in xrange(1,params['num_thresholds'] + 1)]
     params['feature_sizes'] = [params['num_features_increment'] * x for x in xrange(1,params['num_feature_sizes_to_test'] + 1)]
+
+    params['ic50_file'] = os.path.dirname(__file__) + '/../' + params['ic50_file']
+    params['expression_file'] = os.path.dirname(__file__) + '/../' + params['expression_file']
+    params['patient_dir'] = os.path.dirname(__file__) + '/../' + params['patient_dir']
     return params
 
 def run_experiments(experiments, params):
