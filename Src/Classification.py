@@ -6,7 +6,7 @@ from sklearn import svm
 from sklearn.cross_validation import cross_val_score
 from sklearn import tree
 from sklearn import linear_model
-import neat.NeatClassifier as neat
+import NEAT.NeatClassifier as neat
 
 
 """
