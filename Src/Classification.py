@@ -7,6 +7,7 @@ from sklearn.cross_validation import cross_val_score
 from sklearn import tree
 from sklearn import linear_model
 import NEAT.NeatClassifier as neat
+import datetime
 
 
 """
@@ -168,9 +169,17 @@ class Scikit_Model():
         top_features = [all_features[i] for i in xrange(0,len(all_features)) if model.support_[i]]
         return p_identifiers, predictions, top_features
 
-    def get_cross_validation_time(self,expression_file,ic50_file,target_features,drug):
-        raise NotImplementedError
-
+    def get_cross_validation_time(self,expression_file, ic50_file,feature_size,num_permutations,drug):
+        scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
+        for i in range(0,num_permutations):
+            try:
+                shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+                start_time = datetime.datetime.now()
+                cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
+                end_time = datetime.datetime.now()
+                yield float((end_time - start_time).microseconds) / 100000
+            except:
+                yield 0.0
 
 
 

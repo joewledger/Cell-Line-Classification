@@ -21,10 +21,6 @@ class NeatClassifier(BaseEstimator,ClassifierMixin):
         target = [t if t==0 else 1 for t in target]
         self.x = list(set(target))
 
-        #for line in fileinput.input(self.config_file,inplace=1):
-        #    print (line if not line.startswith("input_nodes") else "input_nodes         = %d" % len(data[0])).strip()
-
-        #config.load(self.config_file)
         config.load(len(data[0]))
         chromosome.node_gene_type = genome.NodeGene
 

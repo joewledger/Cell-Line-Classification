@@ -108,6 +108,11 @@ def define_experiments():
                       ['results_dir','model_type','expression_file','ic50_file','patient_dir','feature_sizes','drug'],
                       ['kernel'])
 
+    experiments[11] = ('Get cross-validation runtime',
+                       write_cross_validation_time_to_file,
+                       ['results_dir','model_type','expression_file','ic50_file','feature_sizes','num_permutations','drug','num_threads'],
+                       ['kernel'])
+
     return experiments
 
 def default_parameters():
@@ -260,6 +265,27 @@ def _write_accuracy_features(results_dir,model_type, expression_file,ic50_file,f
     accuracy_scores = model_object.get_model_accuracy_filter_feature_size(expression_file,ic50_file,int(feature_size),num_permutations,drug)
     generic_write_accuracy(savefile,logfile,feature_size,accuracy_scores)
 
+def write_cross_validation_time_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
+    pool = Pool(num_threads)
+    pool.map(map_wrapper,
+             iter.izip(iter.repeat(_write_cv_time),
+                    iter.repeat(results_dir),
+                    iter.repeat(model_type),
+                    iter.repeat(expression_file),
+                    iter.repeat(ic50_file),
+                    feature_sizes,
+                    iter.repeat(num_permutations),
+                    iter.repeat(drug),
+                    iter.repeat(kwargs)))
+
+def _write_cv_time(results_dir,model_type, expression_file,ic50_file,feature_size,num_permutations,drug,**kwargs):
+
+    savefile = results_dir + "Accuracy_Scores/time_%s_features.txt" % int(feature_size)
+    logfile = results_dir + "log.txt"
+    model_object = classify.Scikit_Model(model_type,**kwargs)
+    time_scores = model_object.get_cross_validation_time(expression_file,ic50_file,int(feature_size),num_permutations,drug)
+    generic_write_accuracy(savefile,logfile,feature_size,time_scores)
+
 def write_RFE_accuracy_features_scores_to_file(results_dir,model_type,expression_file,ic50_file,feature_sizes,num_permutations,drug,num_threads,**kwargs):
     pool = Pool(num_threads)
     pool.map(map_wrapper,
@@ -312,6 +338,8 @@ def write_patient_predictions_top_features(results_dir,model_type,expression_fil
 def write_patient_predictions_rfe(results_dir,model_type,expression_file,ic50_file,patient_dir,feature_sizes,drug,**kwargs):
     results_func = (lambda feature_size: classify.Scikit_Model(model_type,**kwargs).get_patient_predictions_rfe(expression_file,ic50_file,patient_dir,feature_size,drug))
     generic_write_predictions(results_dir + "Predictions/patient_prediction_rfe.txt",results_dir + "log.txt",feature_sizes,"Number of Features",results_func)
+
+
 
 def log(logfile, message):
     writer = open(logfile,"a+")
