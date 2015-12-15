@@ -26,16 +26,16 @@ def acc_and_run(g,scikit_data,scikit_target,num_features,num_permutations):
     results = []
 
     for perm in xrange(0,num_permutations):
-        try:
-            start_time = datetime.datetime.now()
-            model = n.NeatClassifier(max_generations=g,config_file='Src/NEAT/config.txt')
-            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            acc = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,num_features,shuffled_data,shuffled_target,cv=5)
-            end_time = datetime.datetime.now()
-            results.append((acc.mean(),float((end_time - start_time).microseconds) / 100000))
-        except:
-            results.append((0.0, 1000.0))
-            print(sys.exc_info()[0])
+        #try:
+        start_time = datetime.datetime.now()
+        model = n.NeatClassifier(max_generations=g)
+        shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+        acc = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,num_features,shuffled_data,shuffled_target,cv=5)
+        end_time = datetime.datetime.now()
+        results.append((acc.mean(),float((end_time - start_time).microseconds) / 100000))
+        #except:
+        #    results.append((0.0, 1000.0))
+        #    print(sys.exc_info()[0])
     return results
 
 def plot_accuracy_num_generations(savefile,accuracy_scores):
