@@ -43,7 +43,6 @@ class Scikit_Model():
     def get_model_accuracy_filter_threshold(self,expression_file, ic50_file,threshold,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         for i in range(0,num_permutations):
-
             try:
                 shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
                 accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_threshold,threshold,shuffled_data,shuffled_target,cv=5)
@@ -54,12 +53,12 @@ class Scikit_Model():
     def get_model_accuracy_filter_feature_size(self,expression_file, ic50_file,feature_size,num_permutations,drug):
         scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
         for i in range(0,num_permutations):
-
-            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-            accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
-            yield accuracy.mean()
-            #except:
-            #    yield 0.0
+            try:
+                shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+                accuracy = cv.cross_val_score_filter_feature_selection(self.model,cv.trim_X_num_features,feature_size,shuffled_data,shuffled_target,cv=5)
+                yield accuracy.mean()
+            except:
+                yield 0.0
 
     def get_model_accuracy_RFE(self,expression_file,ic50_file,target_features,num_permutations,drug):
 
@@ -168,6 +167,13 @@ class Scikit_Model():
         all_features = dfm.get_cell_line_and_patient_expression_gene_intersection(dfm.get_cell_line_expression_frame(expression_file),dfm.get_patients_expression_frame(patient_directory))[0]
         top_features = [all_features[i] for i in xrange(0,len(all_features)) if model.support_[i]]
         return p_identifiers, predictions, top_features
+
+    def get_cross_validation_time(self,expression_file,ic50_file,target_features,drug):
+        raise NotImplementedError
+
+
+
+
 
 
 

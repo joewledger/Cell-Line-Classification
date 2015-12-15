@@ -12,21 +12,20 @@ class NeatClassifier(BaseEstimator,ClassifierMixin):
     def __init__(self,**kwargs):
         self.network = None
         self.max_generations = kwargs.pop('max_generations',10)
+        self.config_file = kwargs.pop('config_file',"config.txt")
 
     def get_params(self,deep=True):
-        return {"max_generations" : self.max_generations}
+        return {"max_generations" : self.max_generations, 'config_file' : self.config_file}
 
     def fit(self,data,target):
 
         target = [t if t==0 else 1 for t in target]
         self.x = list(set(target))
 
-        config_file = "Src/neat/config.txt"
-
-        for line in fileinput.input(config_file,inplace=1):
+        for line in fileinput.input(self.config_file,inplace=1):
             print (line if not line.startswith("input_nodes") else "input_nodes         = %d" % len(data[0])).strip()
 
-        config.load(config_file)
+        config.load(self.config_file)
         chromosome.node_gene_type = genome.NodeGene
 
         def eval_fitness(population):
@@ -62,7 +61,6 @@ class NeatClassifier(BaseEstimator,ClassifierMixin):
     def discretize_prediction(self,prediction):
         p = min(enumerate([math.fabs(cls - prediction) for cls in self.x]), key=itemgetter(1))[0]
         return (p if p==0 else 2)
-
 
 #if __name__ == "__main__":
 #    clf = NeatClassifier(max_generations=300)
