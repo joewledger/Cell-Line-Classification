@@ -2,11 +2,12 @@
 import DataFormatter as dfm
 import Cross_Validator as cv
 import os
-import Src.NEAT.NeatClassifier as n
+import NEAT.NeatClassifier as n
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 from multiprocessing import Pool
+import sys
 
 def get_accuracy_and_runtime_vs_num_generations(expression_file,ic50_file,num_features,generation_range,num_permutations,num_threads):
     drug = "SMAP"
@@ -24,12 +25,13 @@ def acc_and_run(g,scikit_data,scikit_target,num_features,num_permutations):
     for perm in xrange(0,num_permutations):
         try:
             start_time = datetime.datetime.now()
-            model = n.NeatClassifier(max_generations=g,config_file='NEAT/config.txt')
+            model = n.NeatClassifier(max_generations=g,config_file='Src/NEAT/config.txt')
             shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
             acc = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,num_features,shuffled_data,shuffled_target,cv=5)
             end_time = datetime.datetime.now()
             return acc.mean(),(end_time - start_time).seconds
         except:
+            print(sys.exc_info()[0])
             return 0.0, 1000.0
 
 def plot_accuracy_num_generations(savefile,accuracy_scores):
@@ -60,14 +62,17 @@ def plot_runtime_num_generations(savefile,runtime_scores):
     plt.savefig(savefile)
     plt.close()
 
-#Num_Permutations, Num_Threads
+#Expression_file, generation_sizes,num_permutations, num_threads
+#python Src/NEAT_Metrics.py "partial" 3 3 2
+#python Src/NEAT_Metrics.py "full" 15 100 15
 if __name__ == "__main__":
-    expression_file = os.path.dirname(__file__) + '/../' + 'Data/CCLE_Data/full_expression.csv'
+    expression_file = ('full_expression.csv' if sys.argv[1] == 'full' else 'sample1000.csv')
+    expression_file = os.path.dirname(__file__) + '/../' + 'Data/CCLE_Data/' + expression_file
     ic_50_file = os.path.dirname(__file__) + '/../' + 'Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
     num_features = 10
-    generation_range = [x * 5 for x in xrange(1,16)]
-    num_permutations = sys.argv[1]
-    num_threads = sys.argv[2]
+    generation_range = [x * 5 for x in xrange(1,int(sys.argv[2]) + 1)]
+    num_permutations = int(sys.argv[3])
+    num_threads = int(sys.argv[4])
     save_1 = os.path.dirname(__file__) + '/../' +  "Results/accuracy_num_generations.png"
     save_2 = os.path.dirname(__file__) + '/../' +  "Results/runtime_num_generations.png"
 
