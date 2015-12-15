@@ -33,7 +33,7 @@ class Scikit_Model():
         elif(model_type == 'nn'):
             raise NotImplementedError("Neural networks not yet implemented")
         elif(model_type == 'neat'):
-            self.model = neat.NeatClassifier(max_generations=100)
+            self.model = neat.NeatClassifier(max_generations=20)
         elif(model_type == 'linr'):
             self.model = linear_model.LinearRegression(**kwargs)
         elif(model_type == 'logr'):
