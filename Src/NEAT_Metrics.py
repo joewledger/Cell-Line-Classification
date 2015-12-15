@@ -7,11 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 from multiprocessing import Pool
-import itertools as iter
 
-def get_accuracy_and_runtime_vs_num_generations(expression_file,ic50_file,generation_range,num_permutations,num_threads):
+def get_accuracy_and_runtime_vs_num_generations(expression_file,ic50_file,num_features,generation_range,num_permutations,num_threads):
     drug = "SMAP"
-    num_features = 10
+
     scikit_data,scikit_target = dfm.get_expression_scikit_data_target_for_drug(expression_file,ic50_file,drug,normalized=True,trimmed=True,threshold=None)
     p = Pool(num_threads)
     scores = p.map(wrap, [(g,scikit_data,scikit_target,num_features,num_permutations) for g in generation_range])
@@ -23,15 +22,15 @@ def wrap(args):
 
 def acc_and_run(g,scikit_data,scikit_target,num_features,num_permutations):
     for perm in xrange(0,num_permutations):
-
-        start_time = datetime.datetime.now()
-        model = n.NeatClassifier(max_generations=g,config_file='NEAT/config.txt')
-        shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
-        acc = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,num_features,shuffled_data,shuffled_target,cv=5)
-        end_time = datetime.datetime.now()
-        return acc.mean(),(end_time - start_time).seconds
-        #except:
-        #    return 0.0, 1000.0
+        try:
+            start_time = datetime.datetime.now()
+            model = n.NeatClassifier(max_generations=g,config_file='NEAT/config.txt')
+            shuffled_data,shuffled_target = dfm.shuffle_scikit_data_target(scikit_data,scikit_target)
+            acc = cv.cross_val_score_filter_feature_selection(model,cv.trim_X_num_features,num_features,shuffled_data,shuffled_target,cv=5)
+            end_time = datetime.datetime.now()
+            return acc.mean(),(end_time - start_time).seconds
+        except:
+            return 0.0, 1000.0
 
 def plot_accuracy_num_generations(savefile,accuracy_scores):
     plt.figure()
@@ -61,16 +60,18 @@ def plot_runtime_num_generations(savefile,runtime_scores):
     plt.savefig(savefile)
     plt.close()
 
+#Num_Permutations, Num_Threads
 if __name__ == "__main__":
-    expression_file = os.path.dirname(__file__) + '/../' + 'Data/CCLE_Data/sample1000.csv'
+    expression_file = os.path.dirname(__file__) + '/../' + 'Data/CCLE_Data/full_expression.csv'
     ic_50_file = os.path.dirname(__file__) + '/../' + 'Data/IC_50_Data/CL_Sensitivity_Multiple_Drugs.csv'
-    generation_range = [x * 5 for x in xrange(1,3)]
-    num_permutations = 3
-    num_threads = 2
+    num_features = 10
+    generation_range = [x * 5 for x in xrange(1,16)]
+    num_permutations = sys.argv[1]
+    num_threads = sys.argv[2]
     save_1 = os.path.dirname(__file__) + '/../' +  "Results/accuracy_num_generations.png"
     save_2 = os.path.dirname(__file__) + '/../' +  "Results/runtime_num_generations.png"
 
-    accuracy_and_runtime = get_accuracy_and_runtime_vs_num_generations(expression_file,ic_50_file,generation_range,num_permutations,num_threads)
+    accuracy_and_runtime = get_accuracy_and_runtime_vs_num_generations(expression_file,ic_50_file,num_features,generation_range,num_permutations,num_threads)
 
     plot_accuracy_num_generations(save_1,accuracy_and_runtime)
     plot_runtime_num_generations(save_2,accuracy_and_runtime)
